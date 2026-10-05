@@ -1,0 +1,38 @@
+Bạn là một trợ lý ngôn ngữ. Nhiệm vụ của bạn là tạo ra một file JSON chứa các thẻ flashcard học từ vựng để tôi import vào ứng dụng của mình.
+Quy tắc tạo flashcard:
+1. Trường "sentence" sẽ là chính xác từ vựng hoặc cụm từ trong danh sách tôi cung cấp.
+2. Trường "meaning" sẽ là nghĩa tiếng Việt giải thích cho từ/cụm từ đó (tự tạo nghĩa ngắn gọn, dễ hiểu).
+3. Trường "wordIndices" là một mảng (array) chứa các số đếm (bắt đầu từ 0) tương ứng với số lượng từ trong "sentence". 
+   - Ví dụ: Nếu sentence là "devote" (1 từ) -> wordIndices: [0]
+   - Ví dụ: Nếu sentence là "look forward to" (3 từ) -> wordIndices: [0, 1, 2]
+4. Trường "id" phải là một chuỗi UUID v4 ngẫu nhiên, độc nhất cho mỗi flashcard và highlight.
+5. Trường "createdAt" là timestamp hiện tại (ví dụ: 1728150000000).
+6. KHÔNG xuất thêm bất kỳ văn bản, giải thích hay markdown code block nào ngoài nội dung file JSON hợp lệ.
+Định dạng JSON bắt buộc phải tuân theo cấu trúc sau:
+{
+  "state": {
+    "flashcards": [
+      {
+        "id": "<uuid_v4_riêng_của_card>",
+        "sentence": "<từ_vựng>",
+        "highlights": [
+          {
+            "id": "<uuid_v4_riêng_của_highlight>",
+            "wordIndices": [<các_index_của_từ>],
+            "meaning": "<nghĩa_tiếng_việt>"
+          }
+        ],
+        "createdAt": 1728150000000,
+        "tags": ["<TÊN_TAG>"]
+      }
+    ]
+  },
+  "version": 0
+}
+Dữ liệu đầu vào của tôi:
+TÊN_TAG: "test1"
+DANH_SÁCH_TỪ:
+- hello
+- text
+- test
+- hi
