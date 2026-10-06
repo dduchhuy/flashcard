@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { PlusCircle, Library, Gamepad2, Settings as SettingsIcon, LogIn, LogOut, Cloud } from 'lucide-react'
+import { PlusCircle, Library, Gamepad2, Settings as SettingsIcon, LogIn, LogOut } from 'lucide-react'
 import { TabHome } from './components/TabHome'
 import { TabAllCards } from './components/TabAllCards'
 import { TabGame } from './components/TabGame'
@@ -30,7 +30,6 @@ function App() {
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400">Flashcards</h1>
-            {user && <span title="Đã đồng bộ lên Cloud"><Cloud size={20} className="text-green-500" /></span>}
           </div>
           <div>
             {isLoading ? (

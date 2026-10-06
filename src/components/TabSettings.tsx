@@ -81,18 +81,18 @@ export function TabSettings() {
 
   const handleDelete = () => {
     if (flashcards.length === 0) {
-      alert('Không có thẻ nào để xóa (No cards to delete).')
+      alert('No cards to delete.')
       return
     }
 
     if (deleteTag === 'all') {
-      const sure = window.confirm('Bạn có chắc chắn muốn xóa TOÀN BỘ flashcard không?\n(Hành động này không thể hoàn tác)')
+      const sure = window.confirm('Are you sure you want to delete ALL flashcards?\n(This action cannot be undone)')
       if (sure) {
         useFlashcardStore.setState({ flashcards: [] })
-        alert('Đã xóa toàn bộ flashcard.')
+        alert('All flashcards have been deleted.')
       }
     } else {
-      const sure = window.confirm(`Bạn có chắc chắn muốn xóa tất cả flashcard có tag "${deleteTag}" không?`)
+      const sure = window.confirm(`Are you sure you want to delete all flashcards with tag "${deleteTag}"?`)
       if (sure) {
         useFlashcardStore.setState(state => {
           return {
@@ -103,7 +103,7 @@ export function TabSettings() {
             })
           }
         })
-        alert(`Đã xóa các flashcard thuộc tag "${deleteTag}".`)
+        alert(`Deleted flashcards with tag "${deleteTag}".`)
         setDeleteTag('all')
       }
     }
@@ -429,16 +429,16 @@ export function TabSettings() {
 
         {/* Delete Section */}
         <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-700 flex flex-col gap-3">
-          <p className="text-sm font-medium text-red-600 dark:text-red-400">Xóa dữ liệu (Danger Zone)</p>
+          <p className="text-sm font-medium text-red-600 dark:text-red-400">Remove card</p>
           <div className="flex gap-3">
             <select
               value={deleteTag}
               onChange={(e) => setDeleteTag(e.target.value)}
               className="p-2.5 border border-red-200 dark:border-red-900/30 bg-red-50 dark:bg-red-900/10 text-red-800 dark:text-red-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 w-1/2 appearance-none text-center cursor-pointer"
             >
-              <option value="all">Xóa: Toàn bộ thẻ</option>
+              <option value="all">All</option>
               {allTags.map(t => (
-                <option key={t} value={t}>Xóa: {t}</option>
+                <option key={t} value={t}>{t}</option>
               ))}
             </select>
             
@@ -446,7 +446,7 @@ export function TabSettings() {
               onClick={handleDelete}
               className="w-1/2 flex justify-center items-center gap-2 bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 py-2.5 rounded-lg font-medium transition-colors"
             >
-              Xóa thẻ
+              Remove
             </button>
           </div>
         </div>
