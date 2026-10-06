@@ -30,7 +30,8 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
   
   const [hinted, setHinted] = useState<number[]>([])
   const [score, setScore] = useState(0)
-  
+  const [hideMeaning, setHideMeaning] = useState(true)
+
   const inputRef = useRef<HTMLInputElement>(null)
 
 
@@ -42,6 +43,7 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
 
   useEffect(() => {
     setHinted([])
+    setHideMeaning(true)
   }, [currentIndex])
 
   const currentQ = allQuestions[currentIndex]
@@ -129,13 +131,32 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
 
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-6 text-center max-w-xl mx-auto w-full relative">
         
-        <p className={`text-lg text-gray-800 dark:text-gray-200 mb-8 leading-relaxed whitespace-pre-wrap px-4 transition-all duration-300 ${!showFullSentence ? 'blur-sm select-none opacity-60' : ''}`}>
-          {currentQ.sentence}
-        </p>
+        {showFullSentence ? (
+          <p className="text-lg text-gray-800 dark:text-gray-200 mb-8 leading-relaxed whitespace-pre-wrap px-4">
+            {currentQ.sentence}
+          </p>
+        ) : (
+          <div className="text-gray-400 dark:text-gray-500 mb-8 px-4 flex items-center justify-center gap-2 h-[84px]">
+            <Volume2 size={18} className="animate-pulse" />
+            <span className="text-sm font-medium">Listen and type the word</span>
+          </div>
+        )}
         
         <div className="bg-purple-50 dark:bg-gray-900 rounded-xl p-4 mb-8 border border-purple-100 dark:border-gray-700 animate-in fade-in slide-in-from-top-2">
-          <span className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Meaning</span>
-          <span className="font-medium text-purple-700 dark:text-purple-300 text-lg break-words whitespace-pre-wrap">{currentQ.meaning}</span>
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-gray-500 dark:text-gray-400">Meaning</span>
+            <button 
+              onClick={() => setHideMeaning(!hideMeaning)}
+              className="text-xs px-2.5 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium flex items-center gap-1"
+            >
+              {hideMeaning ? 'Show' : 'Hide'}
+            </button>
+          </div>
+          {!hideMeaning && (
+            <div className="mt-3 font-medium text-purple-700 dark:text-purple-300 text-lg break-words whitespace-pre-wrap block">
+              {currentQ.meaning}
+            </div>
+          )}
         </div>
 
         <div className="max-w-sm mx-auto">

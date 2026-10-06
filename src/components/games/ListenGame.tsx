@@ -156,9 +156,16 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
 
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-6 text-center max-w-xl mx-auto w-full relative">
         
-        <p className={`text-lg text-gray-800 dark:text-gray-200 mb-8 leading-relaxed whitespace-pre-wrap px-4 transition-all duration-300 ${!showFullSentence ? 'blur-sm select-none opacity-60' : ''}`}>
-          {currentQ.sentence}
-        </p>
+        {showFullSentence ? (
+          <p className="text-lg text-gray-800 dark:text-gray-200 mb-8 leading-relaxed whitespace-pre-wrap px-4">
+            {currentQ.sentence}
+          </p>
+        ) : (
+          <div className="text-gray-400 dark:text-gray-500 mb-8 px-4 flex items-center justify-center gap-2">
+            <Volume2 size={18} className="animate-pulse" />
+            <span className="text-sm font-medium">Listen and type the word</span>
+          </div>
+        )}
 
         <button
           onClick={() => playAudio()}
@@ -168,7 +175,7 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
         </button>
         
         <div className="bg-blue-50 dark:bg-gray-900 rounded-xl p-4 mb-8 border border-blue-100 dark:border-gray-700">
-          <div className="flex justify-between items-center mb-2">
+          <div className="flex justify-between items-center">
             <span className="text-sm text-gray-500 dark:text-gray-400">Meaning</span>
             <button 
               onClick={() => setHideMeaning(!hideMeaning)}
@@ -177,9 +184,11 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
               {hideMeaning ? 'Show' : 'Hide'}
             </button>
           </div>
-          <span className={`font-medium text-blue-700 dark:text-blue-300 text-lg break-words whitespace-pre-wrap block transition-all ${hideMeaning ? 'blur-md select-none opacity-40' : ''}`}>
-            {hideMeaning ? '• '.repeat(Math.min(currentQ.meaning.length, 10)) : currentQ.meaning}
-          </span>
+          {!hideMeaning && (
+            <div className="mt-3 font-medium text-blue-700 dark:text-blue-300 text-lg break-words whitespace-pre-wrap block">
+              {currentQ.meaning}
+            </div>
+          )}
         </div>
 
         <div className="max-w-sm mx-auto">
