@@ -34,6 +34,7 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
 
   // Audio settings
   const [readMode, setReadMode] = useState<'word' | 'sentence'>('word')
+  const [hideMeaning, setHideMeaning] = useState(true)
 
   useEffect(() => {
     if (status === 'playing') {
@@ -43,6 +44,7 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
 
   useEffect(() => {
     setHinted([])
+    setHideMeaning(true)
   }, [currentIndex])
 
   const currentQ = allQuestions[currentIndex]
@@ -166,8 +168,18 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
         </button>
         
         <div className="bg-blue-50 dark:bg-gray-900 rounded-xl p-4 mb-8 border border-blue-100 dark:border-gray-700">
-          <span className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Meaning</span>
-          <span className="font-medium text-blue-700 dark:text-blue-300 text-lg break-words whitespace-pre-wrap">{currentQ.meaning}</span>
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm text-gray-500 dark:text-gray-400">Meaning</span>
+            <button 
+              onClick={() => setHideMeaning(!hideMeaning)}
+              className="text-xs px-2.5 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium flex items-center gap-1"
+            >
+              {hideMeaning ? 'Show' : 'Hide'}
+            </button>
+          </div>
+          <span className={`font-medium text-blue-700 dark:text-blue-300 text-lg break-words whitespace-pre-wrap block transition-all ${hideMeaning ? 'blur-md select-none opacity-40' : ''}`}>
+            {hideMeaning ? '• '.repeat(Math.min(currentQ.meaning.length, 10)) : currentQ.meaning}
+          </span>
         </div>
 
         <div className="max-w-sm mx-auto">
