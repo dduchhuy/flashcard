@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage, StateStorage } from 'zustand/middleware'
+import { get, set, del } from 'idb-keyval'
 import { v4 as uuidv4 } from 'uuid'
 
 export interface SRSData {
@@ -97,6 +98,27 @@ interface FlashcardState {
   updateFlashcardSRS: (flashcardId: string, srsData: SRSData) => void
   gameInputMode: 'sentence' | 'word'
   setGameInputMode: (mode: 'sentence' | 'word') => void
+}
+
+const idbStorage: StateStorage = {
+  getItem: async (name: string): Promise<string | null> => {
+    const val = await get(name)
+    if (val !== undefined && val !== null) return val
+
+    // Migration from localStorage to IndexedDB
+    const local = localStorage.getItem(name)
+    if (local) {
+      await set(name, local)
+      return local
+    }
+    return null
+  },
+  setItem: async (name: string, value: string): Promise<void> => {
+    await set(name, value)
+  },
+  removeItem: async (name: string): Promise<void> => {
+    await del(name)
+  },
 }
 
 export const useFlashcardStore = create<FlashcardState>()(
@@ -220,6 +242,7 @@ export const useFlashcardStore = create<FlashcardState>()(
     }),
     {
       name: 'flashcard-storage',
+      storage: createJSONStorage(() => idbStorage)
     }
   )
 )

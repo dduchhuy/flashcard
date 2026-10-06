@@ -1,11 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import debugPlugin from './vite-plugin-debug.ts'
 
 export default defineConfig({
   base: './',
   plugins: [
     react(),
+    debugPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
