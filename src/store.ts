@@ -6,6 +6,7 @@ export interface Highlight {
   id: string
   wordIndices: number[]
   meaning: string
+  example?: string
 }
 
 export interface Flashcard {
@@ -64,11 +65,11 @@ interface FlashcardState {
   setActiveTags: (tags: string[]) => void
   updateSettings: (newSettings: Partial<AppSettings>) => void
   resetSettings: () => void
-  addFlashcard: (sentence: string, tags?: string[] | string) => void
+  addFlashcard: (sentence: string, tags?: string[] | string, highlights?: Omit<Highlight, 'id'>[]) => void
   deleteFlashcard: (id: string) => void
   updateFlashcard: (id: string, newSentence: string) => void
   updateFlashcardTag: (id: string, tags?: string[] | string) => void
-  saveHighlight: (flashcardId: string, highlightId: string | null, wordIndices: number[], meaning: string) => string
+  saveHighlight: (flashcardId: string, highlightId: string | null, wordIndices: number[], meaning: string, example?: string) => string
   removeHighlight: (flashcardId: string, highlightId: string) => void
 }
 
@@ -81,7 +82,7 @@ export const useFlashcardStore = create<FlashcardState>()(
       setActiveTags: (tags) => set({ activeTags: tags }),
       updateSettings: (newSettings) => set((state) => ({ settings: { ...state.settings, ...newSettings } })),
       resetSettings: () => set((state) => ({ settings: { ...defaultSettings, isDarkMode: state.settings.isDarkMode } })),
-      addFlashcard: (sentence, tags) =>
+      addFlashcard: (sentence, tags, highlights) =>
         set((state) => {
           const parsedTags = parseTagsInput(tags)
           return {
@@ -90,7 +91,7 @@ export const useFlashcardStore = create<FlashcardState>()(
               {
                 id: uuidv4(),
                 sentence: sentence.trim(),
-                highlights: [],
+                highlights: highlights ? highlights.map(h => ({ ...h, id: uuidv4() })) : [],
                 createdAt: Date.now(),
                 tags: parsedTags.length > 0 ? parsedTags : undefined,
               },
@@ -116,12 +117,11 @@ export const useFlashcardStore = create<FlashcardState>()(
             ),
           }
         }),
-      saveHighlight: (flashcardId, highlightId, wordIndices, meaning) => {
+      saveHighlight: (flashcardId, highlightId, wordIndices, meaning, example) => {
         const finalId = highlightId || uuidv4()
         set((state) => ({
           flashcards: state.flashcards.map((f) => {
             if (f.id === flashcardId) {
-              // Nếu mảng từ rỗng HOẶC nghĩa bị bỏ trống hoàn toàn -> Xóa hẳn note khỏi database
               if (wordIndices.length === 0 || meaning.trim() === '') {
                 return {
                   ...f,
@@ -141,12 +141,12 @@ export const useFlashcardStore = create<FlashcardState>()(
               if (highlightId) {
                 const existingIndex = newHighlights.findIndex(h => h.id === finalId)
                 if (existingIndex >= 0) {
-                  newHighlights[existingIndex] = { id: finalId, wordIndices, meaning: meaning.trim() }
+                  newHighlights[existingIndex] = { id: finalId, wordIndices, meaning: meaning.trim(), example: example?.trim() }
                 } else {
-                  newHighlights.push({ id: finalId, wordIndices, meaning: meaning.trim() })
+                  newHighlights.push({ id: finalId, wordIndices, meaning: meaning.trim(), example: example?.trim() })
                 }
               } else {
-                newHighlights.push({ id: finalId, wordIndices, meaning: meaning.trim() })
+                newHighlights.push({ id: finalId, wordIndices, meaning: meaning.trim(), example: example?.trim() })
               }
 
               return { ...f, highlights: newHighlights }

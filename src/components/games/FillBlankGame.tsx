@@ -16,9 +16,10 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
         questions.push({
           id: h.id,
           word: extractWordText(card.sentence, h.wordIndices),
-          sentence: card.sentence,
+          sentence: h.example ? h.example : card.sentence,
           meaning: h.meaning,
-          wordIndices: h.wordIndices
+          wordIndices: h.wordIndices,
+          isExample: !!h.example
         })
       })
     })
@@ -135,6 +136,33 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
         <p className="text-lg text-gray-800 dark:text-gray-200 mb-8 leading-relaxed whitespace-pre-wrap px-4">
           {(() => {
             if (showFullSentence) return currentQ.sentence
+            if (currentQ.isExample) {
+              const regex = new RegExp(`\\b${currentQ.word}\\b`, 'gi')
+              const parts = currentQ.sentence.split(regex)
+              if (parts.length === 1) {
+                const parts2 = currentQ.sentence.split(new RegExp(currentQ.word, 'gi'))
+                return (
+                  <>
+                    {parts2.map((part: string, i: number) => (
+                      <span key={i}>
+                        {part}
+                        {i < parts2.length - 1 && <span className="text-purple-400 dark:text-purple-500 font-bold opacity-70">{'___'}</span>}
+                      </span>
+                    ))}
+                  </>
+                )
+              }
+              return (
+                <>
+                  {parts.map((part: string, i: number) => (
+                    <span key={i}>
+                      {part}
+                      {i < parts.length - 1 && <span className="text-purple-400 dark:text-purple-500 font-bold opacity-70">{'___'}</span>}
+                    </span>
+                  ))}
+                </>
+              )
+            }
             const { words, spaces, initialSpace } = extractWordsAndSpaces(currentQ.sentence)
             return (
               <>

@@ -16,8 +16,9 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
         questions.push({
           id: h.id,
           word: extractWordText(card.sentence, h.wordIndices),
-          sentence: card.sentence,
-          meaning: h.meaning
+          sentence: h.example ? h.example : card.sentence,
+          meaning: h.meaning,
+          isExample: !!h.example
         })
       })
     })

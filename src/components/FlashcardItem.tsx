@@ -539,6 +539,23 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
         </div>
       )}
 
+      {flashcard.highlights.some(h => h.example) && (
+        <div className="mt-4 space-y-3">
+          {flashcard.highlights.map(h => (
+            <div key={h.id} className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
+              <div className="font-medium text-purple-700 dark:text-purple-400 text-sm mb-1">{h.meaning}</div>
+              {h.example && (
+                <div className="text-sm text-gray-600 dark:text-gray-300 italic flex items-start gap-2">
+                  <span className="text-gray-400 font-serif select-none">"</span>
+                  {h.example}
+                  <span className="text-gray-400 font-serif select-none">"</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="mt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-700 pt-3">
         <span className="text-xs text-gray-400 font-medium">
           {new Date(flashcard.createdAt).toLocaleDateString('en-US')}
