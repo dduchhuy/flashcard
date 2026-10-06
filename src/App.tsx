@@ -10,10 +10,45 @@ import { loginWithGoogle, logout } from './firebase'
 
 type Tab = 'home' | 'all' | 'game' | 'settings'
 
+const TAB_TO_PATH: Record<Tab, string> = {
+  home: 'add',
+  all: 'library',
+  game: 'practice',
+  settings: 'settings'
+}
+
+const PATH_TO_TAB: Record<string, Tab> = {
+  add: 'home',
+  library: 'all',
+  practice: 'game',
+  settings: 'settings'
+}
+
 function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('home')
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    // Check initial URL hash or path
+    let path = window.location.hash.replace('#/', '')
+    if (!path) path = window.location.pathname.split('/').pop() || ''
+    return PATH_TO_TAB[path] || 'home'
+  })
+
   const { settings } = useFlashcardStore()
   const { user, isLoading } = useFirebaseSync()
+
+  // Sync URL when tab changes
+  const changeTab = (tab: Tab) => {
+    setActiveTab(tab)
+    window.history.pushState(null, '', `#/${TAB_TO_PATH[tab]}`)
+  }
+
+  useEffect(() => {
+    const handlePopState = () => {
+      let path = window.location.hash.replace('#/', '')
+      if (PATH_TO_TAB[path]) setActiveTab(PATH_TO_TAB[path])
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
 
   useEffect(() => {
     if (settings.isDarkMode) {
@@ -67,7 +102,7 @@ function App() {
       <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 pb-safe z-40 transition-colors">
         <div className="max-w-3xl mx-auto flex justify-around">
           <button
-            onClick={() => setActiveTab('home')}
+            onClick={() => changeTab('home')}
             className={`flex-1 flex flex-col items-center py-3 gap-1 transition-colors ${
               activeTab === 'home' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
@@ -77,7 +112,7 @@ function App() {
           </button>
           
           <button
-            onClick={() => setActiveTab('all')}
+            onClick={() => changeTab('all')}
             className={`flex-1 flex flex-col items-center py-3 gap-1 transition-colors ${
               activeTab === 'all' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
@@ -87,7 +122,7 @@ function App() {
           </button>
 
           <button
-            onClick={() => setActiveTab('game')}
+            onClick={() => changeTab('game')}
             className={`flex-1 flex flex-col items-center py-3 gap-1 transition-colors ${
               activeTab === 'game' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
@@ -97,7 +132,7 @@ function App() {
           </button>
 
           <button
-            onClick={() => setActiveTab('settings')}
+            onClick={() => changeTab('settings')}
             className={`flex-1 flex flex-col items-center py-3 gap-1 transition-colors ${
               activeTab === 'settings' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}

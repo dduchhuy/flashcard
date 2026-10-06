@@ -436,12 +436,13 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
         ) : (
           <div 
             className={`leading-relaxed touch-none select-none whitespace-pre-wrap ${
-              viewMode === 'grid' ? 'text-lg cursor-default' : 'text-xl cursor-pointer'
+              viewMode === 'grid' ? 'text-lg cursor-pointer' : 'text-xl cursor-text'
             } dark:text-gray-200`}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerUp}
+            onPointerDown={viewMode === 'grid' ? undefined : handlePointerDown}
+            onPointerMove={viewMode === 'grid' ? undefined : handlePointerMove}
+            onPointerUp={viewMode === 'grid' ? undefined : handlePointerUp}
+            onPointerCancel={viewMode === 'grid' ? undefined : handlePointerUp}
+            onClick={viewMode === 'grid' ? () => speakEnglish(flashcard.sentence) : undefined}
           >
             {initialSpace}
             {segments.map((seg, sIdx) => {

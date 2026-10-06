@@ -30,45 +30,9 @@ export function TabSettings() {
     return list.sort()
   }, [flashcards])
 
-  const handleExport = async () => {
-    let cardsToExport = flashcards
-    if (exportTag !== 'all') {
-      cardsToExport = flashcards.filter(f => {
-        const t = getCardTags(f)
-        if (exportTag === 'notag') return t.length === 0 || t.includes('notag')
-        return t.includes(exportTag)
-      })
-    }
-
-    if (cardsToExport.length === 0) {
-      alert('Không có thẻ nào để export (No cards to export).')
-      return
-    }
-
-    const exportDataObj = {
-      state: { flashcards: cardsToExport },
-      version: 0
-    }
-    const exportData = JSON.stringify(exportDataObj, null, 2)
+  const downloadJSON = (dataObj: any, filename: string) => {
+    const exportData = JSON.stringify(dataObj, null, 2)
     const blob = new Blob([exportData], { type: 'application/json;charset=utf-8' })
-    const filename = `flashcards_${exportTag}_${new Date().toISOString().split('T')[0]}.json`
-
-    if ('showSaveFilePicker' in window) {
-      try {
-        const handle = await (window as any).showSaveFilePicker({
-          suggestedName: filename,
-          types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }],
-        })
-        const writable = await handle.createWritable()
-        await writable.write(blob)
-        await writable.close()
-        return
-      } catch (err: any) {
-        if (err.name !== 'AbortError') console.error(err)
-        return
-      }
-    }
-
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.style.display = 'none'
@@ -78,6 +42,54 @@ export function TabSettings() {
     a.click()
     document.body.removeChild(a)
     setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+
+  const handleExport = async () => {
+    if (flashcards.length === 0) {
+      alert('Không có thẻ nào để export (No cards to export).')
+      return
+    }
+
+    const dateStr = new Date().toISOString().split('T')[0]
+
+    if (exportTag === 'all') {
+      const tagGroups: Record<string, typeof flashcards> = {}
+      flashcards.forEach(f => {
+        const tags = getCardTags(f)
+        if (tags.length === 0) {
+          if (!tagGroups['notag']) tagGroups['notag'] = []
+          tagGroups['notag'].push(f)
+        } else {
+          tags.forEach(t => {
+            if (!tagGroups[t]) tagGroups[t] = []
+            tagGroups[t].push(f)
+          })
+        }
+      })
+      
+      const confirm = window.confirm(`Bạn đang chọn export TẤT CẢ. Hệ thống sẽ tự động tải xuống ${Object.keys(tagGroups).length} file riêng biệt cho từng tag. Bạn có chắc chắn không?`)
+      if (!confirm) return
+      
+      Object.entries(tagGroups).forEach(([tag, cards], index) => {
+        setTimeout(() => {
+          downloadJSON({ state: { flashcards: cards }, version: 0 }, `${tag}_${dateStr}.json`)
+        }, index * 500)
+      })
+      return
+    }
+
+    let cardsToExport = flashcards.filter(f => {
+      const t = getCardTags(f)
+      if (exportTag === 'notag') return t.length === 0 || t.includes('notag')
+      return t.includes(exportTag)
+    })
+
+    if (cardsToExport.length === 0) {
+      alert('Không có thẻ nào để export (No cards to export).')
+      return
+    }
+
+    downloadJSON({ state: { flashcards: cardsToExport }, version: 0 }, `${exportTag}_${dateStr}.json`)
   }
 
   const handleDelete = () => {
@@ -177,7 +189,35 @@ export function TabSettings() {
         }
 
         const existingMap = new Map(currentFlashcards.map(f => [f.id, f]))
-        allImportedCards.forEach(c => existingMap.set(c.id, c))
+        
+        allImportedCards.forEach(newCard => {
+          const existingCard = Array.from(existingMap.values()).find(
+            c => c.sentence.toLowerCase().trim() === newCard.sentence.toLowerCase().trim()
+          )
+          
+          if (existingCard) {
+            // Merge tags
+            const existingTags = getCardTags(existingCard)
+            const newCardTags = getCardTags(newCard)
+            const mergedTags = Array.from(new Set([...existingTags, ...newCardTags]))
+            
+            // Merge highlights
+            const mergedHighlights = [...existingCard.highlights]
+            newCard.highlights.forEach(nh => {
+              if (!mergedHighlights.some(eh => eh.wordIndices.join(',') === nh.wordIndices.join(','))) {
+                mergedHighlights.push(nh)
+              }
+            })
+            
+            existingMap.set(existingCard.id, {
+              ...existingCard,
+              tags: mergedTags,
+              highlights: mergedHighlights
+            })
+          } else {
+            existingMap.set(newCard.id, newCard)
+          }
+        })
         return { flashcards: Array.from(existingMap.values()) }
       })
       setImportedTags(Array.from(newTags))

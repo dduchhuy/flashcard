@@ -226,7 +226,7 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
 
           return (
             <button
-              key={i}
+              key={`${currentIndex}-${i}`}
               onClick={() => handleSelect(opt)}
               disabled={selectedOption !== null}
               className={`w-full min-h-[4rem] p-4 rounded-xl border-2 text-center font-medium transition-all duration-300 ${baseBtnClass} ${hoverBtnClass} flex items-center justify-center`}

@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useFlashcardStore, getCardTags } from '../store'
 import { FlashcardItem } from './FlashcardItem'
-import { Plus, Sparkles, Tag, X, Check, BookOpen, Command } from 'lucide-react'
+import { Plus, Sparkles, Tag, X, Check, BookOpen, Command, Lock, Unlock } from 'lucide-react'
 
 export function TabHome() {
   const { flashcards, addFlashcard } = useFlashcardStore()
@@ -9,6 +9,7 @@ export function TabHome() {
   const [tagInput, setTagInput] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [showSuccess, setShowSuccess] = useState(false)
+  const [isTagsLocked, setIsTagsLocked] = useState(false)
   
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -50,8 +51,10 @@ export function TabHome() {
     if (newSentence.trim()) {
       addFlashcard(newSentence, finalTags)
       setNewSentence('')
-      setTagInput('')
-      setSelectedTags([])
+      if (!isTagsLocked) {
+        setTagInput('')
+        setSelectedTags([])
+      }
       
       setShowSuccess(true)
       setTimeout(() => setShowSuccess(false), 2500)
@@ -123,8 +126,18 @@ export function TabHome() {
             <div className="flex items-center justify-between text-xs font-semibold text-gray-600 dark:text-gray-400">
               <span className="flex items-center gap-1.5">
                 <Tag size={14} className="text-purple-500" /> Tags
+                <button
+                  type="button"
+                  onClick={() => setIsTagsLocked(!isTagsLocked)}
+                  className={`ml-1 p-1 rounded-md transition-colors ${
+                    isTagsLocked ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400' : 'text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                  title={isTagsLocked ? "Tags locked" : "Lock tags"}
+                >
+                  {isTagsLocked ? <Lock size={12} /> : <Unlock size={12} />}
+                </button>
               </span>
-              {selectedTags.length > 0 && (
+              {selectedTags.length > 0 && !isTagsLocked && (
                 <button
                   type="button"
                   onClick={() => setSelectedTags([])}

@@ -65,13 +65,13 @@ export function LetterInput({
         {chars.map(c => c.kind === 'space'
           ? <span key={c.i} className="w-3" />
           : (
-            <span
+              <span
               key={c.i}
               className={`
-                px-[2px]
+                mx-[2px]
                 ${c.kind === 'hint' ? (accent === 'purple' ? 'text-purple-500 dark:text-purple-400' : 'text-blue-500 dark:text-blue-400') : ''}
-                ${c.kind === 'empty' ? 'text-transparent border-b-[3px] ' + (accent === 'purple' ? 'border-purple-300 dark:border-purple-600' : 'border-gray-400 dark:border-gray-500') : ''}
-                ${c.kind === 'empty' && c.next && status === 'playing' ? 'animate-pulse' : ''}
+                ${c.kind === 'empty' ? 'text-gray-400 dark:text-gray-500' : ''}
+                ${c.kind === 'empty' && c.next && status === 'playing' ? 'animate-pulse font-bold' : ''}
               `}
             >{c.kind === 'empty' ? '_' : c.ch}</span>
           )

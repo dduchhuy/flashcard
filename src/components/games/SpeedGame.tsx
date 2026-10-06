@@ -162,7 +162,7 @@ export function SpeedGame({ onExit }: { onExit: () => void }) {
             else cls = 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-400 dark:text-gray-600 opacity-50'
           }
           return (
-            <button key={i} onClick={() => choose(opt)} disabled={selected !== null} className={`h-24 p-4 rounded-xl border-2 text-center font-medium transition-colors flex items-center justify-center ${cls}`}>
+            <button key={`${note!.card.id}-${i}`} onClick={() => choose(opt)} disabled={selected !== null} className={`h-24 p-4 rounded-xl border-2 text-center font-medium transition-colors flex items-center justify-center ${cls}`}>
               <span className="line-clamp-2 whitespace-pre-wrap break-all">{opt}</span>
             </button>
           )

@@ -112,21 +112,32 @@ export function speakEnglish(text: string) {
   let selectedVoice = null
   if (matchingVoices.length > 0) {
     const isMale = targetGender === 'Male'
-    for (const v of matchingVoices) {
+    
+    // Priority lists for high-quality, natural-sounding voices
+    const maleNames = ['guy', 'christopher', 'eric', 'ryan', 'george', 'daniel', 'alex', 'david', 'arthur', 'william', 'male']
+    const femaleNames = ['aria', 'jenny', 'ana', 'sonia', 'libby', 'mia', 'samantha', 'serena', 'victoria', 'karen', 'tessa', 'female', 'google us english', 'google uk english female']
+    
+    // Sort matching voices to prioritize "Online" or "Natural" or "Google" voices
+    const sortedVoices = [...matchingVoices].sort((a, b) => {
+      const scoreA = (a.name.includes('Online') || a.name.includes('Natural') || a.name.includes('Google')) ? 1 : 0
+      const scoreB = (b.name.includes('Online') || b.name.includes('Natural') || b.name.includes('Google')) ? 1 : 0
+      return scoreB - scoreA
+    })
+
+    const targetNames = isMale ? maleNames : femaleNames
+    
+    for (const v of sortedVoices) {
       const name = v.name.toLowerCase()
-      if (isMale) {
-        if ((name.includes('male') && !name.includes('female')) || name.includes('daniel') || name.includes('alex') || name.includes('fred') || name.includes('oliver') || name.includes('arthur')) { 
-          selectedVoice = v; 
-          break; 
-        }
-      } else {
-        if (name.includes('female') || name.includes('samantha') || name.includes('serena') || name.includes('victoria') || name.includes('karen') || name.includes('moira') || name.includes('tessa') || name.includes('google us english')) { 
-          selectedVoice = v; 
-          break; 
-        }
+      // Skip if it explicitly contains the opposite gender keyword
+      if (isMale && name.includes('female')) continue
+      if (!isMale && name.includes('male') && !name.includes('female')) continue
+      
+      if (targetNames.some(n => name.includes(n))) {
+        selectedVoice = v
+        break
       }
     }
-    if (!selectedVoice) selectedVoice = matchingVoices[0]
+    if (!selectedVoice) selectedVoice = sortedVoices[0]
   }
 
   if (selectedVoice) {
