@@ -76,7 +76,15 @@ function buildQueue(
     })
   }
 
-  return isRandom ? shuffleArr(items) : items
+  if (isRandom) return shuffleArr(items)
+
+  // Sort by interval ascending: new (no srs) → again (small interval) → hard → good → easy
+  items.sort((a, b) => {
+    const ia = a.type === 'meaning' ? (a.highlight.srs?.interval ?? 0) : (a.card.srs?.interval ?? 0)
+    const ib = b.type === 'meaning' ? (b.highlight.srs?.interval ?? 0) : (b.card.srs?.interval ?? 0)
+    return ia - ib
+  })
+  return items
 }
 
 // ── Settings panel ────────────────────────────────────────────────
@@ -257,34 +265,28 @@ export function TabLearn() {
     
     const captured = current
     
-    setQueue(prev => {
-      const rest = prev.slice(1)
-      if (rating === 'again') {
-        // Re-insert after ~7 cards (like Anki), not at the very end
-        const insertAt = Math.min(7, rest.length)
-        return [...rest.slice(0, insertAt), prev[0], ...rest.slice(insertAt)]
-      }
-      return rest
-    })
+    // Remove current card from queue
+    setQueue(prev => prev.slice(1))
 
-    if (rating !== 'again') {
-      setCompletedCount(c => c + 1)
-      // Schedule re-insertion after the interval (hard=6m, good=10m, easy=3d)
-      const delayMs = rating === 'hard' ? settings.hardMs
-                    : rating === 'good' ? settings.goodMs
-                    : settings.easyMs
-      // Only reschedule within same session (cap at 24h to avoid crazy timeouts)
-      if (delayMs <= 24 * 60 * 60 * 1000) {
-        const timerId = setTimeout(() => {
-          setQueue(prev => [...prev, captured])
-          setCompletedCount(c => Math.max(0, c - 1))
-          pendingTimers.current.delete(captured.card.id)
-        }, delayMs)
-        // Cancel any existing timer for this card
-        const existing = pendingTimers.current.get(captured.card.id)
-        if (existing) clearTimeout(existing)
-        pendingTimers.current.set(captured.card.id, timerId)
-      }
+    // Schedule re-insertion after the interval for ALL ratings
+    const delayMs = rating === 'again' ? settings.againMs
+                  : rating === 'hard'  ? settings.hardMs
+                  : rating === 'good'  ? settings.goodMs
+                  : settings.easyMs
+
+    setCompletedCount(c => c + 1)
+
+    // Only reschedule within same session (cap at 24h)
+    if (delayMs <= 24 * 60 * 60 * 1000) {
+      const timerId = setTimeout(() => {
+        setQueue(prev => [...prev, captured])
+        setCompletedCount(c => Math.max(0, c - 1))
+        pendingTimers.current.delete(captured.card.id)
+      }, delayMs)
+      // Cancel any existing timer for this card
+      const existing = pendingTimers.current.get(captured.card.id)
+      if (existing) clearTimeout(existing)
+      pendingTimers.current.set(captured.card.id, timerId)
     }
   }, [current, settings, updateHighlightSRS, updateFlashcardSRS])
 
