@@ -480,7 +480,7 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
                   inlineStyle = { backgroundColor: bgColor, color: settings.highlightTextColor || (settings.isDarkMode ? '#f3f4f6' : '#374151') }
                 }
               } else {
-                segmentClass += isWordCard ? "font-bold text-2xl text-purple-800 dark:text-purple-300 cursor-pointer" : "hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                segmentClass += "hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
               }
 
               return (
@@ -550,7 +550,7 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
         <div className="mt-4 space-y-3">
           {flashcard.highlights.slice(0, 2).map(h => (
             <div key={h.id} className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
-              <div className="font-medium text-purple-700 dark:text-purple-400 text-sm mb-1">{h.meaning}</div>
+              <div className="font-medium text-gray-800 dark:text-gray-200 text-sm mb-1">{h.meaning}</div>
               {h.example && (
                 <div className="text-sm text-gray-600 dark:text-gray-300 italic flex items-start gap-2">
                   {h.example}
@@ -602,7 +602,7 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
               <div className="space-y-4">
                 {flashcard.highlights.map(h => (
                   <div key={h.id} className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
-                    <div className="font-medium text-purple-700 dark:text-purple-400 text-base mb-1">{h.meaning}</div>
+                    <div className="font-medium text-gray-800 dark:text-gray-200 text-base mb-1">{h.meaning}</div>
                     {h.example && (
                       <div className="text-sm text-gray-600 dark:text-gray-300 italic flex items-start gap-2">
                         {h.example}
