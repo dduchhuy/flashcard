@@ -426,6 +426,9 @@ export function TabSettings() {
             multiple
             className="hidden" 
           />
+        </div>
+
+        {importedTags.length > 0 && (
           <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-lg animate-in fade-in slide-in-from-top-2">
             <div className="flex items-start gap-3">
               <CheckCircle2 className="text-green-500 mt-0.5" size={20} />
