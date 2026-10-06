@@ -211,8 +211,7 @@ export function TabHome() {
           <div className="pt-2 flex justify-end">
             <button
               type="submit"
-              disabled={!newSentence.trim()}
-              className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white px-7 py-3 rounded-xl font-medium shadow-sm hover:shadow transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white px-7 py-3 rounded-xl font-medium shadow-sm hover:shadow transition-all flex items-center justify-center gap-2"
             >
               <Plus size={20} />
               <span>Add Flashcard</span>

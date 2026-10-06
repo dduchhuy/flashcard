@@ -104,7 +104,7 @@ function App() {
           <button
             onClick={() => changeTab('home')}
             className={`flex-1 flex flex-col items-center py-3 gap-1 transition-colors ${
-              activeTab === 'home' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              activeTab === 'home' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
             }`}
           >
             <PlusCircle size={24} strokeWidth={activeTab === 'home' ? 2.5 : 2} />
@@ -114,7 +114,7 @@ function App() {
           <button
             onClick={() => changeTab('all')}
             className={`flex-1 flex flex-col items-center py-3 gap-1 transition-colors ${
-              activeTab === 'all' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              activeTab === 'all' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
             }`}
           >
             <Library size={24} strokeWidth={activeTab === 'all' ? 2.5 : 2} />
@@ -124,7 +124,7 @@ function App() {
           <button
             onClick={() => changeTab('game')}
             className={`flex-1 flex flex-col items-center py-3 gap-1 transition-colors ${
-              activeTab === 'game' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              activeTab === 'game' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
             }`}
           >
             <Gamepad2 size={24} strokeWidth={activeTab === 'game' ? 2.5 : 2} />
@@ -134,7 +134,7 @@ function App() {
           <button
             onClick={() => changeTab('settings')}
             className={`flex-1 flex flex-col items-center py-3 gap-1 transition-colors ${
-              activeTab === 'settings' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              activeTab === 'settings' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
             }`}
           >
             <SettingsIcon size={24} strokeWidth={activeTab === 'settings' ? 2.5 : 2} />

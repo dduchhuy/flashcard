@@ -203,11 +203,13 @@ export function TabSettings() {
             
             // Merge highlights
             const mergedHighlights = [...existingCard.highlights]
-            newCard.highlights.forEach(nh => {
-              if (!mergedHighlights.some(eh => eh.wordIndices.join(',') === nh.wordIndices.join(','))) {
-                mergedHighlights.push(nh)
-              }
-            })
+            if (newCard.highlights && Array.isArray(newCard.highlights)) {
+              newCard.highlights.forEach((nh: any) => {
+                if (!mergedHighlights.some(eh => eh.wordIndices.join(',') === nh.wordIndices.join(','))) {
+                  mergedHighlights.push(nh)
+                }
+              })
+            }
             
             existingMap.set(existingCard.id, {
               ...existingCard,
