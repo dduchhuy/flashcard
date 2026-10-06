@@ -166,8 +166,6 @@ export function speakEnglish(text: string) {
 
   if (selectedVoice) {
     u.voice = selectedVoice
-  } else {
-    u.lang = langPrefix
   }
 
   u.rate = 0.9
