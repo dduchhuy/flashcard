@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import { useFlashcardStore, getCardTags } from '../store'
 import { FlashcardItem } from './FlashcardItem'
 import { SelectDropdown } from './SelectDropdown'
-import { LayoutGrid, List, Lightbulb, LightbulbOff, Tag as TagIcon, ChevronDown, Check, Lock, Unlock } from 'lucide-react'
+import { LayoutGrid, List, Lightbulb, LightbulbOff, Tag as TagIcon, ChevronDown, Check, Lock, Unlock, Type } from 'lucide-react'
 
 type SortOption = 'date_desc' | 'date_asc' | 'a_z' | 'tag'
 
@@ -14,6 +14,8 @@ export function TabAllCards() {
   const [isLocked, setIsLocked] = useState(false)
   
   const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchMode, setSearchMode] = useState<'all' | 'exact'>('all')
   const [isTagFilterOpen, setIsTagFilterOpen] = useState(false)
   const filterRef = useRef<HTMLDivElement>(null)
 
@@ -32,12 +34,25 @@ export function TabAllCards() {
   }, [flashcards])
 
   const filteredCards = useMemo(() => {
-    if (selectedTags.length === 0) return flashcards
-    return flashcards.filter(c => {
-      const tags = getCardTags(c)
-      return selectedTags.some(t => tags.includes(t))
-    })
-  }, [flashcards, selectedTags])
+    let result = flashcards
+    if (selectedTags.length > 0) {
+      result = result.filter(c => {
+        const tags = getCardTags(c)
+        return selectedTags.some(t => tags.includes(t))
+      })
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter(c => {
+        if (c.sentence.toLowerCase().includes(q)) return true
+        if (searchMode === 'all') {
+          if (c.highlights.some(h => h.meaning.toLowerCase().includes(q) || h.example?.toLowerCase().includes(q))) return true
+        }
+        return false
+      })
+    }
+    return result
+  }, [flashcards, selectedTags, searchQuery, searchMode])
 
   const sortedCards = [...filteredCards].sort((a, b) => {
     if (sortBy === 'date_desc') return b.createdAt - a.createdAt
@@ -54,6 +69,29 @@ export function TabAllCards() {
 
   return (
     <div className="space-y-4 animate-in fade-in">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-3 transition-colors">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setSearchMode(m => m === 'all' ? 'exact' : 'all')}
+            title={searchMode === 'all' ? "Search everywhere" : "Search word only"}
+            className={`flex-shrink-0 w-10 flex items-center justify-center rounded-lg transition-colors ${
+              searchMode === 'exact' 
+                ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800'
+                : 'bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }`}
+          >
+            <Type size={18} />
+          </button>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={searchMode === 'all' ? "Search flashcards, meanings, or examples..." : "Search exactly by word..."}
+            className="flex-1 min-w-0 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
+          />
+        </div>
+      </div>
+      
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-3 flex flex-wrap items-center gap-2 transition-colors">
         
         {/* Sort Dropdown */}

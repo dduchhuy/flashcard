@@ -27,7 +27,14 @@ export function SpeedGame({ onExit }: { onExit: () => void }) {
   const options = useMemo(() => {
     if (!note) return []
     const target = mode === 'word' ? note.meaning : note.word
-    const pool = Array.from(new Set(notes.map(n => mode === 'word' ? n.meaning : n.word))).filter(m => m !== target)
+    let pool: string[] = []
+    if (mode === 'word') {
+      const validNotes = notes.filter(n => n.word.toLowerCase() !== note.word.toLowerCase() && n.meaning.toLowerCase() !== note.meaning.toLowerCase())
+      pool = Array.from(new Set(validNotes.map(n => n.meaning)))
+    } else {
+      const validNotes = notes.filter(n => n.meaning.toLowerCase() !== note.meaning.toLowerCase() && n.word.toLowerCase() !== note.word.toLowerCase())
+      pool = Array.from(new Set(validNotes.map(n => n.word)))
+    }
     return shuffle([target, ...shuffle(pool).slice(0, 3)])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qi, notes, mode])

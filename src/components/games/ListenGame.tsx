@@ -1,29 +1,36 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
-import { useFlashcardStore, getCardTags } from '../../store'
+import { useFlashcardStore, getCardTags, getCardsForMode } from '../../store'
 import { ArrowLeft, RefreshCcw, Volume2, Lightbulb } from 'lucide-react'
 import { extractWordText, fuzzyMatch, speakEnglish } from '../../utils'
 import { LetterInput, letterIndices, buildGuess } from './LetterInput'
 
 export function ListenGame({ onExit }: { onExit: () => void }) {
-  const { flashcards, activeTags } = useFlashcardStore()
+  const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
 
   const allQuestions = useMemo(() => {
     const questions: any[] = []
-    const filtered = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
+    let filtered = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
+    filtered = getCardsForMode(filtered, gameInputMode)
+    
     filtered.forEach(card => {
-      card.highlights.forEach(h => {
-        questions.push({
-          id: h.id,
-          word: extractWordText(card.sentence, h.wordIndices),
-          sentence: h.example ? h.example : card.sentence,
-          meaning: h.meaning,
-          isExample: !!h.example
-        })
+      if (card.highlights.length === 0) return
+      let selectedHighlight = card.highlights[0]
+      if (card.highlights.length > 1) {
+        const randIndex = Math.floor(Math.abs(Math.sin(card.id.length + seed)) * card.highlights.length)
+        selectedHighlight = card.highlights[randIndex]
+      }
+      const h = selectedHighlight
+      questions.push({
+        id: h.id,
+        word: extractWordText(card.sentence, h.wordIndices),
+        sentence: h.example ? h.example : card.sentence,
+        meaning: h.meaning,
+        isExample: !!h.example
       })
     })
     return questions.sort(() => Math.random() - 0.5)
-  }, [flashcards, seed, activeTags])
+  }, [flashcards, seed, activeTags, gameInputMode])
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [inputValue, setInputValue] = useState('')
@@ -47,6 +54,12 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
     setHinted([])
     setHideMeaning(true)
   }, [currentIndex])
+
+  useEffect(() => {
+    if (useFlashcardStore.getState().gameInputMode === 'word') {
+      setReadMode('word')
+    }
+  }, [])
 
   const currentQ = allQuestions[currentIndex]
 
@@ -145,12 +158,14 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
             >
               Word
             </button>
-            <button 
-              onClick={() => setReadMode('sentence')}
-              className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${readMode === 'sentence' ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
-            >
-              Sentence
-            </button>
+            {useFlashcardStore.getState().gameInputMode !== 'word' && (
+              <button 
+                onClick={() => setReadMode('sentence')}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${readMode === 'sentence' ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+              >
+                Sentence
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -5,7 +5,7 @@ import { speakEnglish } from '../../utils'
 
 export function TrueFalseGame({ onExit }: { onExit: () => void }) {
   const [seed, setSeed] = useState(0)
-  const notes = useNotes(seed)
+  const notes = useNotes(seed, true)
   const [index, setIndex] = useState(0)
   const [score, setScore] = useState(0)
   const [answer, setAnswer] = useState<null | { right: boolean }>(null)

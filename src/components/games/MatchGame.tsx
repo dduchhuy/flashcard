@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useFlashcardStore } from '../../store'
+import { useFlashcardStore, getCardTags, getCardsForMode } from '../../store'
 import { ArrowLeft, RefreshCcw, Shuffle, Volume2, VolumeX } from 'lucide-react'
 import { extractWordText, speakEnglish } from '../../utils'
+import { EmptyState } from './shared'
 
 type MixItem = {
   uid: string
@@ -11,22 +12,31 @@ type MixItem = {
 }
 
 export function MatchGame({ onExit }: { onExit: () => void }) {
-  const { flashcards } = useFlashcardStore()
+  const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
 
   const allPairs = useMemo(() => {
     const pairs: { id: string, word: string, meaning: string }[] = []
-    flashcards.forEach(card => {
-      card.highlights.forEach(h => {
-        pairs.push({
-          id: h.id,
-          word: extractWordText(card.sentence, h.wordIndices),
-          meaning: h.meaning
-        })
+    let filtered = activeTags && activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
+    filtered = getCardsForMode(filtered, gameInputMode)
+    
+    filtered.forEach(card => {
+      if (card.highlights.length === 0) return
+      
+      let selectedHighlight = card.highlights[0]
+      if (card.highlights.length > 1) {
+        const randIndex = Math.floor(Math.abs(Math.sin(card.id.length + seed)) * card.highlights.length)
+        selectedHighlight = card.highlights[randIndex]
+      }
+      
+      pairs.push({
+        id: selectedHighlight.id,
+        word: extractWordText(card.sentence, selectedHighlight.wordIndices),
+        meaning: selectedHighlight.meaning
       })
     })
     return pairs.sort(() => Math.random() - 0.5)
-  }, [flashcards, seed])
+  }, [flashcards, seed, activeTags, gameInputMode])
 
   const [currentRound, setCurrentRound] = useState(0)
   const [autoSpeak, setAutoSpeak] = useState(true)
@@ -93,12 +103,7 @@ export function MatchGame({ onExit }: { onExit: () => void }) {
   }
 
   if (allPairs.length === 0) {
-    return (
-      <div className="text-center text-gray-500 dark:text-gray-400 py-20 animate-in fade-in">
-        <p>No notes found. Highlight words first!</p>
-        <button onClick={onExit} className="mt-4 text-purple-600 hover:underline">Go back</button>
-      </div>
-    )
+    return <EmptyState onExit={onExit} />
   }
 
   if (currentRound * 5 >= allPairs.length) {

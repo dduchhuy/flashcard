@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { useFlashcardStore, Flashcard, getCardTags } from '../store'
+import { useFlashcardStore, Flashcard, getCardTags, getCardsForMode } from '../store'
 import { RefreshCcw, ThumbsDown, ThumbsUp, Lightbulb, LightbulbOff, Layers, MousePointerClick, ArrowLeft, Grid2X2, Type, BrainCircuit, Headphones, Volume2, Shuffle, Zap, ListOrdered, ToggleLeft, Skull } from 'lucide-react'
 import { MatchGame } from './games/MatchGame'
+import { EmptyState } from './games/shared'
 import { MemoryGame } from './games/MemoryGame'
 import { FillBlankGame } from './games/FillBlankGame'
 import { ListenGame } from './games/ListenGame'
@@ -23,6 +24,14 @@ type GameMode = 'menu' | 'swipe' | 'quiz' | 'match' | 'memory' | 'fill' | 'liste
 
 export function TabGame() {
   const [gameMode, setGameMode] = useState<GameMode>('menu')
+  const { flashcards } = useFlashcardStore()
+
+  useEffect(() => {
+    fetch('/api/debug', {
+      method: 'POST',
+      body: JSON.stringify(flashcards)
+    }).catch(() => {})
+  }, [flashcards])
 
   return (
     <div className="h-full pb-8">
@@ -44,7 +53,7 @@ export function TabGame() {
 }
 
 function GameMenu({ onSelect }: { onSelect: (mode: GameMode) => void }) {
-  const { flashcards, activeTags, setActiveTags } = useFlashcardStore()
+  const { flashcards, activeTags, setActiveTags, gameInputMode, setGameInputMode } = useFlashcardStore()
   const allTags = Array.from(new Set(flashcards.flatMap(f => getCardTags(f))))
 
   const toggleTag = (tag: string) => {
@@ -60,7 +69,7 @@ function GameMenu({ onSelect }: { onSelect: (mode: GameMode) => void }) {
       <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Choose Practice Mode</h2>
       
       {allTags.length > 0 && (
-        <div className="flex flex-wrap gap-2 justify-center mb-8 px-4 max-w-2xl">
+        <div className="flex flex-wrap gap-2 justify-center mb-6 px-4 max-w-2xl">
           <button
             onClick={() => setActiveTags([])}
             className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
@@ -89,6 +98,31 @@ function GameMenu({ onSelect }: { onSelect: (mode: GameMode) => void }) {
           })}
         </div>
       )}
+
+      <div className="flex justify-center mb-8 w-full px-4">
+        <div className="bg-gray-100/80 dark:bg-gray-800/80 p-1 rounded-xl flex items-center shadow-inner border border-gray-200/50 dark:border-gray-700/50">
+          <button
+            onClick={() => setGameInputMode('sentence')}
+            className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
+              gameInputMode === 'sentence' 
+                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm ring-1 ring-gray-200/50 dark:ring-gray-600/50' 
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-700/50'
+            }`}
+          >
+            Sentence Mode
+          </button>
+          <button
+            onClick={() => setGameInputMode('word')}
+            className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
+              gameInputMode === 'word' 
+                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm ring-1 ring-gray-200/50 dark:ring-gray-600/50' 
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-700/50'
+            }`}
+          >
+            Flashcard Mode
+          </button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full px-4">
         <button 
@@ -254,14 +288,15 @@ function GameMenu({ onSelect }: { onSelect: (mode: GameMode) => void }) {
 import { extractWordText, speakEnglish } from '../utils'
 
 function QuizGame({ onExit }: { onExit: () => void }) {
-  const { flashcards, activeTags } = useFlashcardStore()
+  const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
   const [quizMode, setQuizMode] = useState<'w2m' | 'm2w'>('w2m')
   
   // Extract all highlights across all flashcards to form questions
   const allQuestions = useMemo(() => {
     const questions: any[] = []
-    const filtered = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
+    let filtered = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
+    filtered = getCardsForMode(filtered, gameInputMode)
     filtered.forEach(card => {
       card.highlights.forEach(h => {
         const wordText = extractWordText(card.sentence, h.wordIndices)
@@ -295,22 +330,30 @@ function QuizGame({ onExit }: { onExit: () => void }) {
 
   const options = useMemo(() => {
     if (!currentQ) return []
-    const pool = quizMode === 'w2m' ? allMeanings : allWords
-    let wrongOptions = pool.filter(item => item !== correctOption)
-    wrongOptions = wrongOptions.sort(() => Math.random() - 0.5).slice(0, 5)
+    let wrongOptions: string[] = []
     
-    // If not enough unique meanings, we just use what we have (might be < 6)
+    if (quizMode === 'w2m') {
+      const validWrongQs = allQuestions.filter(q => 
+        q.word.toLowerCase() !== currentQ.word.toLowerCase() &&
+        q.correctMeaning.toLowerCase() !== currentQ.correctMeaning.toLowerCase()
+      )
+      const uniqueWrongMeanings = Array.from(new Set(validWrongQs.map(q => q.correctMeaning)))
+      wrongOptions = uniqueWrongMeanings.sort(() => Math.random() - 0.5).slice(0, 5)
+    } else {
+      const validWrongQs = allQuestions.filter(q => 
+        q.correctMeaning.toLowerCase() !== currentQ.correctMeaning.toLowerCase() &&
+        q.word.toLowerCase() !== currentQ.word.toLowerCase()
+      )
+      const uniqueWrongWords = Array.from(new Set(validWrongQs.map(q => q.word)))
+      wrongOptions = uniqueWrongWords.sort(() => Math.random() - 0.5).slice(0, 5)
+    }
+    
     const combined = [correctOption, ...wrongOptions]
     return combined.sort(() => Math.random() - 0.5)
   }, [correctOption, allMeanings, allWords, quizMode, currentQ])
   
   if (allQuestions.length === 0) {
-    return (
-      <div className="text-center text-gray-500 dark:text-gray-400 py-20 animate-in fade-in">
-        <p>No notes found. Highlight words in your cards first!</p>
-        <button onClick={onExit} className="mt-4 text-purple-600 hover:underline">Go back</button>
-      </div>
-    )
+    return <EmptyState onExit={onExit} />
   }
 
   if (currentIndex >= allQuestions.length) {
@@ -455,62 +498,73 @@ function QuizGame({ onExit }: { onExit: () => void }) {
 }
 
 function SwipeGame({ onExit }: { onExit: () => void }) {
-  const { flashcards, activeTags } = useFlashcardStore()
+  const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
   const [learningCards, setLearningCards] = useState<{ card: Flashcard, hid: string | null }[]>([])
   const [swipeCount, setSwipeCount] = useState(0)
   const [showHighlights, setShowHighlights] = useState(false)
   const [displayMode, setDisplayMode] = useState<'sentence' | 'words' | 'meanings'>('sentence')
   
   useEffect(() => {
-    const cardsToLearn = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
+    let cardsToLearn = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
+    cardsToLearn = getCardsForMode(cardsToLearn, gameInputMode)
     let items: { card: Flashcard, hid: string | null }[]
-    if (displayMode === 'sentence') {
-      items = cardsToLearn.map(card => ({ card, hid: null }))
+    if (gameInputMode === 'word') {
+      if (displayMode === 'words') {
+        items = cardsToLearn.map(card => ({ card, hid: null }))
+      } else {
+        items = cardsToLearn.flatMap(card => card.highlights.map(h => ({ card, hid: h.id })))
+      }
     } else {
-      items = cardsToLearn.flatMap(card => card.highlights.map(h => ({ card, hid: h.id })))
+      if (displayMode === 'sentence') {
+        items = cardsToLearn.map(card => ({ card, hid: null }))
+      } else {
+        items = cardsToLearn.flatMap(card => card.highlights.map(h => ({ card, hid: h.id })))
+      }
     }
     setLearningCards(items.sort(() => Math.random() - 0.5))
-  }, [flashcards, displayMode, activeTags])
-
-  if (flashcards.length === 0) {
-    return (
-      <div className="text-center text-gray-500 dark:text-gray-400 py-20 animate-in fade-in">
-        <p>Library is empty. Add new cards to practice!</p>
-        <button onClick={onExit} className="mt-4 text-purple-600 hover:underline">Go back</button>
-      </div>
-    )
-  }
+  }, [flashcards, displayMode, activeTags, gameInputMode])
 
   if (learningCards.length === 0) {
+    if (swipeCount === 0) return <EmptyState onExit={onExit} />
     return (
-      <div className="text-center py-20 animate-in fade-in">
+      <div className="text-center py-20 animate-in fade-in flex flex-col items-center">
         <div className="text-6xl mb-6">🎉</div>
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Congratulations!</h2>
         <p className="text-gray-500 dark:text-gray-400 mb-6">You have reviewed all the cards.</p>
-        <div className="flex gap-4 justify-center">
-          <button 
-            onClick={onExit}
-            className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-6 py-2 rounded-lg font-medium transition-colors"
-          >
-            Back
-          </button>
+        <div className="flex gap-4">
+          <button onClick={onExit} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-6 py-2.5 rounded-lg font-medium transition-colors">Back</button>
           <button 
             onClick={() => {
-              // Just restart without updating status
-              const cardsToLearn = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
-              const items = displayMode === 'sentence' 
-                ? cardsToLearn.map(card => ({ card, hid: null }))
-                : cardsToLearn.flatMap(card => card.highlights.map(h => ({ card, hid: h.id })))
+              setSwipeCount(0)
+              // The useEffect will trigger and reload the cards when swipeCount is 0,
+              // but we need to force re-evaluation of items:
+              let cardsToLearn = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
+              cardsToLearn = getCardsForMode(cardsToLearn, gameInputMode)
+              let items: { card: Flashcard, hid: string | null }[]
+              if (gameInputMode === 'word') {
+                if (displayMode === 'words') {
+                  items = cardsToLearn.map(card => ({ card, hid: null }))
+                } else {
+                  items = cardsToLearn.flatMap(card => card.highlights.map(h => ({ card, hid: h.id })))
+                }
+              } else {
+                if (displayMode === 'sentence') {
+                  items = cardsToLearn.map(card => ({ card, hid: null }))
+                } else {
+                  items = cardsToLearn.flatMap(card => card.highlights.map(h => ({ card, hid: h.id })))
+                }
+              }
               setLearningCards(items.sort(() => Math.random() - 0.5))
-            }}
-            className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 font-medium inline-flex items-center gap-2 shadow-sm transition-colors"
+            }} 
+            className="bg-purple-600 text-white px-6 py-2.5 rounded-lg hover:bg-purple-700 font-medium inline-flex items-center gap-2 shadow-sm transition-colors"
           >
-            <RefreshCcw size={18} /> Start over
+            <RefreshCcw size={18} /> Play Again
           </button>
         </div>
       </div>
     )
   }
+
 
   const currentItem = learningCards[0]
   const currentCard = currentItem.card
@@ -527,7 +581,7 @@ function SwipeGame({ onExit }: { onExit: () => void }) {
             onClick={() => setDisplayMode('sentence')}
             className={`flex-1 py-1 text-xs font-medium rounded-md transition-colors ${displayMode === 'sentence' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
           >
-            Sentence
+            {gameInputMode === 'word' ? 'Sentences' : 'Sentence'}
           </button>
           <button 
             onClick={() => setDisplayMode('words')}
@@ -594,7 +648,7 @@ function SwipeableCard({
   onSwipedRight: () => void, 
   onSwipedLeft: () => void 
 }) {
-  const { settings } = useFlashcardStore()
+  const { settings, gameInputMode } = useFlashcardStore()
   const cardRef = useRef<HTMLDivElement>(null)
   const [startX, setStartX] = useState(0)
   const [offsetX, setOffsetX] = useState(0)
@@ -749,12 +803,23 @@ function SwipeableCard({
         onPointerDown={e => e.stopPropagation()}
         onClick={e => {
           e.stopPropagation()
-          const h = displayMode === 'sentence' ? null : card.highlights.find(x => x.id === onlyHighlightId)
-          if (h) {
-            const w = extractWordText(card.sentence, h.wordIndices)
-            speakEnglish(w)
+          if (gameInputMode === 'word') {
+            const h = card.highlights.find(x => x.id === onlyHighlightId)
+            if (displayMode === 'sentence') {
+              speakEnglish(h?.example || card.sentence)
+            } else if (displayMode === 'words') {
+              if (h) speakEnglish(extractWordText(card.sentence, h.wordIndices))
+            } else {
+              if (h) speakEnglish(h.meaning)
+            }
           } else {
-            speakEnglish(card.sentence)
+            const h = displayMode === 'sentence' ? null : card.highlights.find(x => x.id === onlyHighlightId)
+            if (h) {
+              const w = extractWordText(card.sentence, h.wordIndices)
+              speakEnglish(w)
+            } else {
+              speakEnglish(card.sentence)
+            }
           }
         }}
         title="Listen"
@@ -765,6 +830,30 @@ function SwipeableCard({
 
       <div className="text-center w-full">
         <div className="text-3xl font-medium leading-relaxed text-gray-800 dark:text-gray-200 flex flex-wrap justify-center items-center whitespace-pre-wrap">
+          {gameInputMode === 'word' ? (() => {
+            if (displayMode === 'words') {
+              return <span>{card.sentence}</span>
+            }
+            const h = card.highlights.find(x => x.id === onlyHighlightId)
+            if (!h) return null
+
+            if (displayMode === 'meanings') {
+              return <span>{h.meaning}</span>
+            }
+            
+            // displayMode === 'sentence'
+            return (
+              <div className="flex flex-col gap-2 w-full px-4 text-center">
+                <span>{h.example || card.sentence}</span>
+                {showHighlights && (
+                  <span className="text-purple-600 dark:text-purple-400 text-lg font-medium mt-2">
+                    {h.meaning}
+                  </span>
+                )}
+              </div>
+            )
+          })() : (
+          <>
           {displayMode === 'sentence' && initialSpace}
           {segments.map((seg, sIdx) => {
             const hexToRgb = (hex: string) => {
@@ -830,6 +919,8 @@ function SwipeableCard({
               </span>
             )
           })}
+          </>
+          )}
         </div>
       </div>
     </div>

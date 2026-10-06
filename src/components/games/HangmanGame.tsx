@@ -26,7 +26,7 @@ function Gallows({ misses }: { misses: number }) {
 
 export function HangmanGame({ onExit }: { onExit: () => void }) {
   const [seed, setSeed] = useState(0)
-  const allNotes = useNotes(seed)
+  const allNotes = useNotes(seed, true)
   const notes = useMemo(() => allNotes.filter(n => /[a-z]/i.test(n.word)), [allNotes])
   const [index, setIndex] = useState(0)
   const [score, setScore] = useState(0)

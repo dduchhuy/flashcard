@@ -1,18 +1,46 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { useFlashcardStore, getCardTags } from '../../store'
+import { useFlashcardStore, getCardTags, getCardsForMode } from '../../store'
 import { ArrowLeft, RefreshCcw, Lightbulb, Volume2 } from 'lucide-react'
 import { extractWordText, extractWordsAndSpaces, fuzzyMatch, speakEnglish } from '../../utils'
 import { LetterInput, letterIndices, buildGuess } from './LetterInput'
+import { EmptyState } from './shared'
 
 export function FillBlankGame({ onExit }: { onExit: () => void }) {
-  const { flashcards, activeTags } = useFlashcardStore()
+  const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
 
   const allQuestions = useMemo(() => {
     const questions: any[] = []
-    const filtered = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
+    let filtered = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
+    filtered = getCardsForMode(filtered, gameInputMode)
+    
     filtered.forEach(card => {
-      card.highlights.forEach(h => {
+      if (card.highlights.length === 0) return
+      let selectedHighlight = card.highlights[0]
+      if (card.highlights.length > 1) {
+        const randIndex = Math.floor(Math.abs(Math.sin(card.id.length + seed)) * card.highlights.length)
+        selectedHighlight = card.highlights[randIndex]
+      }
+      const h = selectedHighlight
+      
+      if (gameInputMode === 'word') {
+        const sentence = h.example ? h.example : card.sentence
+        const { words } = extractWordsAndSpaces(sentence)
+        const validWords = words.map((w, i) => ({w, i})).filter(x => /[a-zA-Z]{2,}/.test(x.w))
+        if (validWords.length > 0) {
+          // Pick random word based on seed + h.id length for stability
+          const rIdx = Math.floor(Math.abs(Math.sin(h.id.length + seed)) * validWords.length)
+          const target = validWords[rIdx]
+          questions.push({
+            id: h.id,
+            word: target.w,
+            sentence: sentence,
+            meaning: h.meaning,
+            wordIndices: [target.i],
+            isExample: false
+          })
+        }
+      } else {
         questions.push({
           id: h.id,
           word: extractWordText(card.sentence, h.wordIndices),
@@ -21,10 +49,10 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
           wordIndices: h.wordIndices,
           isExample: !!h.example
         })
-      })
+      }
     })
     return questions.sort(() => Math.random() - 0.5)
-  }, [flashcards, seed, activeTags])
+  }, [flashcards, seed, activeTags, gameInputMode])
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [inputValue, setInputValue] = useState('')
@@ -35,7 +63,6 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
   const [hideMeaning, setHideMeaning] = useState(true)
 
   const inputRef = useRef<HTMLInputElement>(null)
-
 
   useEffect(() => {
     if (status === 'playing') {
@@ -51,12 +78,7 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
   const currentQ = allQuestions[currentIndex]
 
   if (allQuestions.length === 0) {
-    return (
-      <div className="text-center text-gray-500 py-20">
-        <p>No notes found. Highlight words first!</p>
-        <button onClick={onExit} className="mt-4 text-purple-600">Go back</button>
-      </div>
-    )
+    return <EmptyState onExit={onExit} />
   }
 
   if (currentIndex >= allQuestions.length) {
