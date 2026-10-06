@@ -17,6 +17,7 @@ export function TabAllCards() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchMode, setSearchMode] = useState<'all' | 'exact'>('all')
   const [isTagFilterOpen, setIsTagFilterOpen] = useState(false)
+  const [displayCount, setDisplayCount] = useState(50)
   const filterRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -66,6 +67,12 @@ export function TabAllCards() {
     }
     return 0
   })
+
+  useEffect(() => {
+    setDisplayCount(50)
+  }, [searchQuery, searchMode, selectedTags, sortBy])
+
+  const displayedCards = sortedCards.slice(0, displayCount)
 
   return (
     <div className="space-y-4 animate-in fade-in">
@@ -220,22 +227,35 @@ export function TabAllCards() {
           No cards to display.
         </div>
       ) : (
-        <div className={
-          viewMode === 'list' 
-            ? "flex flex-col gap-4" 
-            : "columns-1 sm:columns-2 lg:columns-3 gap-4"
-        }>
-          {sortedCards.map((card) => (
-            <div key={card.id} className={`break-inside-avoid ${viewMode === 'grid' ? 'mb-4' : ''}`}>
-              <FlashcardItem 
-                flashcard={card} 
-                viewMode={viewMode} 
-                showHighlights={showHighlights} 
-                isLocked={isLocked}
-              />
+        <>
+          <div className={
+            viewMode === 'list' 
+              ? "flex flex-col gap-4" 
+              : "columns-1 sm:columns-2 lg:columns-3 gap-4"
+          }>
+            {displayedCards.map((card) => (
+              <div key={card.id} className={`break-inside-avoid ${viewMode === 'grid' ? 'mb-4' : ''}`}>
+                <FlashcardItem 
+                  flashcard={card} 
+                  viewMode={viewMode} 
+                  showHighlights={showHighlights} 
+                  isLocked={isLocked}
+                />
+              </div>
+            ))}
+          </div>
+          
+          {displayCount < sortedCards.length && (
+            <div className="flex justify-center pt-6 pb-12">
+              <button
+                onClick={() => setDisplayCount(c => c + 50)}
+                className="bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/40 dark:text-purple-300 dark:hover:bg-purple-900/60 px-6 py-2.5 rounded-full font-medium transition-colors"
+              >
+                Load More ({sortedCards.length - displayCount} left)
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   )

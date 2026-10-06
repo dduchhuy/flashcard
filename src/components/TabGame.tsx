@@ -804,13 +804,15 @@ function SwipeableCard({
         onClick={e => {
           e.stopPropagation()
           if (gameInputMode === 'word') {
-            const h = card.highlights.find(x => x.id === onlyHighlightId)
-            if (displayMode === 'sentence') {
-              speakEnglish(h?.example || card.sentence)
-            } else if (displayMode === 'words') {
-              if (h) speakEnglish(extractWordText(card.sentence, h.wordIndices))
+            if (displayMode === 'words') {
+              speakEnglish(card.sentence)
             } else {
-              if (h) speakEnglish(h.meaning)
+              const h = card.highlights.find(x => x.id === onlyHighlightId)
+              if (displayMode === 'sentence') {
+                speakEnglish(h?.example || card.sentence)
+              } else {
+                if (h) speakEnglish(h.meaning)
+              }
             }
           } else {
             const h = displayMode === 'sentence' ? null : card.highlights.find(x => x.id === onlyHighlightId)
