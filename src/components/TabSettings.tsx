@@ -1,6 +1,6 @@
 import { useRef, useState, useMemo } from 'react'
 import { useFlashcardStore, getCardTags } from '../store'
-import { Download, Upload, RotateCcw, Moon, Sun, Palette, CheckCircle2 } from 'lucide-react'
+import { Download, Upload, RotateCcw, Moon, Sun, Palette, CheckCircle2, Trash2 } from 'lucide-react'
 
 // Convert hex to rgb
 function hexToRgb(hex: string) {
@@ -352,15 +352,18 @@ export function TabSettings() {
               <div className="font-medium text-gray-800 dark:text-gray-200">Accent</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">Choose English accent preference</div>
             </div>
-            <select
-              value={settings.voiceAccent}
-              onChange={(e) => updateSettings({ voiceAccent: e.target.value as 'US' | 'UK' | 'Random' })}
-              className="p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer appearance-none text-center min-w-[120px]"
-            >
-              <option value="US">🇺🇸 US English</option>
-              <option value="UK">🇬🇧 UK English</option>
-              <option value="Random">🎲 Random</option>
-            </select>
+            <div className="relative">
+              <select
+                value={settings.voiceAccent}
+                onChange={(e) => updateSettings({ voiceAccent: e.target.value as 'US' | 'UK' | 'Random' })}
+                className="p-2 pr-8 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer appearance-none text-left min-w-[140px]"
+              >
+                <option value="US">🇺🇸 US English</option>
+                <option value="UK">🇬🇧 UK English</option>
+                <option value="Random">🎲 Random</option>
+              </select>
+              <ChevronDown size={16} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none" />
+            </div>
           </div>
 
           <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
@@ -368,15 +371,18 @@ export function TabSettings() {
               <div className="font-medium text-gray-800 dark:text-gray-200">Voice Gender</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">Choose voice gender preference</div>
             </div>
-            <select
-              value={settings.voiceGender}
-              onChange={(e) => updateSettings({ voiceGender: e.target.value as 'Male' | 'Female' | 'Random' })}
-              className="p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer appearance-none text-center min-w-[120px]"
-            >
-              <option value="Female">👩 Female</option>
-              <option value="Male">👨 Male</option>
-              <option value="Random">🎲 Random</option>
-            </select>
+            <div className="relative">
+              <select
+                value={settings.voiceGender}
+                onChange={(e) => updateSettings({ voiceGender: e.target.value as 'Male' | 'Female' | 'Random' })}
+                className="p-2 pr-8 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer appearance-none text-left min-w-[140px]"
+              >
+                <option value="Female">👩 Female</option>
+                <option value="Male">👨 Male</option>
+                <option value="Random">🎲 Random</option>
+              </select>
+              <ChevronDown size={16} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none" />
+            </div>
           </div>
         </div>
       </div>
@@ -391,16 +397,19 @@ export function TabSettings() {
         </p>
 
         <div className="flex flex-col gap-3">
-          <select
-            value={exportTag}
-            onChange={(e) => setExportTag(e.target.value)}
-            className="p-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 w-full appearance-none text-center cursor-pointer"
-          >
-            <option value="all">Export: All Tags</option>
-            {allTags.map(t => (
-              <option key={t} value={t}>Export: {t}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              value={exportTag}
+              onChange={(e) => setExportTag(e.target.value)}
+              className="p-2.5 pr-10 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 w-full appearance-none text-left cursor-pointer transition-colors"
+            >
+              <option value="all">Export: All Tags</option>
+              {allTags.map(t => (
+                <option key={t} value={t}>Export: {t}</option>
+              ))}
+            </select>
+            <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none" />
+          </div>
           
           <div className="flex gap-3">
             <button 
@@ -425,33 +434,6 @@ export function TabSettings() {
             multiple
             className="hidden" 
           />
-        </div>
-
-        {/* Delete Section */}
-        <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-700 flex flex-col gap-3">
-          <p className="text-sm font-medium text-red-600 dark:text-red-400">Remove card</p>
-          <div className="flex gap-3">
-            <select
-              value={deleteTag}
-              onChange={(e) => setDeleteTag(e.target.value)}
-              className="p-2.5 border border-red-200 dark:border-red-900/30 bg-red-50 dark:bg-red-900/10 text-red-800 dark:text-red-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 w-1/2 appearance-none text-center cursor-pointer"
-            >
-              <option value="all">All</option>
-              {allTags.map(t => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-            
-            <button 
-              onClick={handleDelete}
-              className="w-1/2 flex justify-center items-center gap-2 bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 py-2.5 rounded-lg font-medium transition-colors"
-            >
-              Remove
-            </button>
-          </div>
-        </div>
-
-        {importedTags.length > 0 && (
           <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-lg animate-in fade-in slide-in-from-top-2">
             <div className="flex items-start gap-3">
               <CheckCircle2 className="text-green-500 mt-0.5" size={20} />
@@ -464,6 +446,43 @@ export function TabSettings() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Danger Zone Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 space-y-4 transition-colors border-2 border-red-100 dark:border-red-900/30">
+        <h2 className="text-lg font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
+          <Trash2 size={20} />
+          Remove card
+        </h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Permanently delete flashcards by specific tags or wipe all data.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-center gap-3 p-4 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/30">
+          <div className="w-full sm:flex-1">
+            <label className="text-xs font-semibold text-red-800 dark:text-red-300 uppercase tracking-wider block mb-1.5 ml-1">Select tag</label>
+            <div className="relative w-full">
+              <select
+                value={deleteTag}
+                onChange={(e) => setDeleteTag(e.target.value)}
+                className="appearance-none w-full p-2.5 pr-10 border border-red-200 dark:border-red-800/50 bg-white dark:bg-gray-800 text-red-900 dark:text-red-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer shadow-sm transition-shadow"
+              >
+                <option value="all">All</option>
+                {allTags.map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+              <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 dark:text-red-400 pointer-events-none" />
+            </div>
+          </div>
+          
+          <button 
+            onClick={handleDelete}
+            className="w-full sm:w-auto sm:mt-5 flex justify-center items-center gap-2 bg-red-600 text-white hover:bg-red-700 px-6 py-2.5 rounded-lg font-medium transition-colors shadow-sm focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 whitespace-nowrap"
+          >
+            <Trash2 size={16} /> Remove
+          </button>
+        </div>
       </div>
 
     </div>
