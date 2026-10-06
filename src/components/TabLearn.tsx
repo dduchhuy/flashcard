@@ -196,28 +196,37 @@ export function TabLearn() {
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [sessionKey, setSessionKey] = useState(0)
   const [showAnswer, setShowAnswer] = useState(false)
-  const [currentIdx, setCurrentIdx] = useState(0)
-  const [meaningIdx, setMeaningIdx] = useState(0) // for word mode: which meaning is shown
+  const [meaningIdx, setMeaningIdx] = useState(0)
   const [stats, setStats] = useState({ again: 0, hard: 0, good: 0, easy: 0 })
+
+  const [queue, setQueue] = useState<QueueItem[]>([])
+  const [completedCount, setCompletedCount] = useState(0)
+  const [isQueueInit, setIsQueueInit] = useState(false)
 
   const allTags = useMemo(() =>
     Array.from(new Set(flashcards.flatMap(c => getCardTags(c)))).filter(Boolean).sort()
   , [flashcards])
 
-  const queue = useMemo(
-    () => buildQueue(flashcards, selectedTags, gameInputMode, learnMode, isRandom),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [flashcards, selectedTags, gameInputMode, learnMode, isRandom, sessionKey]
-  )
-
-  const current = queue[currentIdx]
-
-  // Reset when queue changes
+  // Initialize queue once flashcards are loaded
   useEffect(() => {
-    setCurrentIdx(0)
-    setShowAnswer(false)
-    setMeaningIdx(0)
-  }, [sessionKey, learnMode, isRandom])
+    if (!isQueueInit && flashcards.length > 0) {
+      setQueue(buildQueue(flashcards, selectedTags, gameInputMode, learnMode, isRandom))
+      setIsQueueInit(true)
+    }
+  }, [flashcards.length, isQueueInit, selectedTags, gameInputMode, learnMode, isRandom])
+
+  // Reset explicitly on toolbar actions
+  useEffect(() => {
+    if (sessionKey > 0) {
+      setQueue(buildQueue(flashcards, selectedTags, gameInputMode, learnMode, isRandom))
+      setCompletedCount(0)
+      setShowAnswer(false)
+      setMeaningIdx(0)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionKey])
+
+  const current = queue[0]
 
   const handleSettings = (s: LearnSettings) => {
     setSettings(s)
@@ -233,23 +242,31 @@ export function TabLearn() {
     } else {
       updateFlashcardSRS(current.card.id, srsData)
     }
+    
     setStats(s => ({ ...s, [rating]: s[rating] + 1 }))
     setShowAnswer(false)
     setMeaningIdx(0)
-    setCurrentIdx(i => i + 1)
+    
+    setQueue(prev => {
+      const rest = prev.slice(1)
+      if (rating === 'again') {
+        return [...rest, prev[0]] // move to back
+      }
+      return rest
+    })
+    if (rating !== 'again') {
+      setCompletedCount(c => c + 1)
+    }
   }, [current, settings, updateHighlightSRS, updateFlashcardSRS])
 
   const handleRestart = () => {
     setStats({ again: 0, hard: 0, good: 0, easy: 0 })
-    setCurrentIdx(0)
-    setShowAnswer(false)
-    setMeaningIdx(0)
     setSessionKey(k => k + 1)
   }
 
   // ── Done screen ───────────────────────────────────────────────
   const total = stats.again + stats.hard + stats.good + stats.easy
-  if (!current || currentIdx >= queue.length) {
+  if (!current) {
     return (
       <div className="max-w-xl mx-auto py-8 flex flex-col gap-4 animate-in fade-in">
         {/* Toolbar */}
@@ -363,7 +380,7 @@ export function TabLearn() {
       <div className="h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
         <div
           className="h-full bg-purple-500 rounded-full transition-all duration-500"
-          style={{ width: `${(currentIdx / queue.length) * 100}%` }}
+          style={{ width: `${(completedCount / (completedCount + queue.length)) * 100}%` }}
         />
       </div>
 
@@ -372,7 +389,7 @@ export function TabLearn() {
         {/* Badge */}
         <div className="px-6 pt-5 flex items-center justify-between">
           <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${badge.cls}`}>{badge.label}</span>
-          <span className="text-xs text-gray-400 dark:text-gray-500">{currentIdx + 1} / {queue.length}</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500">{completedCount + 1} / {completedCount + queue.length}</span>
         </div>
 
         {/* Front */}
