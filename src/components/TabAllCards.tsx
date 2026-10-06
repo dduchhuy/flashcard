@@ -4,7 +4,7 @@ import { FlashcardItem } from './FlashcardItem'
 import { SelectDropdown } from './SelectDropdown'
 import { LayoutGrid, List, Lightbulb, LightbulbOff, Tag as TagIcon, ChevronDown, Check, Lock, Unlock } from 'lucide-react'
 
-type SortOption = 'date_desc' | 'date_asc' | 'a_z'
+type SortOption = 'date_desc' | 'date_asc' | 'a_z' | 'tag'
 
 export function TabAllCards() {
   const { flashcards } = useFlashcardStore()
@@ -43,6 +43,12 @@ export function TabAllCards() {
     if (sortBy === 'date_desc') return b.createdAt - a.createdAt
     if (sortBy === 'date_asc') return a.createdAt - b.createdAt
     if (sortBy === 'a_z') return a.sentence.localeCompare(b.sentence)
+    if (sortBy === 'tag') {
+      const aTag = getCardTags(a)[0] || '\uffff'
+      const bTag = getCardTags(b)[0] || '\uffff'
+      if (aTag !== bTag) return aTag.localeCompare(bTag)
+      return a.sentence.localeCompare(b.sentence)
+    }
     return 0
   })
 
@@ -57,7 +63,8 @@ export function TabAllCards() {
           options={[
             { value: 'date_desc', label: 'Newest first' },
             { value: 'date_asc', label: 'Oldest first' },
-            { value: 'a_z', label: 'A - Z' }
+            { value: 'a_z', label: 'A - Z' },
+            { value: 'tag', label: 'Tag' }
           ]}
           className="flex-1 min-w-[130px]"
         />

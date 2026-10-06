@@ -35,7 +35,14 @@ function App() {
             {isLoading ? (
               <span className="text-sm text-gray-500">Đang tải...</span>
             ) : user ? (
-              <button onClick={logout} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors bg-gray-100 dark:bg-gray-700 px-3 py-1.5 rounded-full">
+              <button 
+                onClick={() => {
+                  if (window.confirm('Bạn có chắc chắn muốn đăng xuất không?')) {
+                    logout()
+                  }
+                }} 
+                className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition-colors bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-full shadow-sm border border-gray-200 dark:border-gray-700"
+              >
                 <img src={user.photoURL || ''} alt="avatar" className="w-6 h-6 rounded-full" />
                 <LogOut size={16} />
               </button>
