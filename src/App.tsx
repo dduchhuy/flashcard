@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react'
-import { PlusCircle, Library, Gamepad2, Settings as SettingsIcon } from 'lucide-react'
+import { PlusCircle, Library, Gamepad2, Settings as SettingsIcon, LogIn, LogOut, Cloud } from 'lucide-react'
 import { TabHome } from './components/TabHome'
 import { TabAllCards } from './components/TabAllCards'
 import { TabGame } from './components/TabGame'
 import { TabSettings } from './components/TabSettings'
 import { useFlashcardStore } from './store'
+import { useFirebaseSync } from './useFirebaseSync'
+import { loginWithGoogle, logout } from './firebase'
 
 type Tab = 'home' | 'all' | 'game' | 'settings'
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('home')
   const { settings } = useFlashcardStore()
+  const { user, isLoading } = useFirebaseSync()
 
   useEffect(() => {
     if (settings.isDarkMode) {
@@ -25,7 +28,24 @@ function App() {
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-30 transition-colors">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400">Flashcards</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400">Flashcards</h1>
+            {user && <Cloud size={20} className="text-green-500" title="Đã đồng bộ lên Cloud" />}
+          </div>
+          <div>
+            {isLoading ? (
+              <span className="text-sm text-gray-500">Đang tải...</span>
+            ) : user ? (
+              <button onClick={logout} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors bg-gray-100 dark:bg-gray-700 px-3 py-1.5 rounded-full">
+                <img src={user.photoURL || ''} alt="avatar" className="w-6 h-6 rounded-full" />
+                <LogOut size={16} />
+              </button>
+            ) : (
+              <button onClick={loginWithGoogle} className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-full transition-colors font-medium shadow-sm">
+                <LogIn size={16} /> Đăng nhập
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
