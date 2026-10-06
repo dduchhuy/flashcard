@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { useFlashcardStore, getCardTags } from '../store'
 import { FlashcardItem } from './FlashcardItem'
+import { SelectDropdown } from './SelectDropdown'
 import { LayoutGrid, List, Lightbulb, LightbulbOff, Tag as TagIcon, ChevronDown, Check, Lock, Unlock } from 'lucide-react'
 
 type SortOption = 'date_desc' | 'date_asc' | 'a_z'
@@ -51,18 +52,16 @@ export function TabAllCards() {
         <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto">
           <div className="flex items-center gap-2">
             <span className="text-gray-500 dark:text-gray-400 text-sm font-medium mr-1">Sort by:</span>
-            <div className="relative flex-1 sm:flex-none">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="appearance-none w-full p-2 pr-8 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer"
-              >
-                <option value="date_desc">Newest first</option>
-                <option value="date_asc">Oldest first</option>
-                <option value="a_z">A - Z</option>
-              </select>
-              <ChevronDown size={16} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none" />
-            </div>
+            <SelectDropdown
+              value={sortBy}
+              onChange={(v) => setSortBy(v as SortOption)}
+              options={[
+                { value: 'date_desc', label: 'Newest first' },
+                { value: 'date_asc', label: 'Oldest first' },
+                { value: 'a_z', label: 'A - Z' }
+              ]}
+              className="flex-1 sm:flex-none min-w-[140px]"
+            />
           </div>
 
           <div className="relative" ref={filterRef}>
