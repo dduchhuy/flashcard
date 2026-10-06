@@ -13,6 +13,7 @@ export function TabSettings() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [exportTag, setExportTag] = useState<string>('all')
+  const [deleteTag, setDeleteTag] = useState<string>('all')
   const [importedTags, setImportedTags] = useState<string[]>([])
 
   const allTags = useMemo(() => {
@@ -76,6 +77,36 @@ export function TabSettings() {
     a.click()
     document.body.removeChild(a)
     setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+
+  const handleDelete = () => {
+    if (flashcards.length === 0) {
+      alert('Không có thẻ nào để xóa (No cards to delete).')
+      return
+    }
+
+    if (deleteTag === 'all') {
+      const sure = window.confirm('Bạn có chắc chắn muốn xóa TOÀN BỘ flashcard không?\n(Hành động này không thể hoàn tác)')
+      if (sure) {
+        useFlashcardStore.setState({ flashcards: [] })
+        alert('Đã xóa toàn bộ flashcard.')
+      }
+    } else {
+      const sure = window.confirm(`Bạn có chắc chắn muốn xóa tất cả flashcard có tag "${deleteTag}" không?`)
+      if (sure) {
+        useFlashcardStore.setState(state => {
+          return {
+            flashcards: state.flashcards.filter(f => {
+              const t = getCardTags(f)
+              if (deleteTag === 'notag') return t.length > 0 && !t.includes('notag')
+              return !t.includes(deleteTag)
+            })
+          }
+        })
+        alert(`Đã xóa các flashcard thuộc tag "${deleteTag}".`)
+        setDeleteTag('all')
+      }
+    }
   }
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -394,6 +425,30 @@ export function TabSettings() {
             multiple
             className="hidden" 
           />
+        </div>
+
+        {/* Delete Section */}
+        <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-700 flex flex-col gap-3">
+          <p className="text-sm font-medium text-red-600 dark:text-red-400">Xóa dữ liệu (Danger Zone)</p>
+          <div className="flex gap-3">
+            <select
+              value={deleteTag}
+              onChange={(e) => setDeleteTag(e.target.value)}
+              className="p-2.5 border border-red-200 dark:border-red-900/30 bg-red-50 dark:bg-red-900/10 text-red-800 dark:text-red-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 w-1/2 appearance-none text-center cursor-pointer"
+            >
+              <option value="all">Xóa: Toàn bộ thẻ</option>
+              {allTags.map(t => (
+                <option key={t} value={t}>Xóa: {t}</option>
+              ))}
+            </select>
+            
+            <button 
+              onClick={handleDelete}
+              className="w-1/2 flex justify-center items-center gap-2 bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 py-2.5 rounded-lg font-medium transition-colors"
+            >
+              Xóa thẻ
+            </button>
+          </div>
         </div>
 
         {importedTags.length > 0 && (
