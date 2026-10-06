@@ -470,7 +470,7 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
                   const bgColor = isHovered 
                     ? `rgba(${hexToRgb(settings.hoverColor)}, ${settings.hoverOpacity})`
                     : `rgba(${hexToRgb(settings.highlightColor)}, ${settings.highlightOpacity})`
-                  inlineStyle = { backgroundColor: bgColor, color: settings.highlightTextColor || '#4b5563' }
+                  inlineStyle = { backgroundColor: bgColor, color: settings.highlightTextColor || (settings.isDarkMode ? '#f3f4f6' : '#374151') }
                 }
               } else {
                 segmentClass += "hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer" // normal

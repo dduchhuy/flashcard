@@ -313,19 +313,21 @@ export function TabSettings() {
                   />
                 </div>
               </div>
-              <div className="space-y-2.5">
-                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 font-medium">
-                  <span>Opacity</span>
-                  <span>{Math.round(settings.highlightOpacity * 100)}%</span>
+              {settings.highlightMode !== 'text' && (
+                <div className="space-y-2.5">
+                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 font-medium">
+                    <span>Opacity</span>
+                    <span>{Math.round(settings.highlightOpacity * 100)}%</span>
+                  </div>
+                  <input 
+                    type="range" min="0.05" max="1" step="0.05" 
+                    value={settings.highlightOpacity}
+                    onChange={(e) => updateSettings({ highlightOpacity: parseFloat(e.target.value) })}
+                    className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                    style={{ accentColor: settings.highlightColor }}
+                  />
                 </div>
-                <input 
-                  type="range" min="0.05" max="1" step="0.05" 
-                  value={settings.highlightOpacity}
-                  onChange={(e) => updateSettings({ highlightOpacity: parseFloat(e.target.value) })}
-                  className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                  style={{ accentColor: settings.highlightColor }}
-                />
-              </div>
+              )}
             </div>
 
             {/* Hover Color */}
@@ -342,19 +344,21 @@ export function TabSettings() {
                   />
                 </div>
               </div>
-              <div className="space-y-2.5">
-                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 font-medium">
-                  <span>Opacity</span>
-                  <span>{Math.round(settings.hoverOpacity * 100)}%</span>
+              {settings.highlightMode !== 'text' && (
+                <div className="space-y-2.5">
+                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 font-medium">
+                    <span>Opacity</span>
+                    <span>{Math.round(settings.hoverOpacity * 100)}%</span>
+                  </div>
+                  <input 
+                    type="range" min="0.05" max="1" step="0.05" 
+                    value={settings.hoverOpacity}
+                    onChange={(e) => updateSettings({ hoverOpacity: parseFloat(e.target.value) })}
+                    className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                    style={{ accentColor: settings.hoverColor }}
+                  />
                 </div>
-                <input 
-                  type="range" min="0.05" max="1" step="0.05" 
-                  value={settings.hoverOpacity}
-                  onChange={(e) => updateSettings({ hoverOpacity: parseFloat(e.target.value) })}
-                  className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                  style={{ accentColor: settings.hoverColor }}
-                />
-              </div>
+              )}
             </div>
 
             {/* Text Color - Only shown in background mode */}
@@ -363,10 +367,10 @@ export function TabSettings() {
                 <div className="flex justify-between items-center mb-5">
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Text Color</span>
                   <div className="relative w-8 h-8 rounded-full shadow-sm border-2 border-white dark:border-gray-700 overflow-hidden cursor-pointer ring-2 ring-gray-100 dark:ring-gray-800">
-                    <div className="absolute inset-0" style={{ backgroundColor: settings.highlightTextColor || '#4b5563' }} />
+                    <div className="absolute inset-0" style={{ backgroundColor: settings.highlightTextColor || (settings.isDarkMode ? '#f3f4f6' : '#374151') }} />
                     <input 
                       type="color" 
-                      value={settings.highlightTextColor || '#4b5563'}
+                      value={settings.highlightTextColor || (settings.isDarkMode ? '#f3f4f6' : '#374151')}
                       onChange={(e) => updateSettings({ highlightTextColor: e.target.value })}
                       className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" 
                     />
@@ -387,7 +391,7 @@ export function TabSettings() {
               style={
                 settings.highlightMode === 'text' 
                   ? { color: settings.highlightColor, backgroundColor: 'transparent' }
-                  : { backgroundColor: `rgba(${hexToRgb(settings.highlightColor)}, ${settings.highlightOpacity})`, color: settings.highlightTextColor || '#4b5563' }
+                  : { backgroundColor: `rgba(${hexToRgb(settings.highlightColor)}, ${settings.highlightOpacity})`, color: settings.highlightTextColor || (settings.isDarkMode ? '#f3f4f6' : '#374151') }
               }
               onMouseEnter={(e) => {
                 if (settings.highlightMode === 'text') {

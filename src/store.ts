@@ -49,7 +49,7 @@ export const defaultSettings: AppSettings = {
   highlightOpacity: 0.3,     // Equivalent to bg-purple-100/200ish
   hoverColor: '#a855f7',     // Tailwind purple-500
   hoverOpacity: 0.4,
-  highlightTextColor: '#4b5563', // Tailwind gray-600
+  highlightTextColor: '', // Empty means auto-adapt to dark/light mode
   isDarkMode: false,
   voiceAccent: 'Random',
   voiceGender: 'Random',

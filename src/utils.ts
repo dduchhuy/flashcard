@@ -99,11 +99,24 @@ export function speakEnglish(text: string) {
 
   if (settings.isSpecialAccent && settings.specialAccent) {
     let langPrefix = ''
-    if (settings.specialAccent === 'Indian') langPrefix = 'en-IN'
-    if (settings.specialAccent === 'Irish') langPrefix = 'en-IE'
-    if (settings.specialAccent === 'French') langPrefix = 'fr-FR'
+    let nameKeywords: string[] = []
+    
+    if (settings.specialAccent === 'Indian') {
+      langPrefix = 'en-IN'
+      nameKeywords = ['neerja', 'heera', 'ravi', 'prabhat', 'indian', 'india']
+    } else if (settings.specialAccent === 'Irish') {
+      langPrefix = 'en-IE'
+      nameKeywords = ['emily', 'orla', 'irish', 'ireland']
+    } else if (settings.specialAccent === 'French') {
+      langPrefix = 'fr-FR'
+      nameKeywords = ['denise', 'henri', 'hortense', 'claude', 'french', 'france', 'français']
+    }
 
-    const specialVoices = voices.filter(v => v.lang.startsWith(langPrefix))
+    const langMatches = voices.filter(v => v.lang.startsWith(langPrefix))
+    const nameMatches = voices.filter(v => nameKeywords.some(kw => v.name.toLowerCase().includes(kw)))
+    
+    // Combine and deduplicate
+    const specialVoices = Array.from(new Set([...langMatches, ...nameMatches]))
     
     // Sort to prioritize Google/Online voices
     specialVoices.sort((a, b) => {
