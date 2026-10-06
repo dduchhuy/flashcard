@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { RotateCcw, Volume2, BarChart2, Settings2, ChevronLeft, ChevronRight, Shuffle, ArrowLeftRight, Tag as TagIcon, ChevronDown, Check, X } from 'lucide-react'
 import { useFlashcardStore, getCardTags, getCardsForMode, Flashcard, Highlight } from '../store'
 import { speakEnglish, extractWordText } from '../utils'
@@ -202,6 +202,17 @@ export function TabLearn() {
   const [completedCount, setCompletedCount] = useState(0)
   const [isQueueInit, setIsQueueInit] = useState(false)
 
+  const pendingTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+
+  // Cleanup all timers
+  const clearPendingTimers = () => {
+    pendingTimers.current.forEach(t => clearTimeout(t))
+    pendingTimers.current.clear()
+  }
+
+  // Cleanup on unmount
+  useEffect(() => () => clearPendingTimers(), [])
+
   const allTags = useMemo(() =>
     Array.from(new Set(flashcards.flatMap(c => getCardTags(c)))).filter(Boolean).sort()
   , [flashcards])
@@ -223,6 +234,7 @@ export function TabLearn() {
 
   // Synchronous reset helper
   const resetSession = (newTags: string[], newMode: 'word'|'meaning', newRandom: boolean) => {
+    clearPendingTimers()
     setQueue(buildQueue(flashcards, newTags, gameInputMode, newMode, newRandom))
     setCompletedCount(0)
     setShowAnswer(false)
@@ -243,6 +255,8 @@ export function TabLearn() {
     setShowAnswer(false)
     setMeaningIdx(0)
     
+    const captured = current
+    
     setQueue(prev => {
       const rest = prev.slice(1)
       if (rating === 'again') {
@@ -252,8 +266,25 @@ export function TabLearn() {
       }
       return rest
     })
+
     if (rating !== 'again') {
       setCompletedCount(c => c + 1)
+      // Schedule re-insertion after the interval (hard=6m, good=10m, easy=3d)
+      const delayMs = rating === 'hard' ? settings.hardMs
+                    : rating === 'good' ? settings.goodMs
+                    : settings.easyMs
+      // Only reschedule within same session (cap at 24h to avoid crazy timeouts)
+      if (delayMs <= 24 * 60 * 60 * 1000) {
+        const timerId = setTimeout(() => {
+          setQueue(prev => [...prev, captured])
+          setCompletedCount(c => Math.max(0, c - 1))
+          pendingTimers.current.delete(captured.card.id)
+        }, delayMs)
+        // Cancel any existing timer for this card
+        const existing = pendingTimers.current.get(captured.card.id)
+        if (existing) clearTimeout(existing)
+        pendingTimers.current.set(captured.card.id, timerId)
+      }
     }
   }, [current, settings, updateHighlightSRS, updateFlashcardSRS])
 
