@@ -279,7 +279,8 @@ export function TabLearn() {
     // Only reschedule within same session (cap at 24h)
     if (delayMs <= 24 * 60 * 60 * 1000) {
       const timerId = setTimeout(() => {
-        setQueue(prev => [...prev, captured])
+        // Insert at front so user sees it immediately when timer fires
+        setQueue(prev => [captured, ...prev])
         setCompletedCount(c => Math.max(0, c - 1))
         pendingTimers.current.delete(captured.card.id)
       }, delayMs)
