@@ -30,7 +30,7 @@ function App() {
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400">Flashcards</h1>
-            {user && <Cloud size={20} className="text-green-500" title="Đã đồng bộ lên Cloud" />}
+            {user && <span title="Đã đồng bộ lên Cloud"><Cloud size={20} className="text-green-500" /></span>}
           </div>
           <div>
             {isLoading ? (
