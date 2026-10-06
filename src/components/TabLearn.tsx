@@ -246,7 +246,9 @@ export function TabLearn() {
     setQueue(prev => {
       const rest = prev.slice(1)
       if (rating === 'again') {
-        return [...rest, prev[0]] // move to back
+        // Re-insert after ~7 cards (like Anki), not at the very end
+        const insertAt = Math.min(7, rest.length)
+        return [...rest.slice(0, insertAt), prev[0], ...rest.slice(insertAt)]
       }
       return rest
     })
