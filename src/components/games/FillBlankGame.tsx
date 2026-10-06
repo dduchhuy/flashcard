@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useFlashcardStore, getCardTags } from '../../store'
 import { ArrowLeft, RefreshCcw, Lightbulb, Volume2 } from 'lucide-react'
-import { extractWordText, fuzzyMatch, speakEnglish } from '../../utils'
+import { extractWordText, extractWordsAndSpaces, fuzzyMatch, speakEnglish } from '../../utils'
 import { LetterInput, letterIndices, buildGuess } from './LetterInput'
 
 export function FillBlankGame({ onExit }: { onExit: () => void }) {
@@ -17,7 +17,8 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
           id: h.id,
           word: extractWordText(card.sentence, h.wordIndices),
           sentence: card.sentence,
-          meaning: h.meaning
+          meaning: h.meaning,
+          wordIndices: h.wordIndices
         })
       })
     })
@@ -131,16 +132,26 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
 
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-6 text-center max-w-xl mx-auto w-full relative">
         
-        {showFullSentence ? (
-          <p className="text-lg text-gray-800 dark:text-gray-200 mb-8 leading-relaxed whitespace-pre-wrap px-4">
-            {currentQ.sentence}
-          </p>
-        ) : (
-          <div className="text-gray-400 dark:text-gray-500 mb-8 px-4 flex items-center justify-center gap-2 h-[84px]">
-            <Volume2 size={18} className="animate-pulse" />
-            <span className="text-sm font-medium">Listen and type the word</span>
-          </div>
-        )}
+        <p className="text-lg text-gray-800 dark:text-gray-200 mb-8 leading-relaxed whitespace-pre-wrap px-4">
+          {(() => {
+            if (showFullSentence) return currentQ.sentence
+            const { words, spaces, initialSpace } = extractWordsAndSpaces(currentQ.sentence)
+            return (
+              <>
+                {initialSpace}
+                {words.map((w: string, i: number) => {
+                  const isBlank = currentQ.wordIndices.includes(i)
+                  return (
+                    <span key={i}>
+                      {isBlank ? <span className="text-purple-400 dark:text-purple-500 font-bold opacity-70">{'___'}</span> : w}
+                      {spaces[i]}
+                    </span>
+                  )
+                })}
+              </>
+            )
+          })()}
+        </p>
         
         <div className="bg-purple-50 dark:bg-gray-900 rounded-xl p-4 mb-8 border border-purple-100 dark:border-gray-700 animate-in fade-in slide-in-from-top-2">
           <div className="flex justify-between items-center">
