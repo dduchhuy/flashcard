@@ -2,11 +2,20 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { v4 as uuidv4 } from 'uuid'
 
+export interface SRSData {
+  due: number // timestamp in ms
+  interval: number // in minutes
+  easeFactor: number
+  reps: number
+  step: number // 0=New, 1=Learning step 1, 2=Learning step 2, 3=Review
+}
+
 export interface Highlight {
   id: string
   wordIndices: number[]
   meaning: string
   example?: string
+  srs?: SRSData
 }
 
 export interface Flashcard {
@@ -16,6 +25,7 @@ export interface Flashcard {
   createdAt: number
   tag?: string
   tags?: string[]
+  srs?: SRSData  // word-mode SRS
 }
 
 export function getCardTags(card: Flashcard): string[] {
@@ -83,6 +93,8 @@ interface FlashcardState {
   updateFlashcardTag: (id: string, tags?: string[] | string) => void
   saveHighlight: (flashcardId: string, highlightId: string | null, wordIndices: number[], meaning: string, example?: string) => string
   removeHighlight: (flashcardId: string, highlightId: string) => void
+  updateHighlightSRS: (flashcardId: string, highlightId: string, srsData: SRSData) => void
+  updateFlashcardSRS: (flashcardId: string, srsData: SRSData) => void
   gameInputMode: 'sentence' | 'word'
   setGameInputMode: (mode: 'sentence' | 'word') => void
 }
@@ -184,6 +196,26 @@ export const useFlashcardStore = create<FlashcardState>()(
             }
             return f
           }),
+        })),
+      updateHighlightSRS: (flashcardId, highlightId, srsData) =>
+        set((state) => ({
+          flashcards: state.flashcards.map((f) => {
+            if (f.id === flashcardId) {
+              return {
+                ...f,
+                highlights: f.highlights.map((h) => 
+                  h.id === highlightId ? { ...h, srs: srsData } : h
+                ),
+              }
+            }
+            return f
+          }),
+        })),
+      updateFlashcardSRS: (flashcardId, srsData) =>
+        set((state) => ({
+          flashcards: state.flashcards.map((f) =>
+            f.id === flashcardId ? { ...f, srs: srsData } : f
+          ),
         })),
     }),
     {

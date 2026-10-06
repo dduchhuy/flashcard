@@ -1,19 +1,21 @@
 import { useState, useEffect } from 'react'
-import { PlusCircle, Library, Gamepad2, Settings as SettingsIcon, LogIn, LogOut } from 'lucide-react'
+import { PlusCircle, Library, Gamepad2, Settings as SettingsIcon, LogIn, LogOut, GraduationCap } from 'lucide-react'
 import { TabHome } from './components/TabHome'
 import { TabAllCards } from './components/TabAllCards'
 import { TabGame } from './components/TabGame'
+import { TabLearn } from './components/TabLearn'
 import { TabSettings } from './components/TabSettings'
 import { useFlashcardStore } from './store'
 import { useFirebaseSync } from './useFirebaseSync'
 import { loginWithGoogle, logout } from './firebase'
 
-type Tab = 'home' | 'all' | 'game' | 'settings'
+type Tab = 'home' | 'all' | 'game' | 'learn' | 'settings'
 
 const TAB_TO_PATH: Record<Tab, string> = {
   home: 'add',
   all: 'library',
   game: 'practice',
+  learn: 'learn',
   settings: 'settings'
 }
 
@@ -21,6 +23,7 @@ const PATH_TO_TAB: Record<string, Tab> = {
   add: 'home',
   library: 'all',
   practice: 'game',
+  learn: 'learn',
   settings: 'settings'
 }
 
@@ -95,6 +98,7 @@ function App() {
         {activeTab === 'home' && <TabHome />}
         {activeTab === 'all' && <TabAllCards />}
         {activeTab === 'game' && <TabGame />}
+        {activeTab === 'learn' && <TabLearn />}
         {activeTab === 'settings' && <TabSettings />}
       </main>
 
@@ -129,6 +133,16 @@ function App() {
           >
             <Gamepad2 size={24} strokeWidth={activeTab === 'game' ? 2.5 : 2} />
             <span className="text-xs font-medium">Practice</span>
+          </button>
+
+          <button
+            onClick={() => changeTab('learn')}
+            className={`flex-1 flex flex-col items-center py-3 gap-1 transition-colors ${
+              activeTab === 'learn' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+            }`}
+          >
+            <GraduationCap size={24} strokeWidth={activeTab === 'learn' ? 2.5 : 2} />
+            <span className="text-xs font-medium">Learn</span>
           </button>
 
           <button
