@@ -194,7 +194,6 @@ export function TabLearn() {
   const [learnMode, setLearnMode] = useState<'word' | 'meaning'>('meaning')
   const [isRandom, setIsRandom] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [sessionKey, setSessionKey] = useState(0)
   const [showAnswer, setShowAnswer] = useState(false)
   const [meaningIdx, setMeaningIdx] = useState(0)
   const [stats, setStats] = useState({ again: 0, hard: 0, good: 0, easy: 0 })
@@ -215,22 +214,19 @@ export function TabLearn() {
     }
   }, [flashcards.length, isQueueInit, selectedTags, gameInputMode, learnMode, isRandom])
 
-  // Reset explicitly on toolbar actions
-  useEffect(() => {
-    if (sessionKey > 0) {
-      setQueue(buildQueue(flashcards, selectedTags, gameInputMode, learnMode, isRandom))
-      setCompletedCount(0)
-      setShowAnswer(false)
-      setMeaningIdx(0)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionKey])
-
   const current = queue[0]
 
   const handleSettings = (s: LearnSettings) => {
     setSettings(s)
     saveSettings(s)
+  }
+
+  // Synchronous reset helper
+  const resetSession = (newTags: string[], newMode: 'word'|'meaning', newRandom: boolean) => {
+    setQueue(buildQueue(flashcards, newTags, gameInputMode, newMode, newRandom))
+    setCompletedCount(0)
+    setShowAnswer(false)
+    setMeaningIdx(0)
   }
 
   const handleRate = useCallback((rating: Rating) => {
@@ -261,7 +257,7 @@ export function TabLearn() {
 
   const handleRestart = () => {
     setStats({ again: 0, hard: 0, good: 0, easy: 0 })
-    setSessionKey(k => k + 1)
+    resetSession(selectedTags, learnMode, isRandom)
   }
 
   // ── Done screen ───────────────────────────────────────────────
@@ -330,15 +326,15 @@ export function TabLearn() {
 
       {/* Toolbar */}
       <div className="flex items-center gap-2 flex-wrap">
-        <TagSelector allTags={allTags} selected={selectedTags} onChange={tags => { setSelectedTags(tags); setSessionKey(k => k + 1) }} />
+        <TagSelector allTags={allTags} selected={selectedTags} onChange={tags => { setSelectedTags(tags); resetSession(tags, learnMode, isRandom) }} />
         <button
-          onClick={() => { setIsRandom(r => !r); setSessionKey(k => k + 1) }}
+          onClick={() => { const r = !isRandom; setIsRandom(r); resetSession(selectedTags, learnMode, r) }}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border transition-colors ${isRandom ? 'bg-purple-100 border-purple-200 text-purple-700 dark:bg-purple-900/40 dark:border-purple-800 dark:text-purple-300' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300'}`}
         >
           <Shuffle size={15} /> Random
         </button>
         <button
-          onClick={() => { setLearnMode(m => m === 'meaning' ? 'word' : 'meaning'); setSessionKey(k => k + 1) }}
+          onClick={() => { const m = learnMode === 'meaning' ? 'word' : 'meaning'; setLearnMode(m); resetSession(selectedTags, m, isRandom) }}
           className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 transition-colors hover:bg-gray-50"
         >
           <ArrowLeftRight size={15} /> {learnMode === 'meaning' ? 'Meaning → Word' : 'Word → Meaning'}

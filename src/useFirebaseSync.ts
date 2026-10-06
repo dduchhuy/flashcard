@@ -22,8 +22,16 @@ export function useFirebaseSync() {
           if (docSnap.exists()) {
             const data = docSnap.data();
             if (data.state) {
-              // Override Zustand state with cloud data
-              useFlashcardStore.setState(data.state);
+              const localStr = localStorage.getItem('localUpdatedAt');
+              const localUpdated = localStr ? parseInt(localStr, 10) : 0;
+              const cloudUpdated = data.updatedAt || 0;
+              
+              if (cloudUpdated >= localUpdated) {
+                // Override Zustand state with cloud data
+                useFlashcardStore.setState(data.state);
+              } else {
+                console.warn("Cloud data is older than local data. Not overwriting.");
+              }
             }
           }
         } catch (error) {
@@ -42,6 +50,9 @@ export function useFirebaseSync() {
   useEffect(() => {
     const unsubscribeStore = useFlashcardStore.subscribe((state) => {
       if (user && !isInitialLoadRef.current) {
+        const now = Date.now();
+        localStorage.setItem('localUpdatedAt', now.toString());
+        
         // Debounce or just save directly (Firestore is fast, but debounce is better for many changes)
         const userDocRef = doc(db, 'users', user.uid);
         // Only save flashcards and settings to cloud, activeTags might be local only
@@ -50,7 +61,7 @@ export function useFirebaseSync() {
             flashcards: state.flashcards,
             settings: state.settings,
           },
-          updatedAt: Date.now()
+          updatedAt: now
         }, { merge: true }).catch(err => console.error("Save to Firestore failed", err));
       }
     });
