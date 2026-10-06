@@ -270,7 +270,13 @@ export function TabSettings() {
               </div>
             </div>
             <button
-              onClick={() => updateSettings({ highlightMode: settings.highlightMode === 'text' ? 'background' : 'text' })}
+              onClick={() => {
+                if (settings.highlightMode === 'text') {
+                  updateSettings({ highlightMode: 'background', highlightColor: '#d8b4fe', hoverColor: '#a855f7' })
+                } else {
+                  updateSettings({ highlightMode: 'text', highlightColor: '#9333ea', hoverColor: '#c084fc' })
+                }
+              }}
               className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${settings.highlightMode === 'text' ? 'bg-purple-600' : 'bg-gray-300'}`}
             >
               <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-sm ${settings.highlightMode === 'text' ? 'translate-x-6' : 'translate-x-1'}`} />
@@ -292,7 +298,7 @@ export function TabSettings() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className={`grid grid-cols-1 gap-4 ${settings.highlightMode === 'text' ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
             {/* Normal Color */}
             <div className="flex flex-col bg-gray-50 dark:bg-gray-900/50 p-5 rounded-xl border border-gray-100 dark:border-gray-700">
               <div className="flex justify-between items-center mb-5">
@@ -350,6 +356,27 @@ export function TabSettings() {
                 />
               </div>
             </div>
+
+            {/* Text Color - Only shown in background mode */}
+            {settings.highlightMode !== 'text' && (
+              <div className="flex flex-col bg-gray-50 dark:bg-gray-900/50 p-5 rounded-xl border border-gray-100 dark:border-gray-700">
+                <div className="flex justify-between items-center mb-5">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Text Color</span>
+                  <div className="relative w-8 h-8 rounded-full shadow-sm border-2 border-white dark:border-gray-700 overflow-hidden cursor-pointer ring-2 ring-gray-100 dark:ring-gray-800">
+                    <div className="absolute inset-0" style={{ backgroundColor: settings.highlightTextColor || '#4b5563' }} />
+                    <input 
+                      type="color" 
+                      value={settings.highlightTextColor || '#4b5563'}
+                      onChange={(e) => updateSettings({ highlightTextColor: e.target.value })}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" 
+                    />
+                  </div>
+                </div>
+                <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                  Choose the text color for highlighted words.
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Preview */}
@@ -360,7 +387,7 @@ export function TabSettings() {
               style={
                 settings.highlightMode === 'text' 
                   ? { color: settings.highlightColor, backgroundColor: 'transparent' }
-                  : { backgroundColor: `rgba(${hexToRgb(settings.highlightColor)}, ${settings.highlightOpacity})`, color: settings.isDarkMode ? '#f3f4f6' : '#111827' }
+                  : { backgroundColor: `rgba(${hexToRgb(settings.highlightColor)}, ${settings.highlightOpacity})`, color: settings.highlightTextColor || '#4b5563' }
               }
               onMouseEnter={(e) => {
                 if (settings.highlightMode === 'text') {
@@ -386,43 +413,77 @@ export function TabSettings() {
       {/* Voice Settings Section */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 space-y-5 transition-colors">
         <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-          🔊 Voice Settings
+          Voice Settings
         </h2>
 
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
             <div>
-              <div className="font-medium text-gray-800 dark:text-gray-200">Accent</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Choose English accent preference</div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">Special Accent Mode</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Enable unique regional accents</div>
             </div>
-            <SelectDropdown
-              value={settings.voiceAccent}
-              onChange={(v) => updateSettings({ voiceAccent: v as 'US' | 'UK' | 'Random' })}
-              options={[
-                { value: 'US', label: '🇺🇸 US English' },
-                { value: 'UK', label: '🇬🇧 UK English' },
-                { value: 'Random', label: '🎲 Random' }
-              ]}
-              className="min-w-[150px]"
-            />
+            <button
+              onClick={() => updateSettings({ isSpecialAccent: !settings.isSpecialAccent })}
+              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${settings.isSpecialAccent ? 'bg-purple-600' : 'bg-gray-300'}`}
+            >
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-sm ${settings.isSpecialAccent ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
-            <div>
-              <div className="font-medium text-gray-800 dark:text-gray-200">Voice Gender</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Choose voice gender preference</div>
+          {settings.isSpecialAccent ? (
+            <div className="flex items-center justify-between p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-100 dark:border-purple-800">
+              <div>
+                <div className="font-medium text-purple-800 dark:text-purple-200">Special Accent</div>
+                <div className="text-xs text-purple-600/70 dark:text-purple-300/70">Select a regional voice</div>
+              </div>
+              <SelectDropdown
+                value={settings.specialAccent || 'Indian'}
+                onChange={(v) => updateSettings({ specialAccent: v as 'Indian' | 'Irish' | 'French' })}
+                options={[
+                  { value: 'Indian', label: 'Indian Accent' },
+                  { value: 'Irish', label: 'Irish Accent' },
+                  { value: 'French', label: 'French Accent' }
+                ]}
+                className="min-w-[150px]"
+              />
             </div>
-            <SelectDropdown
-              value={settings.voiceGender}
-              onChange={(v) => updateSettings({ voiceGender: v as 'Male' | 'Female' | 'Random' })}
-              options={[
-                { value: 'Female', label: '👩 Female' },
-                { value: 'Male', label: '👨 Male' },
-                { value: 'Random', label: '🎲 Random' }
-              ]}
-              className="min-w-[150px]"
-            />
-          </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                <div>
+                  <div className="font-medium text-gray-800 dark:text-gray-200">Accent</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Choose English accent preference</div>
+                </div>
+                <SelectDropdown
+                  value={settings.voiceAccent}
+                  onChange={(v) => updateSettings({ voiceAccent: v as 'US' | 'UK' | 'Random' })}
+                  options={[
+                    { value: 'US', label: 'US English' },
+                    { value: 'UK', label: 'UK English' },
+                    { value: 'Random', label: 'Random' }
+                  ]}
+                  className="min-w-[150px]"
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                <div>
+                  <div className="font-medium text-gray-800 dark:text-gray-200">Voice Gender</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Choose voice gender preference</div>
+                </div>
+                <SelectDropdown
+                  value={settings.voiceGender}
+                  onChange={(v) => updateSettings({ voiceGender: v as 'Male' | 'Female' | 'Random' })}
+                  options={[
+                    { value: 'Female', label: 'Female' },
+                    { value: 'Male', label: 'Male' },
+                    { value: 'Random', label: 'Random' }
+                  ]}
+                  className="min-w-[150px]"
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
 

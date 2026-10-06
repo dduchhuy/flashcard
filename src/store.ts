@@ -35,9 +35,12 @@ export interface AppSettings {
   highlightOpacity: number
   hoverColor: string
   hoverOpacity: number
+  highlightTextColor: string
   isDarkMode: boolean
   voiceAccent: 'US' | 'UK' | 'Random'
   voiceGender: 'Male' | 'Female' | 'Random'
+  isSpecialAccent?: boolean
+  specialAccent?: 'Indian' | 'Irish' | 'French'
 }
 
 export const defaultSettings: AppSettings = {
@@ -46,9 +49,12 @@ export const defaultSettings: AppSettings = {
   highlightOpacity: 0.3,     // Equivalent to bg-purple-100/200ish
   hoverColor: '#a855f7',     // Tailwind purple-500
   hoverOpacity: 0.4,
+  highlightTextColor: '#4b5563', // Tailwind gray-600
   isDarkMode: false,
   voiceAccent: 'Random',
-  voiceGender: 'Random'
+  voiceGender: 'Random',
+  isSpecialAccent: false,
+  specialAccent: 'Indian'
 }
 
 interface FlashcardState {

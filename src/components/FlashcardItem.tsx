@@ -467,11 +467,10 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
                     backgroundColor: 'transparent'
                   }
                 } else {
-                  segmentClass += settings.isDarkMode ? 'text-purple-100' : 'text-purple-900'
                   const bgColor = isHovered 
                     ? `rgba(${hexToRgb(settings.hoverColor)}, ${settings.hoverOpacity})`
                     : `rgba(${hexToRgb(settings.highlightColor)}, ${settings.highlightOpacity})`
-                  inlineStyle = { backgroundColor: bgColor }
+                  inlineStyle = { backgroundColor: bgColor, color: settings.highlightTextColor || '#4b5563' }
                 }
               } else {
                 segmentClass += "hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer" // normal
