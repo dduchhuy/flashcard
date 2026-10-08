@@ -429,15 +429,15 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
             />
             <div className="flex flex-col sm:flex-row gap-2">
               <input
-                value={editPhoneticValue}
-                onChange={(e) => setEditPhoneticValue(e.target.value)}
-                placeholder="Phonetic (optional)"
-                className="w-full sm:w-1/2 p-2 border border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 italic rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-              />
-              <input
                 value={editPartOfSpeechValue}
                 onChange={(e) => setEditPartOfSpeechValue(e.target.value)}
                 placeholder="Part of speech (e.g. noun)"
+                className="w-full sm:w-1/2 p-2 border border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 italic rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+              />
+              <input
+                value={editPhoneticValue}
+                onChange={(e) => setEditPhoneticValue(e.target.value)}
+                placeholder="Phonetic (optional)"
                 className="w-full sm:w-1/2 p-2 border border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 italic rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
               />
             </div>

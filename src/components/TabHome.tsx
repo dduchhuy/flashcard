@@ -154,15 +154,15 @@ export function TabHome() {
               />
               <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-gray-100 dark:border-gray-700/60">
                 <input
-                  value={phoneticInput}
-                  onChange={(e) => setPhoneticInput(e.target.value)}
-                  placeholder="Phonetic (optional)"
-                  className="w-full sm:w-1/3 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 text-sm italic focus:outline-none"
-                />
-                <input
                   value={partOfSpeechInput}
                   onChange={(e) => setPartOfSpeechInput(e.target.value)}
                   placeholder="Part of speech (e.g. noun, verb)"
+                  className="w-full sm:w-1/3 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 text-sm italic focus:outline-none"
+                />
+                <input
+                  value={phoneticInput}
+                  onChange={(e) => setPhoneticInput(e.target.value)}
+                  placeholder="Phonetic (optional)"
                   className="w-full sm:w-1/3 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 text-sm italic focus:outline-none sm:border-l sm:border-gray-100 sm:dark:border-gray-700/60 sm:pl-3"
                 />
               </div>
@@ -188,16 +188,16 @@ export function TabHome() {
                   className="flex-1 bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg leading-relaxed focus:outline-none"
                 />
                 <input
-                  value={phoneticInput}
-                  onChange={(e) => setPhoneticInput(e.target.value)}
-                  placeholder="Phonetic (e.g. /ˈæp.əl/)"
-                  className="w-full sm:w-32 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 text-sm italic focus:outline-none sm:border-l sm:border-gray-200 sm:dark:border-gray-700 sm:pl-3"
-                />
-                <input
                   value={partOfSpeechInput}
                   onChange={(e) => setPartOfSpeechInput(e.target.value)}
                   placeholder="Type (noun)"
                   className="w-full sm:w-28 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 text-sm italic focus:outline-none sm:border-l sm:border-gray-200 sm:dark:border-gray-700 sm:pl-3"
+                />
+                <input
+                  value={phoneticInput}
+                  onChange={(e) => setPhoneticInput(e.target.value)}
+                  placeholder="Phonetic (e.g. /ˈæp.əl/)"
+                  className="w-full sm:w-32 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 text-sm italic focus:outline-none sm:border-l sm:border-gray-200 sm:dark:border-gray-700 sm:pl-3"
                 />
               </div>
 
