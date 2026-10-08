@@ -35,6 +35,7 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
   const [isEditingSentence, setIsEditingSentence] = useState(false)
   const [editSentenceValue, setEditSentenceValue] = useState(flashcard.sentence)
   const [editPhoneticValue, setEditPhoneticValue] = useState(flashcard.phonetic || '')
+  const [editPartOfSpeechValue, setEditPartOfSpeechValue] = useState(flashcard.partOfSpeech || '')
   
   const [newTagValue, setNewTagValue] = useState('')
   
@@ -303,8 +304,8 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
   }
 
   const handleSaveSentence = () => {
-    if (editSentenceValue.trim() && (editSentenceValue !== flashcard.sentence || editPhoneticValue !== flashcard.phonetic)) {
-      updateFlashcard(flashcard.id, editSentenceValue.trim(), editPhoneticValue.trim())
+    if (editSentenceValue.trim() && (editSentenceValue !== flashcard.sentence || editPhoneticValue !== flashcard.phonetic || editPartOfSpeechValue !== flashcard.partOfSpeech)) {
+      updateFlashcard(flashcard.id, editSentenceValue.trim(), editPhoneticValue.trim(), editPartOfSpeechValue.trim())
       setEditingIndices([])
     }
     setIsEditingSentence(false)
@@ -426,12 +427,20 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
               className="w-full p-2 border border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-lg resize-none"
               rows={3}
             />
-            <input
-              value={editPhoneticValue}
-              onChange={(e) => setEditPhoneticValue(e.target.value)}
-              placeholder="Phonetic (optional)"
-              className="w-full sm:w-1/2 p-2 border border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 italic rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-            />
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                value={editPhoneticValue}
+                onChange={(e) => setEditPhoneticValue(e.target.value)}
+                placeholder="Phonetic (optional)"
+                className="w-full sm:w-1/2 p-2 border border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 italic rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+              />
+              <input
+                value={editPartOfSpeechValue}
+                onChange={(e) => setEditPartOfSpeechValue(e.target.value)}
+                placeholder="Part of speech (e.g. noun)"
+                className="w-full sm:w-1/2 p-2 border border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400 italic rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+              />
+            </div>
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setIsEditingSentence(false)}
@@ -527,6 +536,11 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
                 </span>
               )
             })}
+            {flashcard.partOfSpeech && (
+              <span className="ml-2 text-[0.75em] px-1.5 py-0.5 rounded-md bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 font-medium align-baseline tracking-wide">
+                {flashcard.partOfSpeech}
+              </span>
+            )}
             {flashcard.phonetic && (
               <span className="ml-2 text-[0.85em] italic text-gray-400 dark:text-gray-500 align-baseline">
                 {flashcard.phonetic}
@@ -606,10 +620,15 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onPointerDown={() => setIsPopupOpen(false)}>
            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto" onPointerDown={e => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-4">
-                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white capitalize">
-                   {flashcard.sentence}
+                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white capitalize flex items-center flex-wrap gap-2">
+                   <span>{flashcard.sentence}</span>
+                   {flashcard.partOfSpeech && (
+                     <span className="text-sm px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 font-medium tracking-wide normal-case">
+                       {flashcard.partOfSpeech}
+                     </span>
+                   )}
                    {flashcard.phonetic && (
-                     <span className="ml-2 text-lg italic text-gray-400 font-normal normal-case">{flashcard.phonetic}</span>
+                     <span className="text-lg italic text-gray-400 font-normal normal-case">{flashcard.phonetic}</span>
                    )}
                  </h2>
                  <button onClick={() => setIsPopupOpen(false)} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">

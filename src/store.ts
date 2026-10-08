@@ -23,6 +23,7 @@ export interface Flashcard {
   id: string
   sentence: string
   phonetic?: string
+  partOfSpeech?: string
   highlights: Highlight[]
   createdAt: number
   tag?: string
@@ -89,9 +90,9 @@ interface FlashcardState {
   setActiveTags: (tags: string[]) => void
   updateSettings: (newSettings: Partial<AppSettings>) => void
   resetSettings: () => void
-  addFlashcard: (sentence: string, tags?: string[] | string, highlights?: Omit<Highlight, 'id'>[], phonetic?: string) => void
+  addFlashcard: (sentence: string, tags?: string[] | string, highlights?: Omit<Highlight, 'id'>[], phonetic?: string, partOfSpeech?: string) => void
   deleteFlashcard: (id: string) => void
-  updateFlashcard: (id: string, newSentence: string, newPhonetic?: string) => void
+  updateFlashcard: (id: string, newSentence: string, newPhonetic?: string, newPartOfSpeech?: string) => void
   updateFlashcardTag: (id: string, tags?: string[] | string) => void
   saveHighlight: (flashcardId: string, highlightId: string | null, wordIndices: number[], meaning: string, example?: string) => string
   removeHighlight: (flashcardId: string, highlightId: string) => void
@@ -133,7 +134,7 @@ export const useFlashcardStore = create<FlashcardState>()(
       setActiveTags: (tags) => set({ activeTags: tags }),
       updateSettings: (newSettings) => set((state) => ({ settings: { ...state.settings, ...newSettings } })),
       resetSettings: () => set((state) => ({ settings: { ...defaultSettings, isDarkMode: state.settings.isDarkMode } })),
-      addFlashcard: (sentence, tags, highlights, phonetic) =>
+      addFlashcard: (sentence, tags, highlights, phonetic, partOfSpeech) =>
         set((state) => {
           const parsedTags = parseTagsInput(tags)
           return {
@@ -143,6 +144,7 @@ export const useFlashcardStore = create<FlashcardState>()(
                 id: uuidv4(),
                 sentence: sentence.trim(),
                 phonetic: phonetic?.trim(),
+                partOfSpeech: partOfSpeech?.trim(),
                 highlights: highlights ? highlights.map(h => ({ ...h, id: uuidv4() })) : [],
                 createdAt: Date.now(),
                 tags: parsedTags.length > 0 ? parsedTags : undefined,
@@ -154,10 +156,10 @@ export const useFlashcardStore = create<FlashcardState>()(
         set((state) => ({
           flashcards: state.flashcards.filter((f) => f.id !== id),
         })),
-      updateFlashcard: (id, newSentence, newPhonetic) =>
+      updateFlashcard: (id, newSentence, newPhonetic, newPartOfSpeech) =>
         set((state) => ({
           flashcards: state.flashcards.map((f) =>
-            f.id === id ? { ...f, sentence: newSentence, phonetic: newPhonetic !== undefined ? newPhonetic : f.phonetic } : f
+            f.id === id ? { ...f, sentence: newSentence, phonetic: newPhonetic !== undefined ? newPhonetic : f.phonetic, partOfSpeech: newPartOfSpeech !== undefined ? newPartOfSpeech : f.partOfSpeech } : f
           ),
         })),
       updateFlashcardTag: (id, tags) =>

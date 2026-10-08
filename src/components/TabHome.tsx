@@ -14,6 +14,7 @@ export function TabHome() {
   const [inputMode, setInputMode] = useState<'sentence' | 'word'>('sentence')
   const [wordMeanings, setWordMeanings] = useState([{ meaning: '', example: '' }])
   const [phoneticInput, setPhoneticInput] = useState('')
+  const [partOfSpeechInput, setPartOfSpeechInput] = useState('')
   
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -54,7 +55,7 @@ export function TabHome() {
 
     if (newSentence.trim()) {
       if (inputMode === 'sentence') {
-        addFlashcard(newSentence, finalTags, undefined, phoneticInput)
+        addFlashcard(newSentence, finalTags, undefined, phoneticInput, partOfSpeechInput)
       } else {
         const { words } = extractWordsAndSpaces(newSentence)
         const indices = Array.from({ length: words.length }, (_, i) => i)
@@ -65,12 +66,13 @@ export function TabHome() {
             meaning: m.meaning.trim(),
             example: m.example?.trim()
           }))
-        addFlashcard(newSentence, finalTags, highlights, phoneticInput)
+        addFlashcard(newSentence, finalTags, highlights, phoneticInput, partOfSpeechInput)
         setWordMeanings([{ meaning: '', example: '' }])
       }
 
       setNewSentence('')
       setPhoneticInput('')
+      setPartOfSpeechInput('')
       if (!isTagsLocked) {
         setTagInput('')
         setSelectedTags([])
@@ -157,6 +159,12 @@ export function TabHome() {
                   placeholder="Phonetic (optional)"
                   className="w-full sm:w-1/3 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 text-sm italic focus:outline-none"
                 />
+                <input
+                  value={partOfSpeechInput}
+                  onChange={(e) => setPartOfSpeechInput(e.target.value)}
+                  placeholder="Part of speech (e.g. noun, verb)"
+                  className="w-full sm:w-1/3 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 text-sm italic focus:outline-none sm:border-l sm:border-gray-100 sm:dark:border-gray-700/60 sm:pl-3"
+                />
               </div>
 
               <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700/60 text-xs text-gray-400">
@@ -183,7 +191,13 @@ export function TabHome() {
                   value={phoneticInput}
                   onChange={(e) => setPhoneticInput(e.target.value)}
                   placeholder="Phonetic (e.g. /ˈæp.əl/)"
-                  className="w-full sm:w-40 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 text-sm italic focus:outline-none sm:border-l sm:border-gray-200 sm:dark:border-gray-700 sm:pl-3"
+                  className="w-full sm:w-32 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 text-sm italic focus:outline-none sm:border-l sm:border-gray-200 sm:dark:border-gray-700 sm:pl-3"
+                />
+                <input
+                  value={partOfSpeechInput}
+                  onChange={(e) => setPartOfSpeechInput(e.target.value)}
+                  placeholder="Type (noun)"
+                  className="w-full sm:w-28 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 text-sm italic focus:outline-none sm:border-l sm:border-gray-200 sm:dark:border-gray-700 sm:pl-3"
                 />
               </div>
 
