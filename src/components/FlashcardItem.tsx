@@ -457,8 +457,11 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
             </div>
           </div>
         ) : (
-          <div 
-            className={`leading-relaxed touch-none select-none whitespace-pre-wrap ${
+          <>
+            <div 
+              className={`leading-relaxed touch-none select-none ${
+              isWordCard ? 'truncate' : 'whitespace-pre-wrap break-words'
+            } ${
               viewMode === 'grid' ? 'text-lg cursor-pointer' : 'text-xl cursor-text'
             } dark:text-gray-200`}
             onPointerDown={viewMode === 'grid' || isWordCard ? undefined : handlePointerDown}
@@ -536,17 +539,22 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
                 </span>
               )
             })}
-            {flashcard.partOfSpeech && (
-              <span className="ml-2 text-[0.75em] px-1.5 py-0.5 rounded-md bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 font-medium align-baseline tracking-wide">
-                {flashcard.partOfSpeech}
-              </span>
+            </div>
+            {(flashcard.partOfSpeech || flashcard.phonetic) && (
+              <div className="mt-1.5 flex flex-col gap-0.5">
+                {flashcard.partOfSpeech && (
+                  <span className="text-sm text-gray-500 dark:text-gray-400 italic">
+                    {flashcard.partOfSpeech}
+                  </span>
+                )}
+                {flashcard.phonetic && (
+                  <span className="text-sm text-gray-400 dark:text-gray-500 italic">
+                    {flashcard.phonetic}
+                  </span>
+                )}
+              </div>
             )}
-            {flashcard.phonetic && (
-              <span className="ml-2 text-[0.85em] italic text-gray-400 dark:text-gray-500 align-baseline">
-                {flashcard.phonetic}
-              </span>
-            )}
-          </div>
+          </>
         )}
       </div>
 
@@ -574,7 +582,7 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
 
       {isWordCard && showHighlights && (
         <div className="mt-4 space-y-3">
-          {flashcard.highlights.slice(0, 2).map(h => (
+          {flashcard.highlights.slice(0, viewMode === 'grid' ? 1 : 2).map(h => (
             <div key={h.id} className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
               <div className="font-medium text-gray-800 dark:text-gray-200 text-sm mb-1">{h.meaning}</div>
               {h.example && (
@@ -584,9 +592,9 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
               )}
             </div>
           ))}
-          {flashcard.highlights.length > 2 && (
+          {flashcard.highlights.length > (viewMode === 'grid' ? 1 : 2) && (
              <div className="text-xs text-gray-400 font-medium italic mt-2 ml-1">
-                ... (and {flashcard.highlights.length - 2} more meanings)
+                ... (and {flashcard.highlights.length - (viewMode === 'grid' ? 1 : 2)} more meanings)
              </div>
           )}
         </div>
@@ -623,7 +631,7 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white capitalize flex items-center flex-wrap gap-2">
                    <span>{flashcard.sentence}</span>
                    {flashcard.partOfSpeech && (
-                     <span className="text-sm px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 font-medium tracking-wide normal-case">
+                     <span className="text-lg text-gray-500 dark:text-gray-400 italic font-normal normal-case">
                        {flashcard.partOfSpeech}
                      </span>
                    )}
@@ -631,7 +639,7 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
                      <span className="text-lg italic text-gray-400 font-normal normal-case">{flashcard.phonetic}</span>
                    )}
                  </h2>
-                 <button onClick={() => setIsPopupOpen(false)} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                 <button onPointerDown={(e) => { e.stopPropagation(); setIsPopupOpen(false); }} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 cursor-pointer p-1">
                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                  </button>
               </div>
