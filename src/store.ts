@@ -2,10 +2,20 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { v4 as uuidv4 } from 'uuid'
 
+export interface SRSData {
+  due: number
+  interval: number
+  easeFactor: number
+  reps: number
+  step: number
+}
+
 export interface Highlight {
   id: string
   wordIndices: number[]
   meaning: string
+  example?: string
+  srs?: SRSData
 }
 
 export interface Flashcard {
@@ -15,12 +25,20 @@ export interface Flashcard {
   createdAt: number
   tag?: string
   tags?: string[]
+  srs?: SRSData
 }
 
 export function getCardTags(card: Flashcard): string[] {
   if (card.tags && card.tags.length > 0) return card.tags
   if (card.tag && card.tag.trim()) return [card.tag.trim()]
   return []
+}
+
+export function getCardsForMode(flashcards: Flashcard[], mode: 'word' | 'sentence'): Flashcard[] {
+  if (mode === 'word') {
+    return flashcards.filter(f => f.highlights && f.highlights.length > 0)
+  }
+  return flashcards
 }
 
 export function parseTagsInput(input?: string[] | string): string[] {
@@ -64,6 +82,10 @@ interface FlashcardState {
   updateFlashcardTag: (id: string, tags?: string[] | string) => void
   saveHighlight: (flashcardId: string, highlightId: string | null, wordIndices: number[], meaning: string) => string
   removeHighlight: (flashcardId: string, highlightId: string) => void
+  gameInputMode: 'word' | 'sentence'
+  setGameInputMode: (mode: 'word' | 'sentence') => void
+  updateFlashcardSRS: (id: string, srsData: SRSData) => void
+  updateHighlightSRS: (flashcardId: string, highlightId: string, srsData: SRSData) => void
 }
 
 export const useFlashcardStore = create<FlashcardState>()(
@@ -162,6 +184,17 @@ export const useFlashcardStore = create<FlashcardState>()(
             return f
           }),
         })),
+      gameInputMode: 'word',
+      setGameInputMode: (mode) => set({ gameInputMode: mode }),
+      updateFlashcardSRS: (id, srsData) => set((state) => ({
+        flashcards: state.flashcards.map(f => f.id === id ? { ...f, srs: srsData } : f)
+      })),
+      updateHighlightSRS: (flashcardId, highlightId, srsData) => set((state) => ({
+        flashcards: state.flashcards.map(f => f.id === flashcardId ? {
+          ...f,
+          highlights: f.highlights.map(h => h.id === highlightId ? { ...h, srs: srsData } : h)
+        } : f)
+      })),
     }),
     {
       name: 'flashcard-storage',
