@@ -291,14 +291,23 @@ function QuizGame({ onExit }: { onExit: () => void }) {
   const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
   const [quizMode, setQuizMode] = useState<'w2m' | 'm2w'>('w2m')
+  const [uniqueWords, setUniqueWords] = useState(false)
+  const [answerCount, setAnswerCount] = useState(6)
+  const [correct, setCorrect] = useState(0)
+  const [wrong, setWrong] = useState(0)
+  const [skipped, setSkipped] = useState(0)
   
   // Extract all highlights across all flashcards to form questions
   const allQuestions = useMemo(() => {
     const questions: any[] = []
     let filtered = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
     filtered = getCardsForMode(filtered, gameInputMode)
-    filtered.forEach(card => {
-      card.highlights.forEach(h => {
+    
+    if (uniqueWords) {
+      // Each card appears only once, using only first highlight
+      filtered.forEach(card => {
+        if (card.highlights.length === 0) return
+        const h = card.highlights[0]
         const wordText = extractWordText(card.sentence, h.wordIndices)
         questions.push({
           cardId: card.id,
@@ -308,9 +317,22 @@ function QuizGame({ onExit }: { onExit: () => void }) {
           correctMeaning: h.meaning,
         })
       })
-    })
+    } else {
+      filtered.forEach(card => {
+        card.highlights.forEach(h => {
+          const wordText = extractWordText(card.sentence, h.wordIndices)
+          questions.push({
+            cardId: card.id,
+            highlightId: h.id,
+            word: wordText,
+            sentence: card.sentence,
+            correctMeaning: h.meaning,
+          })
+        })
+      })
+    }
     return questions.sort(() => Math.random() - 0.5)
-  }, [flashcards, seed, activeTags])
+  }, [flashcards, seed, activeTags, uniqueWords])
 
   const allMeanings = useMemo(() => {
     return Array.from(new Set(allQuestions.map(q => q.correctMeaning)))
@@ -330,6 +352,7 @@ function QuizGame({ onExit }: { onExit: () => void }) {
 
   const options = useMemo(() => {
     if (!currentQ) return []
+    const wrongCount = answerCount - 1
     let wrongOptions: string[] = []
     
     if (quizMode === 'w2m') {
@@ -338,22 +361,30 @@ function QuizGame({ onExit }: { onExit: () => void }) {
         q.correctMeaning.toLowerCase() !== currentQ.correctMeaning.toLowerCase()
       )
       const uniqueWrongMeanings = Array.from(new Set(validWrongQs.map(q => q.correctMeaning)))
-      wrongOptions = uniqueWrongMeanings.sort(() => Math.random() - 0.5).slice(0, 5)
+      wrongOptions = uniqueWrongMeanings.sort(() => Math.random() - 0.5).slice(0, wrongCount)
     } else {
       const validWrongQs = allQuestions.filter(q => 
         q.correctMeaning.toLowerCase() !== currentQ.correctMeaning.toLowerCase() &&
         q.word.toLowerCase() !== currentQ.word.toLowerCase()
       )
       const uniqueWrongWords = Array.from(new Set(validWrongQs.map(q => q.word)))
-      wrongOptions = uniqueWrongWords.sort(() => Math.random() - 0.5).slice(0, 5)
+      wrongOptions = uniqueWrongWords.sort(() => Math.random() - 0.5).slice(0, wrongCount)
     }
     
     const combined = [correctOption, ...wrongOptions]
     return combined.sort(() => Math.random() - 0.5)
-  }, [correctOption, allMeanings, allWords, quizMode, currentQ])
+  }, [correctOption, allMeanings, allWords, quizMode, currentQ, answerCount])
   
   if (allQuestions.length === 0) {
     return <EmptyState onExit={onExit} />
+  }
+
+  const handleRestart = () => {
+    setSeed(s => s + 1)
+    setCurrentIndex(0)
+    setCorrect(0)
+    setWrong(0)
+    setSkipped(0)
   }
 
   if (currentIndex >= allQuestions.length) {
@@ -361,7 +392,24 @@ function QuizGame({ onExit }: { onExit: () => void }) {
       <div className="text-center py-20 animate-in fade-in flex flex-col items-center">
         <div className="text-6xl mb-6">🎉</div>
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Quiz Complete!</h2>
-        <p className="text-gray-500 dark:text-gray-400 mb-8">You have answered all questions.</p>
+        <div className="flex gap-6 mb-8 mt-2">
+          <div className="flex flex-col items-center">
+            <span className="text-2xl font-bold text-green-500">{correct}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Correct</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-2xl font-bold text-red-500">{wrong}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Wrong</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-2xl font-bold text-yellow-500">{skipped}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Skipped</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-2xl font-bold text-gray-700 dark:text-gray-300">{allQuestions.length}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Total</span>
+          </div>
+        </div>
         
         <div className="flex gap-4">
           <button 
@@ -371,10 +419,7 @@ function QuizGame({ onExit }: { onExit: () => void }) {
             Back
           </button>
           <button 
-            onClick={() => {
-              setSeed(s => s + 1)
-              setCurrentIndex(0)
-            }}
+            onClick={handleRestart}
             className="bg-purple-600 text-white px-6 py-2.5 rounded-lg hover:bg-purple-700 font-medium inline-flex items-center gap-2 shadow-sm transition-colors"
           >
             <RefreshCcw size={18} /> Play Again
@@ -384,21 +429,30 @@ function QuizGame({ onExit }: { onExit: () => void }) {
     )
   }
 
-
-
   const handleSelect = (option: string) => {
     if (selectedOption) return // prevent double click
     setSelectedOption(option)
-    
+    if (option === correctOption) {
+      setCorrect(c => c + 1)
+    } else {
+      setWrong(w => w + 1)
+    }
     setTimeout(() => {
       setSelectedOption(null)
       setCurrentIndex(i => i + 1)
     }, 1500)
   }
 
+  const handleSkip = () => {
+    if (selectedOption) return
+    setSkipped(s => s + 1)
+    setCurrentIndex(i => i + 1)
+  }
+
   return (
     <div className="max-w-xl mx-auto py-6 animate-in fade-in flex flex-col h-full">
-      <div className="flex justify-between items-center mb-8">
+      {/* Top bar */}
+      <div className="flex justify-between items-center mb-6 flex-wrap gap-2">
         <button onClick={onExit} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
           <ArrowLeft size={24} />
         </button>
@@ -406,21 +460,46 @@ function QuizGame({ onExit }: { onExit: () => void }) {
           <button onClick={() => setQuizMode('w2m')} className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${quizMode === 'w2m' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}>Word → Meaning</button>
           <button onClick={() => setQuizMode('m2w')} className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${quizMode === 'm2w' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}>Meaning → Word</button>
         </div>
-        <div className="w-6" />
-        <button 
-          onClick={() => setShowContext(!showContext)}
-          className={`text-sm font-medium px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5 transition-colors border ${
-            showContext 
-              ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800' 
-              : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-          }`}
-        >
-          {showContext ? <Lightbulb size={16} /> : <LightbulbOff size={16} />}
-          <span className="hidden sm:inline">Context</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Unique words toggle */}
+          <button
+            onClick={() => { setUniqueWords(u => !u); setCurrentIndex(0); setCorrect(0); setWrong(0); setSkipped(0) }}
+            title={uniqueWords ? 'Each word shown once (ON)' : 'Each word shown once (OFF)'}
+            className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors ${
+              uniqueWords
+                ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700'
+                : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+          >
+            1×
+          </button>
+          {/* Answer count selector */}
+          <select
+            value={answerCount}
+            onChange={e => setAnswerCount(Number(e.target.value))}
+            className="text-xs font-medium px-2 py-1.5 rounded-lg border bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-400 cursor-pointer"
+            title="Number of answer options"
+          >
+            {[2,3,4,5,6,7,8].map(n => (
+              <option key={n} value={n}>{n} options</option>
+            ))}
+          </select>
+          {/* Context toggle */}
+          <button 
+            onClick={() => setShowContext(!showContext)}
+            className={`text-sm font-medium px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5 transition-colors border ${
+              showContext 
+                ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800' 
+                : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+          >
+            {showContext ? <Lightbulb size={16} /> : <LightbulbOff size={16} />}
+            <span className="hidden sm:inline">Context</span>
+          </button>
+        </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-8 text-center flex-1 flex flex-col items-center justify-center relative">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-6 text-center flex-1 flex flex-col items-center justify-center relative">
         {quizMode === 'w2m' && (
           <button
             onClick={() => speakEnglish(currentQ.word)}
@@ -436,9 +515,17 @@ function QuizGame({ onExit }: { onExit: () => void }) {
           </p>
         )}
         <h2 className="text-4xl font-bold text-purple-600 dark:text-purple-400 break-words whitespace-pre-wrap">{questionText}</h2>
+        {/* Skip button inside card */}
+        <button
+          onClick={handleSkip}
+          disabled={!!selectedOption}
+          className="absolute top-4 right-4 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-30"
+        >
+          Skip ⏭
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+      <div className={`grid gap-3 mb-4 ${answerCount <= 2 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
         {options.map((opt, i) => {
           let baseBtnClass = "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
           let hoverBtnClass = "hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30"
@@ -457,8 +544,6 @@ function QuizGame({ onExit }: { onExit: () => void }) {
           }
 
           const btnClass = `${baseBtnClass} ${hoverBtnClass}`
-          
-          // For the absolute overlay, we want a SOLID background when hovered in dark mode, not /30 opacity!
           const overlayClass = selectedOption 
             ? btnClass 
             : "bg-purple-50 dark:bg-gray-700 border-purple-300 dark:border-purple-500 text-gray-700 dark:text-gray-200"
@@ -490,9 +575,17 @@ function QuizGame({ onExit }: { onExit: () => void }) {
           )
         })}
       </div>
-      <p className="text-center text-sm font-medium text-gray-500 dark:text-gray-400 mt-2">
-        {currentIndex + 1} / {allQuestions.length}
-      </p>
+
+      {/* Stats bar */}
+      <div className="flex items-center justify-center gap-4 text-sm font-medium mt-2 py-2 px-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+        <span className="text-green-600 dark:text-green-400">✅ {correct}</span>
+        <span className="text-gray-300 dark:text-gray-600">|</span>
+        <span className="text-red-500 dark:text-red-400">❌ {wrong}</span>
+        <span className="text-gray-300 dark:text-gray-600">|</span>
+        <span className="text-yellow-500 dark:text-yellow-400">⏭ {skipped}</span>
+        <span className="text-gray-300 dark:text-gray-600">|</span>
+        <span className="text-gray-500 dark:text-gray-400">{currentIndex + 1} / {allQuestions.length}</span>
+      </div>
     </div>
   )
 }
