@@ -1,6 +1,6 @@
 import { useMemo, ReactNode } from 'react'
 import { ArrowLeft, RefreshCcw } from 'lucide-react'
-import { useFlashcardStore, getCardTags } from '../../store'
+import { useFlashcardStore, getCardTags, getCardsForMode } from '../../store'
 import { extractWordText } from '../../utils'
 
 export type Note = {
@@ -20,33 +20,56 @@ export function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
-export function useNotes(seed: number): Note[] {
-  const { flashcards, activeTags } = useFlashcardStore()
+export function useNotes(seed: number, allHighlights?: boolean): Note[] {
+  const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
   return useMemo(() => {
     const notes: Note[] = []
-    const filtered = activeTags.length > 0
+    let filtered = activeTags.length > 0
       ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t)))
       : flashcards
+      
+    filtered = getCardsForMode(filtered, gameInputMode)
     filtered.forEach(card => {
-      card.highlights.forEach(h => {
+      if (card.highlights.length === 0) return
+      
+      if (allHighlights) {
+        card.highlights.forEach(h => {
+          notes.push({
+            id: h.id,
+            word: extractWordText(card.sentence, h.wordIndices),
+            meaning: h.meaning,
+            sentence: card.sentence,
+            cardId: card.id,
+          })
+        })
+      } else {
+        let selectedHighlight = card.highlights[0]
+        if (card.highlights.length > 1) {
+          const randIndex = Math.floor(Math.abs(Math.sin(card.id.length + seed)) * card.highlights.length)
+          selectedHighlight = card.highlights[randIndex]
+        }
+        
         notes.push({
-          id: h.id,
-          word: extractWordText(card.sentence, h.wordIndices),
-          meaning: h.meaning,
+          id: selectedHighlight.id,
+          word: extractWordText(card.sentence, selectedHighlight.wordIndices),
+          meaning: selectedHighlight.meaning,
           sentence: card.sentence,
           cardId: card.id,
         })
-      })
+      }
     })
     return shuffle(notes)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flashcards, seed, activeTags])
+  }, [flashcards, seed, activeTags, gameInputMode, allHighlights])
 }
 
-export function EmptyState({ onExit, text = 'No notes found. Highlight words first!' }: { onExit: () => void, text?: string }) {
+export function EmptyState({ onExit, text }: { onExit: () => void, text?: string }) {
+  const mode = useFlashcardStore.getState().gameInputMode
+  const defaultText = mode === 'word' ? 'No suitable flashcards found.' : 'No notes found. Highlight words first!'
+  const display = text || defaultText
   return (
     <div className="text-center text-gray-500 dark:text-gray-400 py-20">
-      <p>{text}</p>
+      <p>{display}</p>
       <button onClick={onExit} className="mt-4 text-purple-600 hover:underline">Go back</button>
     </div>
   )

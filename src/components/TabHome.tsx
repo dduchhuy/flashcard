@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react'
 import { useFlashcardStore, getCardTags } from '../store'
 import { FlashcardItem } from './FlashcardItem'
-import { Plus, Sparkles, Tag, X, Check, BookOpen, Command } from 'lucide-react'
+import { Plus, Sparkles, Tag, X, Check, BookOpen, Command, Lock, Unlock, Type, FileText } from 'lucide-react'
+import { extractWordsAndSpaces } from '../utils'
 
 export function TabHome() {
   const { flashcards, addFlashcard } = useFlashcardStore()
@@ -9,6 +10,9 @@ export function TabHome() {
   const [tagInput, setTagInput] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [showSuccess, setShowSuccess] = useState(false)
+  const [isTagsLocked, setIsTagsLocked] = useState(false)
+  const [inputMode, setInputMode] = useState<'sentence' | 'word'>('sentence')
+  const [wordMeanings, setWordMeanings] = useState([{ meaning: '', example: '' }])
   
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -48,10 +52,27 @@ export function TabHome() {
     }
 
     if (newSentence.trim()) {
-      addFlashcard(newSentence, finalTags)
+      if (inputMode === 'sentence') {
+        addFlashcard(newSentence, finalTags)
+      } else {
+        const { words } = extractWordsAndSpaces(newSentence)
+        const indices = Array.from({ length: words.length }, (_, i) => i)
+        const highlights = wordMeanings
+          .filter(m => m.meaning.trim() !== '')
+          .map(m => ({
+            wordIndices: indices,
+            meaning: m.meaning.trim(),
+            example: m.example?.trim()
+          }))
+        addFlashcard(newSentence, finalTags, highlights)
+        setWordMeanings([{ meaning: '', example: '' }])
+      }
+
       setNewSentence('')
-      setTagInput('')
-      setSelectedTags([])
+      if (!isTagsLocked) {
+        setTagInput('')
+        setSelectedTags([])
+      }
       
       setShowSuccess(true)
       setTimeout(() => setShowSuccess(false), 2500)
@@ -77,7 +98,7 @@ export function TabHome() {
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Add New Flashcard</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Enter a sentence to create your flashcard note</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Create a flashcard from a sentence or a word</p>
             </div>
           </div>
 
@@ -89,42 +110,132 @@ export function TabHome() {
           )}
         </div>
 
-        <form onSubmit={handleAdd} className="space-y-4">
-          {/* Sentence Input Area */}
-          <div className="relative rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 focus-within:bg-white dark:focus-within:bg-gray-800 focus-within:border-purple-500 dark:focus-within:border-purple-500 focus-within:ring-4 focus-within:ring-purple-500/10 transition-all p-3.5">
-            <textarea
-              ref={textareaRef}
-              value={newSentence}
-              onChange={(e) => setNewSentence(e.target.value)}
-              onKeyDown={(e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-                  e.preventDefault()
-                  handleAdd()
-                }
-              }}
-              placeholder="Type or paste your sentence here (e.g. 'She decided to pursue her passion for digital art.')..."
-              className="w-full bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg leading-relaxed focus:outline-none resize-none min-h-[90px]"
-              rows={3}
-            />
+        <div className="flex bg-gray-100 dark:bg-gray-700/50 p-1 rounded-xl w-fit mb-5">
+          <button
+            type="button"
+            onClick={() => setInputMode('sentence')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              inputMode === 'sentence' ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+            }`}
+          >
+            <Type size={16} /> Sentence
+          </button>
+          <button
+            type="button"
+            onClick={() => setInputMode('word')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              inputMode === 'word' ? 'bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+            }`}
+          >
+            <FileText size={16} /> Flashcard
+          </button>
+        </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700/60 text-xs text-gray-400">
-              <span>{wordCount} {wordCount === 1 ? 'word' : 'words'}</span>
-              <span className="hidden sm:flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-700 font-mono text-[10px] text-gray-600 dark:text-gray-300 flex items-center gap-0.5">
-                  <Command size={10} /> Enter
-                </kbd>
-                to submit
-              </span>
+        <form onSubmit={handleAdd} className="space-y-4">
+          {inputMode === 'sentence' ? (
+            <div className="relative rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 focus-within:bg-white dark:focus-within:bg-gray-800 focus-within:border-purple-500 dark:focus-within:border-purple-500 focus-within:ring-4 focus-within:ring-purple-500/10 transition-all p-3.5">
+              <textarea
+                ref={textareaRef}
+                value={newSentence}
+                onChange={(e) => setNewSentence(e.target.value)}
+                onKeyDown={(e) => {
+                  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                    e.preventDefault()
+                    handleAdd()
+                  }
+                }}
+                placeholder="Type or paste your sentence here (e.g. 'She decided to pursue her passion for digital art.')..."
+                className="w-full bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg leading-relaxed focus:outline-none resize-none min-h-[90px]"
+                rows={3}
+              />
+
+              <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700/60 text-xs text-gray-400">
+                <span>{wordCount} {wordCount === 1 ? 'word' : 'words'}</span>
+                <span className="hidden sm:flex items-center gap-1">
+                  <kbd className="px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-700 font-mono text-[10px] text-gray-600 dark:text-gray-300 flex items-center gap-0.5">
+                    <Command size={10} /> Enter
+                  </kbd>
+                  to submit
+                </span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="relative rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 focus-within:bg-white dark:focus-within:bg-gray-800 focus-within:border-purple-500 dark:focus-within:border-purple-500 focus-within:ring-4 focus-within:ring-purple-500/10 transition-all p-3.5">
+                <input
+                  ref={textareaRef as any}
+                  value={newSentence}
+                  onChange={(e) => setNewSentence(e.target.value)}
+                  placeholder="Enter a word or phrase (e.g. 'Apple')..."
+                  className="w-full bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg leading-relaxed focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Meanings & Examples</div>
+                {wordMeanings.map((m, i) => (
+                  <div key={i} className="flex gap-2 items-start relative group">
+                    <div className="flex-1 space-y-2 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-700/50">
+                      <input
+                        placeholder="Meaning (e.g. Trái táo)"
+                        value={m.meaning}
+                        onChange={e => {
+                          const newM = [...wordMeanings]
+                          newM[i].meaning = e.target.value
+                          setWordMeanings(newM)
+                        }}
+                        className="w-full bg-transparent text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none font-medium"
+                      />
+                      <input
+                        placeholder="Example sentence (e.g. I eat an apple everyday)"
+                        value={m.example}
+                        onChange={e => {
+                          const newM = [...wordMeanings]
+                          newM[i].example = e.target.value
+                          setWordMeanings(newM)
+                        }}
+                        className="w-full bg-transparent text-sm text-gray-600 dark:text-gray-300 placeholder-gray-400 focus:outline-none italic"
+                      />
+                    </div>
+                    {wordMeanings.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setWordMeanings(wordMeanings.filter((_, idx) => idx !== i))}
+                        className="p-1.5 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity mt-2"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setWordMeanings([...wordMeanings, { meaning: '', example: '' }])}
+                  className="text-xs text-purple-600 dark:text-purple-400 hover:underline font-medium flex items-center gap-1 mt-1"
+                >
+                  <Plus size={12} /> Add another meaning
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Tags Selection Section */}
           <div className="space-y-2.5">
             <div className="flex items-center justify-between text-xs font-semibold text-gray-600 dark:text-gray-400">
               <span className="flex items-center gap-1.5">
                 <Tag size={14} className="text-purple-500" /> Tags
+                <button
+                  type="button"
+                  onClick={() => setIsTagsLocked(!isTagsLocked)}
+                  className={`ml-1 p-1 rounded-md transition-colors ${
+                    isTagsLocked ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400' : 'text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                  title={isTagsLocked ? "Tags locked" : "Lock tags"}
+                >
+                  {isTagsLocked ? <Lock size={12} /> : <Unlock size={12} />}
+                </button>
               </span>
-              {selectedTags.length > 0 && (
+              {selectedTags.length > 0 && !isTagsLocked && (
                 <button
                   type="button"
                   onClick={() => setSelectedTags([])}
@@ -198,8 +309,7 @@ export function TabHome() {
           <div className="pt-2 flex justify-end">
             <button
               type="submit"
-              disabled={!newSentence.trim()}
-              className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white px-7 py-3 rounded-xl font-medium shadow-sm hover:shadow transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white px-7 py-3 rounded-xl font-medium shadow-sm hover:shadow transition-all flex items-center justify-center gap-2"
             >
               <Plus size={20} />
               <span>Add Flashcard</span>

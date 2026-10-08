@@ -1,28 +1,36 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
-import { useFlashcardStore, getCardTags } from '../../store'
+import { useFlashcardStore, getCardTags, getCardsForMode } from '../../store'
 import { ArrowLeft, RefreshCcw, Volume2, Lightbulb } from 'lucide-react'
 import { extractWordText, fuzzyMatch, speakEnglish } from '../../utils'
 import { LetterInput, letterIndices, buildGuess } from './LetterInput'
 
 export function ListenGame({ onExit }: { onExit: () => void }) {
-  const { flashcards, activeTags } = useFlashcardStore()
+  const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
 
   const allQuestions = useMemo(() => {
     const questions: any[] = []
-    const filtered = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
+    let filtered = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
+    filtered = getCardsForMode(filtered, gameInputMode)
+    
     filtered.forEach(card => {
-      card.highlights.forEach(h => {
-        questions.push({
-          id: h.id,
-          word: extractWordText(card.sentence, h.wordIndices),
-          sentence: card.sentence,
-          meaning: h.meaning
-        })
+      if (card.highlights.length === 0) return
+      let selectedHighlight = card.highlights[0]
+      if (card.highlights.length > 1) {
+        const randIndex = Math.floor(Math.abs(Math.sin(card.id.length + seed)) * card.highlights.length)
+        selectedHighlight = card.highlights[randIndex]
+      }
+      const h = selectedHighlight
+      questions.push({
+        id: h.id,
+        word: extractWordText(card.sentence, h.wordIndices),
+        sentence: h.example ? h.example : card.sentence,
+        meaning: h.meaning,
+        isExample: !!h.example
       })
     })
     return questions.sort(() => Math.random() - 0.5)
-  }, [flashcards, seed, activeTags])
+  }, [flashcards, seed, activeTags, gameInputMode])
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [inputValue, setInputValue] = useState('')
@@ -34,6 +42,7 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
 
   // Audio settings
   const [readMode, setReadMode] = useState<'word' | 'sentence'>('word')
+  const [hideMeaning, setHideMeaning] = useState(true)
 
   useEffect(() => {
     if (status === 'playing') {
@@ -43,7 +52,14 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
 
   useEffect(() => {
     setHinted([])
+    setHideMeaning(true)
   }, [currentIndex])
+
+  useEffect(() => {
+    if (useFlashcardStore.getState().gameInputMode === 'word') {
+      setReadMode('word')
+    }
+  }, [])
 
   const currentQ = allQuestions[currentIndex]
 
@@ -142,21 +158,30 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
             >
               Word
             </button>
-            <button 
-              onClick={() => setReadMode('sentence')}
-              className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${readMode === 'sentence' ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
-            >
-              Sentence
-            </button>
+            {useFlashcardStore.getState().gameInputMode !== 'word' && (
+              <button 
+                onClick={() => setReadMode('sentence')}
+                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${readMode === 'sentence' ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+              >
+                Sentence
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-6 text-center max-w-xl mx-auto w-full relative">
         
-        <p className={`text-lg text-gray-800 dark:text-gray-200 mb-8 leading-relaxed whitespace-pre-wrap px-4 transition-all duration-300 ${!showFullSentence ? 'blur-sm select-none opacity-60' : ''}`}>
-          {currentQ.sentence}
-        </p>
+        {showFullSentence ? (
+          <p className="text-lg text-gray-800 dark:text-gray-200 mb-8 leading-relaxed whitespace-pre-wrap px-4">
+            {currentQ.sentence}
+          </p>
+        ) : (
+          <div className="text-gray-400 dark:text-gray-500 mb-8 px-4 flex items-center justify-center gap-2">
+            <Volume2 size={18} className="animate-pulse" />
+            <span className="text-sm font-medium">Listen and type the word</span>
+          </div>
+        )}
 
         <button
           onClick={() => playAudio()}
@@ -166,8 +191,20 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
         </button>
         
         <div className="bg-blue-50 dark:bg-gray-900 rounded-xl p-4 mb-8 border border-blue-100 dark:border-gray-700">
-          <span className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Meaning</span>
-          <span className="font-medium text-blue-700 dark:text-blue-300 text-lg break-words whitespace-pre-wrap">{currentQ.meaning}</span>
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-gray-500 dark:text-gray-400">Meaning</span>
+            <button 
+              onClick={() => setHideMeaning(!hideMeaning)}
+              className="text-xs px-2.5 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium flex items-center gap-1"
+            >
+              {hideMeaning ? 'Show' : 'Hide'}
+            </button>
+          </div>
+          {!hideMeaning && (
+            <div className="mt-3 font-medium text-blue-700 dark:text-blue-300 text-lg break-words whitespace-pre-wrap block">
+              {currentQ.meaning}
+            </div>
+          )}
         </div>
 
         <div className="max-w-sm mx-auto">

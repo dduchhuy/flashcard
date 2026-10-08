@@ -1,24 +1,40 @@
 import { useState, useMemo } from 'react'
 import { RotateCcw, Volume2 } from 'lucide-react'
-import { useFlashcardStore, getCardTags } from '../../store'
+import { useFlashcardStore, getCardTags, getCardsForMode } from '../../store'
 import { extractWordsAndSpaces, speakEnglish } from '../../utils'
 import { shuffle, EmptyState, ResultScreen, BackBar, BottomCounter, softBtn } from './shared'
 
 export function SentenceGame({ onExit }: { onExit: () => void }) {
-  const { flashcards, activeTags } = useFlashcardStore()
+  const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
 
   const items = useMemo(() => {
-    const filtered = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
-    const list = filtered
-      .map(card => ({
-        card,
-        tokens: extractWordsAndSpaces(card.sentence).words.filter(w => w.length > 0),
-      }))
-      .filter(x => x.tokens.length >= 3)
+    let filtered = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
+    filtered = getCardsForMode(filtered, gameInputMode)
+    let list: { card: any, sentence: string, tokens: string[] }[] = []
+    
+    filtered.forEach(card => {
+      if (gameInputMode === 'word' && card.highlights.length > 0) {
+        card.highlights.forEach(h => {
+          const targetSentence = h.example || card.sentence
+          list.push({
+            card,
+            sentence: targetSentence,
+            tokens: extractWordsAndSpaces(targetSentence).words.filter(w => w.length > 0)
+          })
+        })
+      } else {
+        list.push({
+          card,
+          sentence: card.sentence,
+          tokens: extractWordsAndSpaces(card.sentence).words.filter(w => w.length > 0)
+        })
+      }
+    })
+    
+    list = list.filter(x => x.tokens.length >= 3)
     return shuffle(list)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flashcards, seed, activeTags])
+  }, [flashcards, seed, activeTags, gameInputMode])
 
   const [index, setIndex] = useState(0)
   const [score, setScore] = useState(0)
@@ -53,7 +69,7 @@ export function SentenceGame({ onExit }: { onExit: () => void }) {
       if (guess === item.tokens.join(' ')) {
         setStatus('correct')
         if (!wrongOnce) setScore(s => s + 1)
-        speakEnglish(item.card.sentence)
+        speakEnglish(item.sentence)
         setTimeout(next, 2200)
       } else {
         setStatus('wrong')
@@ -94,7 +110,7 @@ export function SentenceGame({ onExit }: { onExit: () => void }) {
           'border-gray-300 dark:border-gray-600'
         }`}>
           {status === 'correct' ? (
-            <span className="text-lg text-green-700 dark:text-green-300 whitespace-pre-wrap">{item.card.sentence}</span>
+            <span className="text-lg text-green-700 dark:text-green-300 whitespace-pre-wrap">{item.sentence}</span>
           ) : placed.map((id, pos) => (
             <button key={pos} onClick={() => removeAt(pos)} className="px-3 py-1.5 rounded-lg bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-200 font-medium hover:bg-purple-200 dark:hover:bg-purple-900/60 transition-colors">
               {item.tokens[id]}
@@ -119,12 +135,12 @@ export function SentenceGame({ onExit }: { onExit: () => void }) {
 
         <div className="flex flex-wrap gap-3 justify-center">
           <button onClick={() => setPlaced([])} disabled={status !== 'playing'} title="Reset" className={softBtn}><RotateCcw size={20} /></button>
-          <button onClick={() => speakEnglish(item.card.sentence)} title="Listen to sentence" className={softBtn}><Volume2 size={20} /></button>
+          <button onClick={() => speakEnglish(item.sentence)} title="Listen to sentence" className={softBtn}><Volume2 size={20} /></button>
           <button onClick={next} disabled={status !== 'playing'} className={softBtn}>Skip</button>
         </div>
 
         {status === 'correct' && (
-          <button onClick={() => speakEnglish(item.card.sentence)} title="Listen" className="absolute bottom-4 right-4 p-2 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+          <button onClick={() => speakEnglish(item.sentence)} title="Listen" className="absolute bottom-4 right-4 p-2 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
             <Volume2 size={22} />
           </button>
         )}

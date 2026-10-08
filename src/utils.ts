@@ -95,44 +95,90 @@ export function speakEnglish(text: string) {
   
   const settings = useFlashcardStore.getState().settings
   
-  let targetAccent = settings.voiceAccent
-  if (targetAccent === 'Random') {
-    targetAccent = Math.random() > 0.5 ? 'US' : 'UK'
-  }
-  
-  let targetGender = settings.voiceGender
-  if (targetGender === 'Random') {
-    targetGender = Math.random() > 0.5 ? 'Male' : 'Female'
-  }
-
-  const langPrefix = targetAccent === 'US' ? 'en-US' : 'en-GB'
-  const langMatch = targetAccent === 'US' ? 'en_US' : 'en_GB'
-  const matchingVoices = voices.filter(v => v.lang.startsWith(langPrefix) || v.lang === langMatch)
-
   let selectedVoice = null
-  if (matchingVoices.length > 0) {
-    const isMale = targetGender === 'Male'
-    for (const v of matchingVoices) {
-      const name = v.name.toLowerCase()
-      if (isMale) {
-        if ((name.includes('male') && !name.includes('female')) || name.includes('daniel') || name.includes('alex') || name.includes('fred') || name.includes('oliver') || name.includes('arthur')) { 
-          selectedVoice = v; 
-          break; 
-        }
-      } else {
-        if (name.includes('female') || name.includes('samantha') || name.includes('serena') || name.includes('victoria') || name.includes('karen') || name.includes('moira') || name.includes('tessa') || name.includes('google us english')) { 
-          selectedVoice = v; 
-          break; 
+
+  if (settings.isSpecialAccent && settings.specialAccent) {
+    let langPrefix = ''
+    let nameKeywords: string[] = []
+    
+    if (settings.specialAccent === 'Indian') {
+      langPrefix = 'en-IN'
+      nameKeywords = ['neerja', 'heera', 'ravi', 'prabhat', 'indian', 'india']
+    } else if (settings.specialAccent === 'Irish') {
+      langPrefix = 'en-IE'
+      nameKeywords = ['emily', 'orla', 'irish', 'ireland']
+    } else if (settings.specialAccent === 'French') {
+      langPrefix = 'fr-FR'
+      nameKeywords = ['denise', 'henri', 'hortense', 'claude', 'french', 'france', 'français']
+    }
+
+    const langMatches = voices.filter(v => v.lang.startsWith(langPrefix))
+    const nameMatches = voices.filter(v => nameKeywords.some(kw => v.name.toLowerCase().includes(kw)))
+    
+    // Combine and deduplicate
+    const specialVoices = Array.from(new Set([...langMatches, ...nameMatches]))
+    
+    // Sort to prioritize Google/Online voices
+    specialVoices.sort((a, b) => {
+      const scoreA = (a.name.includes('Online') || a.name.includes('Google')) ? 1 : 0
+      const scoreB = (b.name.includes('Online') || b.name.includes('Google')) ? 1 : 0
+      return scoreB - scoreA
+    })
+
+    if (specialVoices.length > 0) {
+      selectedVoice = specialVoices[0]
+    } else {
+      // Fallback if the specific accent is not installed on the OS
+      u.lang = langPrefix
+    }
+  } else {
+    // Normal Accent/Gender Logic
+    let targetAccent = settings.voiceAccent
+    if (targetAccent === 'Random') {
+      targetAccent = Math.random() > 0.5 ? 'US' : 'UK'
+    }
+    
+    let targetGender = settings.voiceGender
+    if (targetGender === 'Random') {
+      targetGender = Math.random() > 0.5 ? 'Male' : 'Female'
+    }
+
+    const langPrefix = targetAccent === 'US' ? 'en-US' : 'en-GB'
+    const langMatch = targetAccent === 'US' ? 'en_US' : 'en_GB'
+    const matchingVoices = voices.filter(v => v.lang.startsWith(langPrefix) || v.lang === langMatch)
+
+    if (matchingVoices.length > 0) {
+      const isMale = targetGender === 'Male'
+      
+      const maleNames = ['guy', 'christopher', 'eric', 'ryan', 'george', 'daniel', 'alex', 'david', 'arthur', 'william', 'male']
+      const femaleNames = ['aria', 'jenny', 'ana', 'sonia', 'libby', 'mia', 'samantha', 'serena', 'victoria', 'karen', 'tessa', 'female', 'google us english', 'google uk english female']
+      
+      const sortedVoices = [...matchingVoices].sort((a, b) => {
+        const scoreA = (a.name.includes('Online') || a.name.includes('Natural') || a.name.includes('Google')) ? 1 : 0
+        const scoreB = (b.name.includes('Online') || b.name.includes('Natural') || b.name.includes('Google')) ? 1 : 0
+        return scoreB - scoreA
+      })
+
+      const targetNames = isMale ? maleNames : femaleNames
+      
+      for (const v of sortedVoices) {
+        const name = v.name.toLowerCase()
+        if (isMale && name.includes('female')) continue
+        if (!isMale && name.includes('male') && !name.includes('female')) continue
+        
+        if (targetNames.some(n => name.includes(n))) {
+          selectedVoice = v
+          break
         }
       }
+      if (!selectedVoice) selectedVoice = sortedVoices[0]
+    } else {
+      u.lang = langPrefix
     }
-    if (!selectedVoice) selectedVoice = matchingVoices[0]
   }
 
   if (selectedVoice) {
     u.voice = selectedVoice
-  } else {
-    u.lang = langPrefix
   }
 
   u.rate = 0.9

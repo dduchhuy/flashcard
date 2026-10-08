@@ -1,6 +1,7 @@
 import { useRef, useState, useMemo } from 'react'
 import { useFlashcardStore, getCardTags } from '../store'
-import { Download, Upload, RotateCcw, Moon, Sun, Palette, CheckCircle2 } from 'lucide-react'
+import { SelectDropdown } from './SelectDropdown'
+import { Download, Upload, RotateCcw, Moon, Sun, Palette, CheckCircle2, Trash2 } from 'lucide-react'
 
 // Convert hex to rgb
 function hexToRgb(hex: string) {
@@ -13,6 +14,7 @@ export function TabSettings() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [exportTag, setExportTag] = useState<string>('all')
+  const [deleteTag, setDeleteTag] = useState<string>('all')
   const [importedTags, setImportedTags] = useState<string[]>([])
 
   const allTags = useMemo(() => {
@@ -28,45 +30,9 @@ export function TabSettings() {
     return list.sort()
   }, [flashcards])
 
-  const handleExport = async () => {
-    let cardsToExport = flashcards
-    if (exportTag !== 'all') {
-      cardsToExport = flashcards.filter(f => {
-        const t = getCardTags(f)
-        if (exportTag === 'notag') return t.length === 0 || t.includes('notag')
-        return t.includes(exportTag)
-      })
-    }
-
-    if (cardsToExport.length === 0) {
-      alert('Không có thẻ nào để export (No cards to export).')
-      return
-    }
-
-    const exportDataObj = {
-      state: { flashcards: cardsToExport },
-      version: 0
-    }
-    const exportData = JSON.stringify(exportDataObj, null, 2)
+  const downloadJSON = (dataObj: any, filename: string) => {
+    const exportData = JSON.stringify(dataObj, null, 2)
     const blob = new Blob([exportData], { type: 'application/json;charset=utf-8' })
-    const filename = `flashcards_${exportTag}_${new Date().toISOString().split('T')[0]}.json`
-
-    if ('showSaveFilePicker' in window) {
-      try {
-        const handle = await (window as any).showSaveFilePicker({
-          suggestedName: filename,
-          types: [{ description: 'JSON File', accept: { 'application/json': ['.json'] } }],
-        })
-        const writable = await handle.createWritable()
-        await writable.write(blob)
-        await writable.close()
-        return
-      } catch (err: any) {
-        if (err.name !== 'AbortError') console.error(err)
-        return
-      }
-    }
-
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.style.display = 'none'
@@ -76,6 +42,84 @@ export function TabSettings() {
     a.click()
     document.body.removeChild(a)
     setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+
+  const handleExport = async () => {
+    if (flashcards.length === 0) {
+      alert('Không có thẻ nào để export (No cards to export).')
+      return
+    }
+
+    const dateStr = new Date().toISOString().split('T')[0]
+
+    if (exportTag === 'all') {
+      const tagGroups: Record<string, typeof flashcards> = {}
+      flashcards.forEach(f => {
+        const tags = getCardTags(f)
+        if (tags.length === 0) {
+          if (!tagGroups['notag']) tagGroups['notag'] = []
+          tagGroups['notag'].push(f)
+        } else {
+          tags.forEach(t => {
+            if (!tagGroups[t]) tagGroups[t] = []
+            tagGroups[t].push(f)
+          })
+        }
+      })
+      
+      const confirm = window.confirm(`Bạn đang chọn export TẤT CẢ. Hệ thống sẽ tự động tải xuống ${Object.keys(tagGroups).length} file riêng biệt cho từng tag. Bạn có chắc chắn không?`)
+      if (!confirm) return
+      
+      Object.entries(tagGroups).forEach(([tag, cards], index) => {
+        setTimeout(() => {
+          downloadJSON({ state: { flashcards: cards }, version: 0 }, `${tag}_${dateStr}.json`)
+        }, index * 500)
+      })
+      return
+    }
+
+    let cardsToExport = flashcards.filter(f => {
+      const t = getCardTags(f)
+      if (exportTag === 'notag') return t.length === 0 || t.includes('notag')
+      return t.includes(exportTag)
+    })
+
+    if (cardsToExport.length === 0) {
+      alert('Không có thẻ nào để export (No cards to export).')
+      return
+    }
+
+    downloadJSON({ state: { flashcards: cardsToExport }, version: 0 }, `${exportTag}_${dateStr}.json`)
+  }
+
+  const handleDelete = () => {
+    if (flashcards.length === 0) {
+      alert('No cards to delete.')
+      return
+    }
+
+    if (deleteTag === 'all') {
+      const sure = window.confirm('Are you sure you want to delete ALL flashcards?\n(This action cannot be undone)')
+      if (sure) {
+        useFlashcardStore.setState({ flashcards: [] })
+        alert('All flashcards have been deleted.')
+      }
+    } else {
+      const sure = window.confirm(`Are you sure you want to delete all flashcards with tag "${deleteTag}"?`)
+      if (sure) {
+        useFlashcardStore.setState(state => {
+          return {
+            flashcards: state.flashcards.filter(f => {
+              const t = getCardTags(f)
+              if (deleteTag === 'notag') return t.length > 0 && !t.includes('notag')
+              return !t.includes(deleteTag)
+            })
+          }
+        })
+        alert(`Deleted flashcards with tag "${deleteTag}".`)
+        setDeleteTag('all')
+      }
+    }
   }
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,7 +189,37 @@ export function TabSettings() {
         }
 
         const existingMap = new Map(currentFlashcards.map(f => [f.id, f]))
-        allImportedCards.forEach(c => existingMap.set(c.id, c))
+        
+        allImportedCards.forEach(newCard => {
+          const existingCard = Array.from(existingMap.values()).find(
+            c => c.sentence.toLowerCase().trim() === newCard.sentence.toLowerCase().trim()
+          )
+          
+          if (existingCard) {
+            // Merge tags
+            const existingTags = getCardTags(existingCard)
+            const newCardTags = getCardTags(newCard)
+            const mergedTags = Array.from(new Set([...existingTags, ...newCardTags]))
+            
+            // Merge highlights
+            const mergedHighlights = [...existingCard.highlights]
+            if (newCard.highlights && Array.isArray(newCard.highlights)) {
+              newCard.highlights.forEach((nh: any) => {
+                if (!mergedHighlights.some(eh => eh.wordIndices.join(',') === nh.wordIndices.join(','))) {
+                  mergedHighlights.push(nh)
+                }
+              })
+            }
+            
+            existingMap.set(existingCard.id, {
+              ...existingCard,
+              tags: mergedTags,
+              highlights: mergedHighlights
+            })
+          } else {
+            existingMap.set(newCard.id, newCard)
+          }
+        })
         return { flashcards: Array.from(existingMap.values()) }
       })
       setImportedTags(Array.from(newTags))
@@ -196,7 +270,13 @@ export function TabSettings() {
               </div>
             </div>
             <button
-              onClick={() => updateSettings({ highlightMode: settings.highlightMode === 'text' ? 'background' : 'text' })}
+              onClick={() => {
+                if (settings.highlightMode === 'text') {
+                  updateSettings({ highlightMode: 'background', highlightColor: '#d8b4fe', hoverColor: '#a855f7' })
+                } else {
+                  updateSettings({ highlightMode: 'text', highlightColor: '#9333ea', hoverColor: '#c084fc' })
+                }
+              }}
               className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${settings.highlightMode === 'text' ? 'bg-purple-600' : 'bg-gray-300'}`}
             >
               <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-sm ${settings.highlightMode === 'text' ? 'translate-x-6' : 'translate-x-1'}`} />
@@ -218,7 +298,7 @@ export function TabSettings() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className={`grid grid-cols-1 gap-4 ${settings.highlightMode === 'text' ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
             {/* Normal Color */}
             <div className="flex flex-col bg-gray-50 dark:bg-gray-900/50 p-5 rounded-xl border border-gray-100 dark:border-gray-700">
               <div className="flex justify-between items-center mb-5">
@@ -233,19 +313,21 @@ export function TabSettings() {
                   />
                 </div>
               </div>
-              <div className="space-y-2.5">
-                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 font-medium">
-                  <span>Opacity</span>
-                  <span>{Math.round(settings.highlightOpacity * 100)}%</span>
+              {settings.highlightMode !== 'text' && (
+                <div className="space-y-2.5">
+                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 font-medium">
+                    <span>Opacity</span>
+                    <span>{Math.round(settings.highlightOpacity * 100)}%</span>
+                  </div>
+                  <input 
+                    type="range" min="0.05" max="1" step="0.05" 
+                    value={settings.highlightOpacity}
+                    onChange={(e) => updateSettings({ highlightOpacity: parseFloat(e.target.value) })}
+                    className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                    style={{ accentColor: settings.highlightColor }}
+                  />
                 </div>
-                <input 
-                  type="range" min="0.05" max="1" step="0.05" 
-                  value={settings.highlightOpacity}
-                  onChange={(e) => updateSettings({ highlightOpacity: parseFloat(e.target.value) })}
-                  className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                  style={{ accentColor: settings.highlightColor }}
-                />
-              </div>
+              )}
             </div>
 
             {/* Hover Color */}
@@ -262,20 +344,43 @@ export function TabSettings() {
                   />
                 </div>
               </div>
-              <div className="space-y-2.5">
-                <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 font-medium">
-                  <span>Opacity</span>
-                  <span>{Math.round(settings.hoverOpacity * 100)}%</span>
+              {settings.highlightMode !== 'text' && (
+                <div className="space-y-2.5">
+                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 font-medium">
+                    <span>Opacity</span>
+                    <span>{Math.round(settings.hoverOpacity * 100)}%</span>
+                  </div>
+                  <input 
+                    type="range" min="0.05" max="1" step="0.05" 
+                    value={settings.hoverOpacity}
+                    onChange={(e) => updateSettings({ hoverOpacity: parseFloat(e.target.value) })}
+                    className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                    style={{ accentColor: settings.hoverColor }}
+                  />
                 </div>
-                <input 
-                  type="range" min="0.05" max="1" step="0.05" 
-                  value={settings.hoverOpacity}
-                  onChange={(e) => updateSettings({ hoverOpacity: parseFloat(e.target.value) })}
-                  className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                  style={{ accentColor: settings.hoverColor }}
-                />
-              </div>
+              )}
             </div>
+
+            {/* Text Color - Only shown in background mode */}
+            {settings.highlightMode !== 'text' && (
+              <div className="flex flex-col bg-gray-50 dark:bg-gray-900/50 p-5 rounded-xl border border-gray-100 dark:border-gray-700">
+                <div className="flex justify-between items-center mb-5">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Text Color</span>
+                  <div className="relative w-8 h-8 rounded-full shadow-sm border-2 border-white dark:border-gray-700 overflow-hidden cursor-pointer ring-2 ring-gray-100 dark:ring-gray-800">
+                    <div className="absolute inset-0" style={{ backgroundColor: settings.highlightTextColor || (settings.isDarkMode ? '#f3f4f6' : '#374151') }} />
+                    <input 
+                      type="color" 
+                      value={settings.highlightTextColor || (settings.isDarkMode ? '#f3f4f6' : '#374151')}
+                      onChange={(e) => updateSettings({ highlightTextColor: e.target.value })}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" 
+                    />
+                  </div>
+                </div>
+                <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                  Choose the text color for highlighted words.
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Preview */}
@@ -286,7 +391,7 @@ export function TabSettings() {
               style={
                 settings.highlightMode === 'text' 
                   ? { color: settings.highlightColor, backgroundColor: 'transparent' }
-                  : { backgroundColor: `rgba(${hexToRgb(settings.highlightColor)}, ${settings.highlightOpacity})`, color: settings.isDarkMode ? '#f3f4f6' : '#111827' }
+                  : { backgroundColor: `rgba(${hexToRgb(settings.highlightColor)}, ${settings.highlightOpacity})`, color: settings.highlightTextColor || (settings.isDarkMode ? '#f3f4f6' : '#374151') }
               }
               onMouseEnter={(e) => {
                 if (settings.highlightMode === 'text') {
@@ -312,41 +417,77 @@ export function TabSettings() {
       {/* Voice Settings Section */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 space-y-5 transition-colors">
         <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-          🔊 Voice Settings
+          Voice Settings
         </h2>
 
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
             <div>
-              <div className="font-medium text-gray-800 dark:text-gray-200">Accent</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Choose English accent preference</div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">Special Accent Mode</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Enable unique regional accents</div>
             </div>
-            <select
-              value={settings.voiceAccent}
-              onChange={(e) => updateSettings({ voiceAccent: e.target.value as 'US' | 'UK' | 'Random' })}
-              className="p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer appearance-none text-center min-w-[120px]"
+            <button
+              onClick={() => updateSettings({ isSpecialAccent: !settings.isSpecialAccent })}
+              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${settings.isSpecialAccent ? 'bg-purple-600' : 'bg-gray-300'}`}
             >
-              <option value="US">🇺🇸 US English</option>
-              <option value="UK">🇬🇧 UK English</option>
-              <option value="Random">🎲 Random</option>
-            </select>
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-sm ${settings.isSpecialAccent ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
-            <div>
-              <div className="font-medium text-gray-800 dark:text-gray-200">Voice Gender</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Choose voice gender preference</div>
+          {settings.isSpecialAccent ? (
+            <div className="flex items-center justify-between p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-100 dark:border-purple-800">
+              <div>
+                <div className="font-medium text-purple-800 dark:text-purple-200">Special Accent</div>
+                <div className="text-xs text-purple-600/70 dark:text-purple-300/70">Select a regional voice</div>
+              </div>
+              <SelectDropdown
+                value={settings.specialAccent || 'Indian'}
+                onChange={(v) => updateSettings({ specialAccent: v as 'Indian' | 'Irish' | 'French' })}
+                options={[
+                  { value: 'Indian', label: 'Indian Accent' },
+                  { value: 'Irish', label: 'Irish Accent' },
+                  { value: 'French', label: 'French Accent' }
+                ]}
+                className="min-w-[150px]"
+              />
             </div>
-            <select
-              value={settings.voiceGender}
-              onChange={(e) => updateSettings({ voiceGender: e.target.value as 'Male' | 'Female' | 'Random' })}
-              className="p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer appearance-none text-center min-w-[120px]"
-            >
-              <option value="Female">👩 Female</option>
-              <option value="Male">👨 Male</option>
-              <option value="Random">🎲 Random</option>
-            </select>
-          </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                <div>
+                  <div className="font-medium text-gray-800 dark:text-gray-200">Accent</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Choose English accent preference</div>
+                </div>
+                <SelectDropdown
+                  value={settings.voiceAccent}
+                  onChange={(v) => updateSettings({ voiceAccent: v as 'US' | 'UK' | 'Random' })}
+                  options={[
+                    { value: 'US', label: 'US English' },
+                    { value: 'UK', label: 'UK English' },
+                    { value: 'Random', label: 'Random' }
+                  ]}
+                  className="min-w-[150px]"
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
+                <div>
+                  <div className="font-medium text-gray-800 dark:text-gray-200">Voice Gender</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Choose voice gender preference</div>
+                </div>
+                <SelectDropdown
+                  value={settings.voiceGender}
+                  onChange={(v) => updateSettings({ voiceGender: v as 'Male' | 'Female' | 'Random' })}
+                  options={[
+                    { value: 'Female', label: 'Female' },
+                    { value: 'Male', label: 'Male' },
+                    { value: 'Random', label: 'Random' }
+                  ]}
+                  className="min-w-[150px]"
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -360,16 +501,14 @@ export function TabSettings() {
         </p>
 
         <div className="flex flex-col gap-3">
-          <select
+          <SelectDropdown
             value={exportTag}
-            onChange={(e) => setExportTag(e.target.value)}
-            className="p-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 w-full appearance-none text-center cursor-pointer"
-          >
-            <option value="all">Export: All Tags</option>
-            {allTags.map(t => (
-              <option key={t} value={t}>Export: {t}</option>
-            ))}
-          </select>
+            onChange={setExportTag}
+            options={[
+              { value: 'all', label: 'Export: All Tags' },
+              ...allTags.map(t => ({ value: t, label: `Export: ${t}` }))
+            ]}
+          />
           
           <div className="flex gap-3">
             <button 
@@ -409,6 +548,39 @@ export function TabSettings() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Danger Zone Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 space-y-4 transition-colors border-2 border-red-100 dark:border-red-900/30">
+        <h2 className="text-lg font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
+          <Trash2 size={20} />
+          Remove card
+        </h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Permanently delete flashcards by specific tags or wipe all data.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-center gap-3 p-4 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/30">
+          <div className="w-full sm:flex-1">
+            <label className="text-xs font-semibold text-red-800 dark:text-red-300 uppercase tracking-wider block mb-1.5 ml-1">Select tag</label>
+            <SelectDropdown
+              value={deleteTag}
+              onChange={setDeleteTag}
+              options={[
+                { value: 'all', label: 'All' },
+                ...allTags.map(t => ({ value: t, label: t }))
+              ]}
+              buttonClassName="border-red-200 dark:border-red-800/50 bg-white dark:bg-gray-800 text-red-900 dark:text-red-100 ring-red-500"
+            />
+          </div>
+          
+          <button 
+            onClick={handleDelete}
+            className="w-full sm:w-auto sm:mt-5 flex justify-center items-center gap-2 bg-red-600 text-white hover:bg-red-700 px-6 py-2.5 rounded-lg font-medium transition-colors shadow-sm focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 whitespace-nowrap"
+          >
+            <Trash2 size={16} /> Remove
+          </button>
+        </div>
       </div>
 
     </div>
