@@ -1,22 +1,11 @@
 import { create } from 'zustand'
-import { persist, createJSONStorage, StateStorage } from 'zustand/middleware'
-import { get, set, del } from 'idb-keyval'
+import { persist } from 'zustand/middleware'
 import { v4 as uuidv4 } from 'uuid'
-
-export interface SRSData {
-  due: number // timestamp in ms
-  interval: number // in minutes
-  easeFactor: number
-  reps: number
-  step: number // 0=New, 1=Learning step 1, 2=Learning step 2, 3=Review
-}
 
 export interface Highlight {
   id: string
   wordIndices: number[]
   meaning: string
-  example?: string
-  srs?: SRSData
 }
 
 export interface Flashcard {
@@ -26,25 +15,12 @@ export interface Flashcard {
   createdAt: number
   tag?: string
   tags?: string[]
-  srs?: SRSData  // word-mode SRS
 }
 
 export function getCardTags(card: Flashcard): string[] {
   if (card.tags && card.tags.length > 0) return card.tags
   if (card.tag && card.tag.trim()) return [card.tag.trim()]
   return []
-}
-
-export function isWordCard(card: Flashcard): boolean {
-  // 1. If any highlight has an example explicitly defined (even empty string), it was created as a Word Card
-  if (card.highlights.some(h => h.example !== undefined)) return true
-
-  // 2. Otherwise, it is a Sentence card.
-  return false
-}
-
-export function getCardsForMode(cards: Flashcard[], mode: 'sentence' | 'word'): Flashcard[] {
-  return cards.filter(c => mode === 'word' ? isWordCard(c) : !isWordCard(c))
 }
 
 export function parseTagsInput(input?: string[] | string): string[] {
@@ -59,12 +35,9 @@ export interface AppSettings {
   highlightOpacity: number
   hoverColor: string
   hoverOpacity: number
-  highlightTextColor: string
   isDarkMode: boolean
   voiceAccent: 'US' | 'UK' | 'Random'
   voiceGender: 'Male' | 'Female' | 'Random'
-  isSpecialAccent?: boolean
-  specialAccent?: 'Indian' | 'Irish' | 'French'
 }
 
 export const defaultSettings: AppSettings = {
@@ -73,12 +46,9 @@ export const defaultSettings: AppSettings = {
   highlightOpacity: 0.3,     // Equivalent to bg-purple-100/200ish
   hoverColor: '#a855f7',     // Tailwind purple-500
   hoverOpacity: 0.4,
-  highlightTextColor: '', // Empty means auto-adapt to dark/light mode
   isDarkMode: false,
   voiceAccent: 'Random',
-  voiceGender: 'Random',
-  isSpecialAccent: false,
-  specialAccent: 'Indian'
+  voiceGender: 'Random'
 }
 
 interface FlashcardState {
@@ -88,37 +58,12 @@ interface FlashcardState {
   setActiveTags: (tags: string[]) => void
   updateSettings: (newSettings: Partial<AppSettings>) => void
   resetSettings: () => void
-  addFlashcard: (sentence: string, tags?: string[] | string, highlights?: Omit<Highlight, 'id'>[]) => void
+  addFlashcard: (sentence: string, tags?: string[] | string) => void
   deleteFlashcard: (id: string) => void
   updateFlashcard: (id: string, newSentence: string) => void
   updateFlashcardTag: (id: string, tags?: string[] | string) => void
-  saveHighlight: (flashcardId: string, highlightId: string | null, wordIndices: number[], meaning: string, example?: string) => string
+  saveHighlight: (flashcardId: string, highlightId: string | null, wordIndices: number[], meaning: string) => string
   removeHighlight: (flashcardId: string, highlightId: string) => void
-  updateHighlightSRS: (flashcardId: string, highlightId: string, srsData: SRSData) => void
-  updateFlashcardSRS: (flashcardId: string, srsData: SRSData) => void
-  gameInputMode: 'sentence' | 'word'
-  setGameInputMode: (mode: 'sentence' | 'word') => void
-}
-
-const idbStorage: StateStorage = {
-  getItem: async (name: string): Promise<string | null> => {
-    const val = await get(name)
-    if (val !== undefined && val !== null) return val
-
-    // Migration from localStorage to IndexedDB
-    const local = localStorage.getItem(name)
-    if (local) {
-      await set(name, local)
-      return local
-    }
-    return null
-  },
-  setItem: async (name: string, value: string): Promise<void> => {
-    await set(name, value)
-  },
-  removeItem: async (name: string): Promise<void> => {
-    await del(name)
-  },
 }
 
 export const useFlashcardStore = create<FlashcardState>()(
@@ -127,12 +72,10 @@ export const useFlashcardStore = create<FlashcardState>()(
       flashcards: [],
       settings: defaultSettings,
       activeTags: [],
-      gameInputMode: 'sentence',
-      setGameInputMode: (mode) => set({ gameInputMode: mode }),
       setActiveTags: (tags) => set({ activeTags: tags }),
       updateSettings: (newSettings) => set((state) => ({ settings: { ...state.settings, ...newSettings } })),
       resetSettings: () => set((state) => ({ settings: { ...defaultSettings, isDarkMode: state.settings.isDarkMode } })),
-      addFlashcard: (sentence, tags, highlights) =>
+      addFlashcard: (sentence, tags) =>
         set((state) => {
           const parsedTags = parseTagsInput(tags)
           return {
@@ -141,7 +84,7 @@ export const useFlashcardStore = create<FlashcardState>()(
               {
                 id: uuidv4(),
                 sentence: sentence.trim(),
-                highlights: highlights ? highlights.map(h => ({ ...h, id: uuidv4() })) : [],
+                highlights: [],
                 createdAt: Date.now(),
                 tags: parsedTags.length > 0 ? parsedTags : undefined,
               },
@@ -167,11 +110,12 @@ export const useFlashcardStore = create<FlashcardState>()(
             ),
           }
         }),
-      saveHighlight: (flashcardId, highlightId, wordIndices, meaning, example) => {
+      saveHighlight: (flashcardId, highlightId, wordIndices, meaning) => {
         const finalId = highlightId || uuidv4()
         set((state) => ({
           flashcards: state.flashcards.map((f) => {
             if (f.id === flashcardId) {
+              // Nếu mảng từ rỗng HOẶC nghĩa bị bỏ trống hoàn toàn -> Xóa hẳn note khỏi database
               if (wordIndices.length === 0 || meaning.trim() === '') {
                 return {
                   ...f,
@@ -191,13 +135,12 @@ export const useFlashcardStore = create<FlashcardState>()(
               if (highlightId) {
                 const existingIndex = newHighlights.findIndex(h => h.id === finalId)
                 if (existingIndex >= 0) {
-                  const existingExample = example !== undefined ? example?.trim() : newHighlights[existingIndex].example
-                  newHighlights[existingIndex] = { id: finalId, wordIndices, meaning: meaning.trim(), example: existingExample }
+                  newHighlights[existingIndex] = { id: finalId, wordIndices, meaning: meaning.trim() }
                 } else {
-                  newHighlights.push({ id: finalId, wordIndices, meaning: meaning.trim(), example: example?.trim() })
+                  newHighlights.push({ id: finalId, wordIndices, meaning: meaning.trim() })
                 }
               } else {
-                newHighlights.push({ id: finalId, wordIndices, meaning: meaning.trim(), example: example?.trim() })
+                newHighlights.push({ id: finalId, wordIndices, meaning: meaning.trim() })
               }
 
               return { ...f, highlights: newHighlights }
@@ -219,30 +162,9 @@ export const useFlashcardStore = create<FlashcardState>()(
             return f
           }),
         })),
-      updateHighlightSRS: (flashcardId, highlightId, srsData) =>
-        set((state) => ({
-          flashcards: state.flashcards.map((f) => {
-            if (f.id === flashcardId) {
-              return {
-                ...f,
-                highlights: f.highlights.map((h) => 
-                  h.id === highlightId ? { ...h, srs: srsData } : h
-                ),
-              }
-            }
-            return f
-          }),
-        })),
-      updateFlashcardSRS: (flashcardId, srsData) =>
-        set((state) => ({
-          flashcards: state.flashcards.map((f) =>
-            f.id === flashcardId ? { ...f, srs: srsData } : f
-          ),
-        })),
     }),
     {
       name: 'flashcard-storage',
-      storage: createJSONStorage(() => idbStorage)
     }
   )
 )

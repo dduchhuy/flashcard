@@ -1,66 +1,43 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { useFlashcardStore, getCardTags, getCardsForMode } from '../../store'
-import { ArrowLeft, RefreshCcw, Lightbulb, Volume2 } from 'lucide-react'
-import { extractWordText, extractWordsAndSpaces, fuzzyMatch, speakEnglish } from '../../utils'
+import { useFlashcardStore, getCardTags } from '../../store'
+import { ArrowLeft, RefreshCcw, Lightbulb, Volume2, SkipForward } from 'lucide-react'
+import { extractWordText, fuzzyMatch, speakEnglish } from '../../utils'
 import { LetterInput, letterIndices, buildGuess } from './LetterInput'
-import { EmptyState } from './shared'
+
+// Mode: 'first' = show first meaning only, 'all' = show full meaning, (same as before = show full meaning as default)
+type FillMode = 'all' | 'first'
 
 export function FillBlankGame({ onExit }: { onExit: () => void }) {
-  const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
+  const { flashcards, activeTags } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
+  const [fillMode, setFillMode] = useState<FillMode>('all')
 
   const allQuestions = useMemo(() => {
     const questions: any[] = []
-    let filtered = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
-    filtered = getCardsForMode(filtered, gameInputMode)
-    
+    const filtered = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
     filtered.forEach(card => {
-      if (card.highlights.length === 0) return
-      let selectedHighlight = card.highlights[0]
-      if (card.highlights.length > 1) {
-        const randIndex = Math.floor(Math.abs(Math.sin(card.id.length + seed)) * card.highlights.length)
-        selectedHighlight = card.highlights[randIndex]
-      }
-      const h = selectedHighlight
-      
-      if (gameInputMode === 'word') {
-        const sentence = h.example ? h.example : card.sentence
-        const { words } = extractWordsAndSpaces(sentence)
-        const validWords = words.map((w, i) => ({w, i})).filter(x => /[a-zA-Z]{2,}/.test(x.w))
-        if (validWords.length > 0) {
-          // Pick random word based on seed + h.id length for stability
-          const rIdx = Math.floor(Math.abs(Math.sin(h.id.length + seed)) * validWords.length)
-          const target = validWords[rIdx]
-          questions.push({
-            id: h.id,
-            word: target.w,
-            sentence: sentence,
-            meaning: h.meaning,
-            wordIndices: [target.i],
-            isExample: false
-          })
-        }
-      } else {
+      card.highlights.forEach(h => {
         questions.push({
           id: h.id,
           word: extractWordText(card.sentence, h.wordIndices),
-          sentence: h.example ? h.example : card.sentence,
+          sentence: card.sentence,
           meaning: h.meaning,
-          wordIndices: h.wordIndices,
-          isExample: !!h.example
+          firstMeaning: h.meaning.split('\n')[0].trim(),
         })
-      }
+      })
     })
     return questions.sort(() => Math.random() - 0.5)
-  }, [flashcards, seed, activeTags, gameInputMode])
+  }, [flashcards, seed, activeTags])
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [inputValue, setInputValue] = useState('')
   const [status, setStatus] = useState<'playing' | 'correct' | 'wrong' | 'skipped'>('playing')
-  
   const [hinted, setHinted] = useState<number[]>([])
-  const [score, setScore] = useState(0)
-  const [hideMeaning, setHideMeaning] = useState(true)
+  
+  // Stats
+  const [correctCount, setCorrectCount] = useState(0)
+  const [wrongCount, setWrongCount] = useState(0)
+  const [skipCount, setSkipCount] = useState(0)
 
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -72,27 +49,60 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
 
   useEffect(() => {
     setHinted([])
-    setHideMeaning(true)
   }, [currentIndex])
 
   const currentQ = allQuestions[currentIndex]
 
+  const displayMeaning = currentQ
+    ? (fillMode === 'first' ? currentQ.firstMeaning : currentQ.meaning)
+    : ''
+
   if (allQuestions.length === 0) {
-    return <EmptyState onExit={onExit} />
+    return (
+      <div className="text-center text-gray-500 py-20">
+        <p>No notes found. Highlight words first!</p>
+        <button onClick={onExit} className="mt-4 text-purple-600">Go back</button>
+      </div>
+    )
   }
 
   if (currentIndex >= allQuestions.length) {
-    const percentage = Math.round((score / allQuestions.length) * 100)
+    const total = allQuestions.length
     return (
       <div className="text-center py-20 animate-in fade-in flex flex-col items-center">
         <div className="text-6xl mb-6">🏆</div>
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Practice Complete!</h2>
-        <p className="text-lg text-gray-500 dark:text-gray-400 mb-6">
-          You scored <span className="font-bold text-purple-600">{score}</span> out of {allQuestions.length} ({percentage}%)
+        <div className="flex gap-6 mb-6 mt-2">
+          <div className="flex flex-col items-center">
+            <span className="text-2xl font-bold text-green-600">{correctCount}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">Correct</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-2xl font-bold text-red-500">{wrongCount}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">Wrong</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="text-2xl font-bold text-gray-500">{skipCount}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">Skipped</span>
+          </div>
+        </div>
+        <p className="text-gray-500 dark:text-gray-400 mb-6">
+          Score: <span className="font-bold text-purple-600">{correctCount}</span> / {total}
         </p>
         <div className="flex gap-4 mt-2">
-          <button onClick={onExit} className="bg-gray-200 dark:bg-gray-700 px-6 py-2 rounded-lg font-medium">Back</button>
-          <button onClick={() => { setSeed(s => s + 1); setCurrentIndex(0); setScore(0) }} className="bg-purple-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium">
+          <button onClick={onExit} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-6 py-2 rounded-lg font-medium">Back</button>
+          <button
+            onClick={() => {
+              setSeed(s => s + 1)
+              setCurrentIndex(0)
+              setCorrectCount(0)
+              setWrongCount(0)
+              setSkipCount(0)
+              setInputValue('')
+              setStatus('playing')
+            }}
+            className="bg-purple-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium hover:bg-purple-700"
+          >
             <RefreshCcw size={18} /> Play Again
           </button>
         </div>
@@ -101,27 +111,37 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
   }
 
   const checkAnswer = () => {
-    if (fuzzyMatch(buildGuess(currentQ.word, inputValue, hinted), currentQ.word)) {
+    if (status !== 'playing') return
+    const guess = buildGuess(currentQ.word, inputValue, hinted)
+    if (fuzzyMatch(guess, currentQ.word)) {
       setStatus('correct')
-      setScore(s => s + 1)
+      setCorrectCount(c => c + 1)
       setTimeout(() => {
         setStatus('playing')
         setInputValue('')
         setCurrentIndex(i => i + 1)
       }, 1500)
     } else {
+      // Wrong: show answer and move on
       setStatus('wrong')
+      setWrongCount(c => c + 1)
       setTimeout(() => {
         setStatus('playing')
         setInputValue('')
-        inputRef.current?.focus()
-      }, 1500)
+        setCurrentIndex(i => i + 1)
+      }, 2000)
     }
   }
 
   const handleSkip = () => {
+    if (status !== 'playing') return
+    setSkipCount(c => c + 1)
     setInputValue('')
-    setCurrentIndex(i => i + 1)
+    setStatus('skipped')
+    setTimeout(() => {
+      setStatus('playing')
+      setCurrentIndex(i => i + 1)
+    }, 800)
   }
 
   const handleHint = () => {
@@ -137,89 +157,81 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
 
   return (
     <div className="max-w-2xl mx-auto py-6 animate-in fade-in flex flex-col h-full">
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center gap-4">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6 flex-wrap gap-2">
+        <div className="flex items-center gap-3">
           <button onClick={onExit} className="text-gray-500 hover:text-gray-700 dark:text-gray-400">
             <ArrowLeft size={24} />
           </button>
+          {/* Stats */}
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <span className="text-green-600 dark:text-green-400">✓ {correctCount}</span>
+            <span className="text-red-500 dark:text-red-400">✗ {wrongCount}</span>
+            <span className="text-gray-500 dark:text-gray-400">→ {skipCount}</span>
+          </div>
         </div>
-        
-        <button 
-          onClick={() => speakEnglish(currentQ.word)}
-          className="px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors border bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50"
-        >
-          <Volume2 size={16} />
-          <span className="hidden sm:inline">Listen</span>
-        </button>
-      </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-6 text-center max-w-xl mx-auto w-full relative">
-        
-        <p className="text-lg text-gray-800 dark:text-gray-200 mb-8 leading-relaxed whitespace-pre-wrap px-4">
-          {(() => {
-            if (showFullSentence) return currentQ.sentence
-            if (currentQ.isExample) {
-              const regex = new RegExp(`\\b${currentQ.word}\\b`, 'gi')
-              const parts = currentQ.sentence.split(regex)
-              if (parts.length === 1) {
-                const parts2 = currentQ.sentence.split(new RegExp(currentQ.word, 'gi'))
-                return (
-                  <>
-                    {parts2.map((part: string, i: number) => (
-                      <span key={i}>
-                        {part}
-                        {i < parts2.length - 1 && <span className="text-purple-400 dark:text-purple-500 font-bold opacity-70">{'___'}</span>}
-                      </span>
-                    ))}
-                  </>
-                )
-              }
-              return (
-                <>
-                  {parts.map((part: string, i: number) => (
-                    <span key={i}>
-                      {part}
-                      {i < parts.length - 1 && <span className="text-purple-400 dark:text-purple-500 font-bold opacity-70">{'___'}</span>}
-                    </span>
-                  ))}
-                </>
-              )
-            }
-            const { words, spaces, initialSpace } = extractWordsAndSpaces(currentQ.sentence)
-            return (
-              <>
-                {initialSpace}
-                {words.map((w: string, i: number) => {
-                  const isBlank = currentQ.wordIndices.includes(i)
-                  return (
-                    <span key={i}>
-                      {isBlank ? <span className="text-purple-400 dark:text-purple-500 font-bold opacity-70">{'___'}</span> : w}
-                      {spaces[i]}
-                    </span>
-                  )
-                })}
-              </>
-            )
-          })()}
-        </p>
-        
-        <div className="bg-purple-50 dark:bg-gray-900 rounded-xl p-4 mb-8 border border-purple-100 dark:border-gray-700 animate-in fade-in slide-in-from-top-2">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500 dark:text-gray-400">Meaning</span>
-            <button 
-              onClick={() => setHideMeaning(!hideMeaning)}
-              className="text-xs px-2.5 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium flex items-center gap-1"
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Fill mode selector */}
+          <div className="flex bg-gray-100 dark:bg-gray-900 rounded-lg p-0.5">
+            <button
+              onClick={() => setFillMode('all')}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${fillMode === 'all' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}
             >
-              {hideMeaning ? 'Show' : 'Hide'}
+              All meanings
+            </button>
+            <button
+              onClick={() => setFillMode('first')}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${fillMode === 'first' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}
+            >
+              1st meaning
             </button>
           </div>
-          {!hideMeaning && (
-            <div className="mt-3 font-medium text-purple-700 dark:text-purple-300 text-lg break-words whitespace-pre-wrap block">
-              {currentQ.meaning}
-            </div>
-          )}
+
+          {/* Listen button */}
+          <button
+            onClick={() => speakEnglish(currentQ.word)}
+            className="px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors border bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50"
+          >
+            <Volume2 size={16} />
+            <span className="hidden sm:inline">Listen</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Card */}
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-6 text-center max-w-xl mx-auto w-full relative">
+
+        {/* Context sentence */}
+        <p className={`text-lg text-gray-800 dark:text-gray-200 mb-6 leading-relaxed whitespace-pre-wrap px-4 transition-all duration-300 ${!showFullSentence ? 'blur-sm select-none opacity-60' : ''}`}>
+          {currentQ.sentence}
+        </p>
+
+        {/* Meaning display */}
+        <div className="bg-purple-50 dark:bg-gray-900 rounded-xl p-4 mb-6 border border-purple-100 dark:border-gray-700 animate-in fade-in slide-in-from-top-2">
+          <span className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Meaning</span>
+          <span className="font-medium text-purple-700 dark:text-purple-300 text-lg break-words whitespace-pre-wrap">{displayMeaning}</span>
         </div>
 
+        {/* Wrong: show correct answer */}
+        {status === 'wrong' && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3 mb-4 animate-in fade-in">
+            <p className="text-sm text-red-600 dark:text-red-400 font-medium">
+              Answer: <span className="font-bold">{currentQ.word}</span>
+            </p>
+          </div>
+        )}
+
+        {/* Skipped: show answer */}
+        {status === 'skipped' && (
+          <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl p-3 mb-4 animate-in fade-in">
+            <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+              Skipped — Answer: <span className="font-bold">{currentQ.word}</span>
+            </p>
+          </div>
+        )}
+
+        {/* Letter input */}
         <div className="max-w-sm mx-auto">
           <LetterInput
             word={currentQ.word}
@@ -240,16 +252,17 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
             accent="purple"
           />
         </div>
-        
+
+        {/* Buttons */}
         <div className="mt-6 flex flex-wrap gap-3 justify-center">
           <button
             onClick={handleSkip}
             disabled={status !== 'playing'}
-            className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-5 py-3 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+            className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-5 py-3 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors flex items-center gap-1.5"
           >
-            Skip
+            <SkipForward size={16} /> Skip
           </button>
-          
+
           <button
             onClick={handleHint}
             disabled={status !== 'playing' || hinted.length >= letterIndices(currentQ.word).length}
@@ -258,7 +271,7 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
           >
             <Lightbulb size={20} />
           </button>
-          
+
           <button
             onClick={checkAnswer}
             disabled={status !== 'playing' || !inputValue.trim()}
@@ -268,6 +281,8 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
           </button>
         </div>
       </div>
+
+      {/* Progress */}
       <p className="text-center text-sm font-medium text-gray-500 dark:text-gray-400">
         {currentIndex + 1} / {allQuestions.length}
       </p>

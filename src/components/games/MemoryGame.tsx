@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useFlashcardStore, getCardTags, getCardsForMode } from '../../store'
+import { useFlashcardStore } from '../../store'
 import { ArrowLeft, RefreshCcw, Volume2, VolumeX } from 'lucide-react'
 import { extractWordText, speakEnglish } from '../../utils'
 
@@ -13,26 +13,18 @@ type CardItem = {
 }
 
 export function MemoryGame({ onExit }: { onExit: () => void }) {
-  const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
+  const { flashcards } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
 
   const allPairs = useMemo(() => {
     const pairs: { id: string, word: string, meaning: string }[] = []
-    let filtered = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
-    filtered = getCardsForMode(filtered, gameInputMode)
-    
-    filtered.forEach(card => {
-      if (card.highlights.length === 0) return
-      let selectedHighlight = card.highlights[0]
-      if (card.highlights.length > 1) {
-        const randIndex = Math.floor(Math.abs(Math.sin(card.id.length + seed)) * card.highlights.length)
-        selectedHighlight = card.highlights[randIndex]
-      }
-      const h = selectedHighlight
-      pairs.push({
-        id: h.id,
-        word: extractWordText(card.sentence, h.wordIndices),
-        meaning: h.meaning
+    flashcards.forEach(card => {
+      card.highlights.forEach(h => {
+        pairs.push({
+          id: h.id,
+          word: extractWordText(card.sentence, h.wordIndices),
+          meaning: h.meaning
+        })
       })
     })
     return pairs.sort(() => Math.random() - 0.5)

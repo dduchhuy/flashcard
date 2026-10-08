@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react'
 import { Volume2, Eye, EyeOff } from 'lucide-react'
-import { useFlashcardStore, getCardTags, getCardsForMode } from '../../store'
-import { extractWordText, speakEnglish, extractWordsAndSpaces } from '../../utils'
+import { useFlashcardStore, getCardTags } from '../../store'
+import { extractWordText, speakEnglish } from '../../utils'
 import { shuffle, EmptyState, ResultScreen, BackBar, BottomCounter } from './shared'
 
 export function TypingGame({ onExit }: { onExit: () => void }) {
-  const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
+  const { flashcards, activeTags } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
 
   // Extract all questions with missing word/phrase and options
@@ -19,38 +19,17 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
       sentenceFull: string
     }[] = []
 
-    let filtered = activeTags.length > 0
+    const filtered = activeTags.length > 0
       ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t)))
       : flashcards
-      
-    filtered = getCardsForMode(filtered, gameInputMode)
 
     filtered.forEach(card => {
-      if (card.highlights.length === 0) return
-      
       card.highlights.forEach(h => {
-        let targetWordIndices = h.wordIndices
-        let targetSentence = card.sentence
-        let targetMeaning = h.meaning
-        
-        if (gameInputMode === 'word') {
-          targetSentence = h.example || card.sentence
-          const { words } = extractWordsAndSpaces(targetSentence)
-          const validWords = words.map((w, i) => ({w, i})).filter(x => /[a-zA-Z]{2,}/.test(x.w))
-          if (validWords.length > 0) {
-            const rIdx = Math.floor(Math.abs(Math.sin(h.id.length + seed)) * validWords.length)
-            targetWordIndices = [validWords[rIdx].i]
-            targetMeaning = ''
-          } else {
-            return
-          }
-        }
-
-        const wordText = extractWordText(targetSentence, targetWordIndices)
+        const wordText = extractWordText(card.sentence, h.wordIndices)
         if (!wordText) return
 
         // Build blank sentence
-        const parts = targetSentence.trim().split(/(\s+)/)
+        const parts = card.sentence.trim().split(/(\s+)/)
         const words: string[] = []
         const spaces: string[] = []
         let initialSpace = ''
@@ -85,7 +64,7 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
         let sentenceWithBlank = initialSpace
         let inBlank = false
         for (let i = 0; i < words.length; i++) {
-          if (targetWordIndices.includes(i)) {
+          if (h.wordIndices.includes(i)) {
             if (!inBlank) {
               sentenceWithBlank += '______'
               inBlank = true
@@ -101,16 +80,16 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
           cardId: card.id,
           highlightId: h.id,
           targetWord: wordText,
-          meaning: targetMeaning,
+          meaning: h.meaning,
           sentenceWithBlank: sentenceWithBlank.trim(),
-          sentenceFull: targetSentence,
+          sentenceFull: card.sentence,
         })
       })
     })
 
     return shuffle(questions)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flashcards, seed, activeTags, gameInputMode])
+  }, [flashcards, seed, activeTags])
 
   const allWordsPool = useMemo(() => {
     return Array.from(new Set(allQuestions.map(q => q.targetWord)))
@@ -247,7 +226,7 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
 
           return (
             <button
-              key={`${currentIndex}-${i}`}
+              key={i}
               onClick={() => handleSelect(opt)}
               disabled={selectedOption !== null}
               className={`w-full min-h-[4rem] p-4 rounded-xl border-2 text-center font-medium transition-all duration-300 ${baseBtnClass} ${hoverBtnClass} flex items-center justify-center`}

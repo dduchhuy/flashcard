@@ -40,9 +40,6 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
   const menuRef = useRef<HTMLDivElement>(null)
   const itemRef = useRef<HTMLDivElement>(null)
 
-  const isWordCard = flashcard.highlights.some(h => h.example !== undefined)
-  const [isPopupOpen, setIsPopupOpen] = useState(false)
-
   const [lockedDragStart, setLockedDragStart] = useState<number | null>(null)
   const [lockedDragIndices, setLockedDragIndices] = useState<number[]>([])
 
@@ -310,22 +307,18 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
   }
 
   return (
-    <div 
-      ref={itemRef} 
-      onClick={isWordCard ? () => setIsPopupOpen(true) : undefined}
-      className={`bg-white dark:bg-gray-800 rounded-xl shadow relative flex flex-col transition-colors ${isWordCard ? 'cursor-pointer hover:shadow-md border border-transparent hover:border-purple-200 dark:hover:border-purple-800/50' : ''} ${viewMode === 'grid' ? 'p-4 h-fit' : 'p-5'}`}
-    >
+    <div ref={itemRef} className={`bg-white dark:bg-gray-800 rounded-xl shadow relative flex flex-col transition-colors ${viewMode === 'grid' ? 'p-4 h-fit' : 'p-5'}`}>
       
       <div className="absolute top-3 right-3" ref={menuRef}>
         <button
-          onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-          className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          onClick={() => setShowMenu(!showMenu)}
+          className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
         >
           <MoreVertical size={20} />
         </button>
         
         {showMenu && (
-          <div className="absolute right-0 mt-1 w-36 bg-white border border-gray-100 rounded-lg shadow-lg z-20 py-1" onClick={e => e.stopPropagation()}>
+          <div className="absolute right-0 mt-1 w-36 bg-white border border-gray-100 rounded-lg shadow-lg z-20 py-1">
             <button
               onClick={() => {
                 setIsEditingSentence(true)
@@ -417,7 +410,7 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
 
       <div className={`mt-2 ${viewMode === 'list' ? 'mr-6' : 'mr-4'} flex-1`}>
         {isEditingSentence ? (
-          <div className="flex flex-col gap-2" onClick={e => e.stopPropagation()}>
+          <div className="flex flex-col gap-2">
             <textarea
               autoFocus
               value={editSentenceValue}
@@ -443,13 +436,12 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
         ) : (
           <div 
             className={`leading-relaxed touch-none select-none whitespace-pre-wrap ${
-              viewMode === 'grid' ? 'text-lg cursor-pointer' : 'text-xl cursor-text'
+              viewMode === 'grid' ? 'text-lg cursor-default' : 'text-xl cursor-pointer'
             } dark:text-gray-200`}
-            onPointerDown={viewMode === 'grid' || isWordCard ? undefined : handlePointerDown}
-            onPointerMove={viewMode === 'grid' || isWordCard ? undefined : handlePointerMove}
-            onPointerUp={viewMode === 'grid' || isWordCard ? undefined : handlePointerUp}
-            onPointerCancel={viewMode === 'grid' || isWordCard ? undefined : handlePointerUp}
-            onClick={viewMode === 'grid' ? () => speakEnglish(flashcard.sentence) : (isWordCard ? () => setIsPopupOpen(true) : undefined)}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
           >
             {initialSpace}
             {segments.map((seg, sIdx) => {
@@ -466,7 +458,7 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
 
               if (seg.type === 'editing') {
                 segmentClass += "bg-purple-200 text-purple-900 border-b-2 border-purple-500 font-medium"
-              } else if (seg.type === 'highlight' && !isWordCard) {
+              } else if (seg.type === 'highlight') {
                 segmentClass += "font-medium group cursor-pointer "
                 if (settings.highlightMode === 'text') {
                   inlineStyle = { 
@@ -474,13 +466,14 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
                     backgroundColor: 'transparent'
                   }
                 } else {
+                  segmentClass += settings.isDarkMode ? 'text-purple-100' : 'text-purple-900'
                   const bgColor = isHovered 
                     ? `rgba(${hexToRgb(settings.hoverColor)}, ${settings.hoverOpacity})`
                     : `rgba(${hexToRgb(settings.highlightColor)}, ${settings.highlightOpacity})`
-                  inlineStyle = { backgroundColor: bgColor, color: settings.highlightTextColor || (settings.isDarkMode ? '#f3f4f6' : '#374151') }
+                  inlineStyle = { backgroundColor: bgColor }
                 }
               } else {
-                segmentClass += "hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                segmentClass += "hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer" // normal
               }
 
               return (
@@ -507,7 +500,7 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
                       </span>
                     ))}
 
-                    {seg.type === 'highlight' && !isWordCard && editingIndices.length === 0 && (
+                    {seg.type === 'highlight' && editingIndices.length === 0 && (
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 w-max max-w-[200px] pointer-events-none">
                         <div className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 text-sm py-1.5 px-3 rounded-lg shadow-lg text-center break-words whitespace-pre-wrap text-left">
                           {seg.meaning}
@@ -546,26 +539,6 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
         </div>
       )}
 
-      {isWordCard && showHighlights && (
-        <div className="mt-4 space-y-3">
-          {flashcard.highlights.slice(0, 2).map(h => (
-            <div key={h.id} className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
-              <div className="font-medium text-gray-800 dark:text-gray-200 text-sm mb-1">{h.meaning}</div>
-              {h.example && (
-                <div className="text-sm text-gray-600 dark:text-gray-300 italic flex items-start gap-2">
-                  {h.example}
-                </div>
-              )}
-            </div>
-          ))}
-          {flashcard.highlights.length > 2 && (
-             <div className="text-xs text-gray-400 font-medium italic mt-2 ml-1">
-                ... (and {flashcard.highlights.length - 2} more meanings)
-             </div>
-          )}
-        </div>
-      )}
-
       <div className="mt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-700 pt-3">
         <span className="text-xs text-gray-400 font-medium">
           {new Date(flashcard.createdAt).toLocaleDateString('en-US')}
@@ -589,31 +562,6 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
           </button>
         </div>
       </div>
-
-      {isPopupOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onPointerDown={() => setIsPopupOpen(false)}>
-           <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto" onPointerDown={e => e.stopPropagation()}>
-              <div className="flex justify-between items-center mb-4">
-                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white capitalize">{flashcard.sentence}</h2>
-                 <button onClick={() => setIsPopupOpen(false)} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                 </button>
-              </div>
-              <div className="space-y-4">
-                {flashcard.highlights.map(h => (
-                  <div key={h.id} className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
-                    <div className="font-medium text-gray-800 dark:text-gray-200 text-base mb-1">{h.meaning}</div>
-                    {h.example && (
-                      <div className="text-sm text-gray-600 dark:text-gray-300 italic flex items-start gap-2">
-                        {h.example}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-           </div>
-        </div>
-      )}
     </div>
   )
 }

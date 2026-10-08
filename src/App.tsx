@@ -1,57 +1,16 @@
 import { useState, useEffect } from 'react'
-import { PlusCircle, Library, Gamepad2, Settings as SettingsIcon, LogIn, LogOut, GraduationCap } from 'lucide-react'
+import { PlusCircle, Library, Gamepad2, Settings as SettingsIcon } from 'lucide-react'
 import { TabHome } from './components/TabHome'
 import { TabAllCards } from './components/TabAllCards'
 import { TabGame } from './components/TabGame'
-import { TabLearn } from './components/TabLearn'
 import { TabSettings } from './components/TabSettings'
 import { useFlashcardStore } from './store'
-import { useFirebaseSync } from './useFirebaseSync'
-import { loginWithGoogle, logout } from './firebase'
 
-type Tab = 'home' | 'all' | 'game' | 'learn' | 'settings'
-
-const TAB_TO_PATH: Record<Tab, string> = {
-  home: 'add',
-  all: 'library',
-  game: 'practice',
-  learn: 'learn',
-  settings: 'settings'
-}
-
-const PATH_TO_TAB: Record<string, Tab> = {
-  add: 'home',
-  library: 'all',
-  practice: 'game',
-  learn: 'learn',
-  settings: 'settings'
-}
+type Tab = 'home' | 'all' | 'game' | 'settings'
 
 function App() {
-  const [activeTab, setActiveTab] = useState<Tab>(() => {
-    // Check initial URL hash or path
-    let path = window.location.hash.replace('#/', '')
-    if (!path) path = window.location.pathname.split('/').pop() || ''
-    return PATH_TO_TAB[path] || 'home'
-  })
-
+  const [activeTab, setActiveTab] = useState<Tab>('home')
   const { settings } = useFlashcardStore()
-  const { user, isLoading } = useFirebaseSync()
-
-  // Sync URL when tab changes
-  const changeTab = (tab: Tab) => {
-    setActiveTab(tab)
-    window.history.pushState(null, '', `#/${TAB_TO_PATH[tab]}`)
-  }
-
-  useEffect(() => {
-    const handlePopState = () => {
-      let path = window.location.hash.replace('#/', '')
-      if (PATH_TO_TAB[path]) setActiveTab(PATH_TO_TAB[path])
-    }
-    window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
-  }, [])
 
   useEffect(() => {
     if (settings.isDarkMode) {
@@ -66,30 +25,7 @@ function App() {
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-30 transition-colors">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400">Flashcards</h1>
-          </div>
-          <div>
-            {isLoading ? (
-              <span className="text-sm text-gray-500">Đang tải...</span>
-            ) : user ? (
-              <button 
-                onClick={() => {
-                  if (window.confirm('Bạn có chắc chắn muốn đăng xuất không?')) {
-                    logout()
-                  }
-                }} 
-                className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 hover:text-red-500 dark:hover:text-red-400 transition-colors bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-full shadow-sm border border-gray-200 dark:border-gray-700"
-              >
-                <img src={user.photoURL || ''} alt="avatar" className="w-6 h-6 rounded-full" />
-                <LogOut size={16} />
-              </button>
-            ) : (
-              <button onClick={loginWithGoogle} className="flex items-center gap-2 text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-full transition-colors font-medium shadow-sm">
-                <LogIn size={16} /> Đăng nhập
-              </button>
-            )}
-          </div>
+          <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400">Flashcards</h1>
         </div>
       </header>
 
@@ -98,7 +34,6 @@ function App() {
         {activeTab === 'home' && <TabHome />}
         {activeTab === 'all' && <TabAllCards />}
         {activeTab === 'game' && <TabGame />}
-        {activeTab === 'learn' && <TabLearn />}
         {activeTab === 'settings' && <TabSettings />}
       </main>
 
@@ -106,9 +41,9 @@ function App() {
       <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 pb-safe z-40 transition-colors">
         <div className="max-w-3xl mx-auto flex justify-around">
           <button
-            onClick={() => changeTab('home')}
+            onClick={() => setActiveTab('home')}
             className={`flex-1 flex flex-col items-center py-3 gap-1 transition-colors ${
-              activeTab === 'home' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+              activeTab === 'home' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             <PlusCircle size={24} strokeWidth={activeTab === 'home' ? 2.5 : 2} />
@@ -116,9 +51,9 @@ function App() {
           </button>
           
           <button
-            onClick={() => changeTab('all')}
+            onClick={() => setActiveTab('all')}
             className={`flex-1 flex flex-col items-center py-3 gap-1 transition-colors ${
-              activeTab === 'all' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+              activeTab === 'all' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             <Library size={24} strokeWidth={activeTab === 'all' ? 2.5 : 2} />
@@ -126,9 +61,9 @@ function App() {
           </button>
 
           <button
-            onClick={() => changeTab('game')}
+            onClick={() => setActiveTab('game')}
             className={`flex-1 flex flex-col items-center py-3 gap-1 transition-colors ${
-              activeTab === 'game' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+              activeTab === 'game' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             <Gamepad2 size={24} strokeWidth={activeTab === 'game' ? 2.5 : 2} />
@@ -136,19 +71,9 @@ function App() {
           </button>
 
           <button
-            onClick={() => changeTab('learn')}
+            onClick={() => setActiveTab('settings')}
             className={`flex-1 flex flex-col items-center py-3 gap-1 transition-colors ${
-              activeTab === 'learn' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
-            }`}
-          >
-            <GraduationCap size={24} strokeWidth={activeTab === 'learn' ? 2.5 : 2} />
-            <span className="text-xs font-medium">Learn</span>
-          </button>
-
-          <button
-            onClick={() => changeTab('settings')}
-            className={`flex-1 flex flex-col items-center py-3 gap-1 transition-colors ${
-              activeTab === 'settings' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
+              activeTab === 'settings' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             <SettingsIcon size={24} strokeWidth={activeTab === 'settings' ? 2.5 : 2} />

@@ -5,7 +5,7 @@ import { speakEnglish } from '../../utils'
 
 export function ScrambleGame({ onExit }: { onExit: () => void }) {
   const [seed, setSeed] = useState(0)
-  const notes = useNotes(seed, true)
+  const notes = useNotes(seed)
   const [index, setIndex] = useState(0)
   const [score, setScore] = useState(0)
   const [placed, setPlaced] = useState<number[]>([])
