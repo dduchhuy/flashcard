@@ -38,6 +38,7 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
   const [correctCount, setCorrectCount] = useState(0)
   const [wrongCount, setWrongCount] = useState(0)
   const [skipCount, setSkipCount] = useState(0)
+  const [wrongQuestions, setWrongQuestions] = useState<any[]>([])
 
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -51,7 +52,12 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
     setHinted([])
   }, [currentIndex])
 
-  const currentQ = allQuestions[currentIndex]
+  const [replayMode, setReplayMode] = useState(false)
+  const [replayQuestions, setReplayQuestions] = useState<any[]>([])
+
+  const activeQuestions = replayMode ? replayQuestions : allQuestions
+
+  const currentQ = activeQuestions[currentIndex]
 
   const displayMeaning = currentQ
     ? (fillMode === 'first' ? currentQ.firstMeaning : currentQ.meaning)
@@ -66,8 +72,8 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
     )
   }
 
-  if (currentIndex >= allQuestions.length) {
-    const total = allQuestions.length
+  if (currentIndex >= activeQuestions.length) {
+    const total = activeQuestions.length
     return (
       <div className="text-center py-20 animate-in fade-in flex flex-col items-center">
         <div className="text-6xl mb-6">🏆</div>
@@ -89,7 +95,7 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
         <p className="text-gray-500 dark:text-gray-400 mb-6">
           Score: <span className="font-bold text-purple-600">{correctCount}</span> / {total}
         </p>
-        <div className="flex gap-4 mt-2">
+        <div className="flex flex-wrap justify-center gap-4 mt-2">
           <button onClick={onExit} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-6 py-2 rounded-lg font-medium">Back</button>
           <button
             onClick={() => {
@@ -100,11 +106,31 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
               setSkipCount(0)
               setInputValue('')
               setStatus('playing')
+              setWrongQuestions([])
+              setReplayMode(false)
             }}
             className="bg-purple-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium hover:bg-purple-700"
           >
             <RefreshCcw size={18} /> Play Again
           </button>
+          {wrongQuestions.length > 0 && (
+            <button
+              onClick={() => {
+                setReplayMode(true)
+                setReplayQuestions(wrongQuestions.sort(() => Math.random() - 0.5))
+                setCurrentIndex(0)
+                setCorrectCount(0)
+                setWrongCount(0)
+                setSkipCount(0)
+                setInputValue('')
+                setStatus('playing')
+                setWrongQuestions([])
+              }}
+              className="bg-red-500 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium hover:bg-red-600 shadow-sm transition-colors"
+            >
+              Retry Wrong ({wrongQuestions.length})
+            </button>
+          )}
         </div>
       </div>
     )
@@ -125,6 +151,7 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
       // Wrong: show answer and move on
       setStatus('wrong')
       setWrongCount(c => c + 1)
+      setWrongQuestions(prev => [...prev, currentQ])
       setTimeout(() => {
         setStatus('playing')
         setInputValue('')
@@ -284,7 +311,7 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
 
       {/* Progress */}
       <p className="text-center text-sm font-medium text-gray-500 dark:text-gray-400">
-        {currentIndex + 1} / {allQuestions.length}
+        {currentIndex + 1} / {activeQuestions.length}
       </p>
     </div>
   )
