@@ -22,6 +22,7 @@ export interface Highlight {
 export interface Flashcard {
   id: string
   sentence: string
+  phonetic?: string
   highlights: Highlight[]
   createdAt: number
   tag?: string
@@ -88,9 +89,9 @@ interface FlashcardState {
   setActiveTags: (tags: string[]) => void
   updateSettings: (newSettings: Partial<AppSettings>) => void
   resetSettings: () => void
-  addFlashcard: (sentence: string, tags?: string[] | string, highlights?: Omit<Highlight, 'id'>[]) => void
+  addFlashcard: (sentence: string, tags?: string[] | string, highlights?: Omit<Highlight, 'id'>[], phonetic?: string) => void
   deleteFlashcard: (id: string) => void
-  updateFlashcard: (id: string, newSentence: string) => void
+  updateFlashcard: (id: string, newSentence: string, newPhonetic?: string) => void
   updateFlashcardTag: (id: string, tags?: string[] | string) => void
   saveHighlight: (flashcardId: string, highlightId: string | null, wordIndices: number[], meaning: string, example?: string) => string
   removeHighlight: (flashcardId: string, highlightId: string) => void
@@ -132,7 +133,7 @@ export const useFlashcardStore = create<FlashcardState>()(
       setActiveTags: (tags) => set({ activeTags: tags }),
       updateSettings: (newSettings) => set((state) => ({ settings: { ...state.settings, ...newSettings } })),
       resetSettings: () => set((state) => ({ settings: { ...defaultSettings, isDarkMode: state.settings.isDarkMode } })),
-      addFlashcard: (sentence, tags, highlights) =>
+      addFlashcard: (sentence, tags, highlights, phonetic) =>
         set((state) => {
           const parsedTags = parseTagsInput(tags)
           return {
@@ -141,6 +142,7 @@ export const useFlashcardStore = create<FlashcardState>()(
               {
                 id: uuidv4(),
                 sentence: sentence.trim(),
+                phonetic: phonetic?.trim(),
                 highlights: highlights ? highlights.map(h => ({ ...h, id: uuidv4() })) : [],
                 createdAt: Date.now(),
                 tags: parsedTags.length > 0 ? parsedTags : undefined,
@@ -152,10 +154,10 @@ export const useFlashcardStore = create<FlashcardState>()(
         set((state) => ({
           flashcards: state.flashcards.filter((f) => f.id !== id),
         })),
-      updateFlashcard: (id, newSentence) =>
+      updateFlashcard: (id, newSentence, newPhonetic) =>
         set((state) => ({
           flashcards: state.flashcards.map((f) =>
-            f.id === id ? { ...f, sentence: newSentence } : f
+            f.id === id ? { ...f, sentence: newSentence, phonetic: newPhonetic !== undefined ? newPhonetic : f.phonetic } : f
           ),
         })),
       updateFlashcardTag: (id, tags) =>

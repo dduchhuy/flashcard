@@ -13,6 +13,7 @@ export function TabHome() {
   const [isTagsLocked, setIsTagsLocked] = useState(false)
   const [inputMode, setInputMode] = useState<'sentence' | 'word'>('sentence')
   const [wordMeanings, setWordMeanings] = useState([{ meaning: '', example: '' }])
+  const [phoneticInput, setPhoneticInput] = useState('')
   
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -53,7 +54,7 @@ export function TabHome() {
 
     if (newSentence.trim()) {
       if (inputMode === 'sentence') {
-        addFlashcard(newSentence, finalTags)
+        addFlashcard(newSentence, finalTags, undefined, phoneticInput)
       } else {
         const { words } = extractWordsAndSpaces(newSentence)
         const indices = Array.from({ length: words.length }, (_, i) => i)
@@ -64,11 +65,12 @@ export function TabHome() {
             meaning: m.meaning.trim(),
             example: m.example?.trim()
           }))
-        addFlashcard(newSentence, finalTags, highlights)
+        addFlashcard(newSentence, finalTags, highlights, phoneticInput)
         setWordMeanings([{ meaning: '', example: '' }])
       }
 
       setNewSentence('')
+      setPhoneticInput('')
       if (!isTagsLocked) {
         setTagInput('')
         setSelectedTags([])
@@ -148,6 +150,14 @@ export function TabHome() {
                 className="w-full bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg leading-relaxed focus:outline-none resize-none min-h-[90px]"
                 rows={3}
               />
+              <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-gray-100 dark:border-gray-700/60">
+                <input
+                  value={phoneticInput}
+                  onChange={(e) => setPhoneticInput(e.target.value)}
+                  placeholder="Phonetic (optional)"
+                  className="w-full sm:w-1/3 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 text-sm italic focus:outline-none"
+                />
+              </div>
 
               <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700/60 text-xs text-gray-400">
                 <span>{wordCount} {wordCount === 1 ? 'word' : 'words'}</span>
@@ -161,13 +171,19 @@ export function TabHome() {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="relative rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 focus-within:bg-white dark:focus-within:bg-gray-800 focus-within:border-purple-500 dark:focus-within:border-purple-500 focus-within:ring-4 focus-within:ring-purple-500/10 transition-all p-3.5">
+              <div className="relative rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 focus-within:bg-white dark:focus-within:bg-gray-800 focus-within:border-purple-500 dark:focus-within:border-purple-500 focus-within:ring-4 focus-within:ring-purple-500/10 transition-all p-3.5 flex flex-col sm:flex-row gap-3">
                 <input
                   ref={textareaRef as any}
                   value={newSentence}
                   onChange={(e) => setNewSentence(e.target.value)}
                   placeholder="Enter a word or phrase (e.g. 'Apple')..."
-                  className="w-full bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg leading-relaxed focus:outline-none"
+                  className="flex-1 bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg leading-relaxed focus:outline-none"
+                />
+                <input
+                  value={phoneticInput}
+                  onChange={(e) => setPhoneticInput(e.target.value)}
+                  placeholder="Phonetic (e.g. /ˈæp.əl/)"
+                  className="w-full sm:w-40 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 text-sm italic focus:outline-none sm:border-l sm:border-gray-200 sm:dark:border-gray-700 sm:pl-3"
                 />
               </div>
 

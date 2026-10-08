@@ -453,39 +453,16 @@ function QuizGame({ onExit }: { onExit: () => void }) {
   return (
     <div className="max-w-xl mx-auto py-6 animate-in fade-in flex flex-col h-full">
       {/* Top bar */}
-      <div className="flex justify-between items-center mb-6 flex-wrap gap-2">
-        <button onClick={onExit} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+      <div className="flex justify-between items-center mb-6 gap-2">
+        <button onClick={onExit} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 flex-shrink-0">
           <ArrowLeft size={24} />
         </button>
-        <div className="flex bg-gray-100 dark:bg-gray-900 rounded-lg p-0.5">
-          <button onClick={() => setQuizMode('w2m')} className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${quizMode === 'w2m' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}>Word → Meaning</button>
-          <button onClick={() => setQuizMode('m2w')} className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${quizMode === 'm2w' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}>Meaning → Word</button>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* Unique words toggle */}
-          <button
-            onClick={() => { setUniqueWords(u => !u); setCurrentIndex(0); setCorrect(0); setWrong(0); setSkipped(0) }}
-            title={uniqueWords ? 'Each word shown once (ON)' : 'Each word shown once (OFF)'}
-            className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors ${
-              uniqueWords
-                ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700'
-                : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-            }`}
-          >
-            1 meaning
-          </button>
-          {/* Answer count selector — styled like the library tag dropdown */}
-          <SelectDropdown
-            value={String(answerCount)}
-            onChange={v => setAnswerCount(Number(v))}
-            options={[2,3,4,5,6,7,8].map(n => ({ value: String(n), label: `${n} options` }))}
-            className="w-28"
-            buttonClassName="!py-1.5 !text-xs"
-          />
+        
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar justify-end flex-1">
           {/* Context toggle */}
           <button 
             onClick={() => setShowContext(!showContext)}
-            className={`text-sm font-medium px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5 transition-colors border ${
+            className={`flex-shrink-0 text-sm font-medium px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5 transition-colors border ${
               showContext 
                 ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800' 
                 : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -494,9 +471,36 @@ function QuizGame({ onExit }: { onExit: () => void }) {
             {showContext ? <Lightbulb size={16} /> : <LightbulbOff size={16} />}
             <span className="hidden sm:inline">Context</span>
           </button>
+          
+          {/* Answer count selector — styled like the library tag dropdown */}
+          <SelectDropdown
+            value={String(answerCount)}
+            onChange={v => setAnswerCount(Number(v))}
+            options={[2,3,4,5,6,7,8].map(n => ({ value: String(n), label: `${n} options` }))}
+            className="w-28 flex-shrink-0"
+            buttonClassName="!py-1.5 !text-xs"
+          />
+
+          {/* Unique words toggle */}
+          <button
+            onClick={() => { setUniqueWords(u => !u); setCurrentIndex(0); setCorrect(0); setWrong(0); setSkipped(0) }}
+            title={uniqueWords ? 'Each word shown once (ON)' : 'Each word shown once (OFF)'}
+            className={`flex-shrink-0 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors ${
+              uniqueWords
+                ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700'
+                : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+          >
+            1 Mean
+          </button>
+
+          {/* Quiz mode segmented control */}
+          <div className="flex bg-gray-100 dark:bg-gray-900 rounded-lg p-0.5 flex-shrink-0">
+            <button onClick={() => setQuizMode('m2w')} className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${quizMode === 'm2w' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}>Mean</button>
+            <button onClick={() => setQuizMode('w2m')} className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${quizMode === 'w2m' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}>Word</button>
+          </div>
         </div>
       </div>
-
 
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-6 text-center flex-1 flex flex-col items-center justify-center relative">
         {quizMode === 'w2m' && (
@@ -518,9 +522,9 @@ function QuizGame({ onExit }: { onExit: () => void }) {
         <button
           onClick={handleSkip}
           disabled={!!selectedOption}
-          className="absolute top-4 right-4 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-30"
+          className="absolute top-4 right-4 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 font-medium"
         >
-          Skip ⏭
+          Skip
         </button>
       </div>
 
