@@ -395,15 +395,15 @@ function QuizGame({ onExit }: { onExit: () => void }) {
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Quiz Complete!</h2>
         <div className="flex gap-6 mb-8 mt-2">
           <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-green-500">{correct}</span>
+            <span className="text-2xl font-bold text-gray-700 dark:text-gray-300">{correct}</span>
             <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Correct</span>
           </div>
           <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-red-500">{wrong}</span>
+            <span className="text-2xl font-bold text-gray-700 dark:text-gray-300">{wrong}</span>
             <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Wrong</span>
           </div>
           <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-yellow-500">{skipped}</span>
+            <span className="text-2xl font-bold text-gray-700 dark:text-gray-300">{skipped}</span>
             <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Skipped</span>
           </div>
           <div className="flex flex-col items-center">
@@ -458,7 +458,7 @@ function QuizGame({ onExit }: { onExit: () => void }) {
           <ArrowLeft size={24} />
         </button>
         
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar justify-end flex-1">
+        <div className="flex items-center gap-2 flex-wrap justify-end flex-1">
           {/* Context toggle */}
           <button 
             onClick={() => setShowContext(!showContext)}
@@ -528,7 +528,7 @@ function QuizGame({ onExit }: { onExit: () => void }) {
         </button>
       </div>
 
-      <div className="flex flex-row gap-2 mb-4 w-full">
+      <div className="grid grid-cols-2 gap-3 mb-4 w-full">
         {options.map((opt, i) => {
           let baseBtnClass = "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
           let hoverBtnClass = "hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30"
@@ -547,51 +547,35 @@ function QuizGame({ onExit }: { onExit: () => void }) {
           }
 
           const btnClass = `${baseBtnClass} ${hoverBtnClass}`
-          const overlayClass = selectedOption 
-            ? btnClass 
-            : "bg-purple-50 dark:bg-gray-700 border-purple-300 dark:border-purple-500 text-gray-700 dark:text-gray-200"
 
           return (
-            <div key={i} className="relative group flex-1 h-24 min-w-0">
-              <button
-                onClick={() => handleSelect(opt)}
-                disabled={!!selectedOption}
-                className={`w-full h-full p-2 sm:p-3 rounded-xl border-2 text-center font-medium transition-all duration-300 ${btnClass} flex items-center justify-center`}
-              >
-                <div className="line-clamp-3 text-xs sm:text-sm whitespace-pre-wrap break-words w-full">
-                  {opt}
-                </div>
-              </button>
-
-              <div className="absolute top-0 left-0 w-full hidden group-hover:block z-50 animate-in fade-in zoom-in-95 duration-100">
-                <button
-                  onClick={() => handleSelect(opt)}
-                  disabled={!!selectedOption}
-                  className={`w-full min-h-[6rem] h-auto p-3 rounded-xl border-2 text-center font-medium shadow-2xl flex items-center justify-center ${overlayClass}`}
-                >
-                  <div className="whitespace-pre-wrap break-words text-sm w-full">
-                    {opt}
-                  </div>
-                </button>
+            <button
+              key={i}
+              onClick={() => handleSelect(opt)}
+              disabled={!!selectedOption}
+              className={`w-full p-3 rounded-xl border-2 text-center font-medium transition-all duration-300 ${btnClass} flex items-center justify-center min-h-[3.5rem]`}
+            >
+              <div className="text-sm whitespace-pre-wrap break-words w-full">
+                {opt}
               </div>
-            </div>
+            </button>
           )
         })}
       </div>
 
       {/* Stats bar */}
-      <div className="flex items-center justify-center gap-6 mt-2 px-1 text-sm font-medium">
-        <span className="text-green-600 dark:text-green-400">
+      <div className="flex items-center justify-center gap-6 mt-2 px-1 text-sm font-medium text-gray-500 dark:text-gray-400">
+        <span>
           {correct} correct
         </span>
-        <span className="text-red-500 dark:text-red-400">
+        <span>
           {wrong} wrong
         </span>
-        <span className="text-amber-500 dark:text-amber-400">
+        <span>
           {skipped} skip
         </span>
         <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
-        <span className="text-gray-500 dark:text-gray-400 tabular-nums">
+        <span className="tabular-nums">
           {currentIndex + 1} / {allQuestions.length}
         </span>
       </div>

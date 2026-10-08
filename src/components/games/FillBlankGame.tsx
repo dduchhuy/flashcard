@@ -151,15 +151,15 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Practice Complete!</h2>
         <div className="flex gap-6 mb-8 mt-2">
           <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-green-500">{correct}</span>
+            <span className="text-2xl font-bold text-gray-700 dark:text-gray-300">{correct}</span>
             <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Correct</span>
           </div>
           <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-red-500">{wrong}</span>
+            <span className="text-2xl font-bold text-gray-700 dark:text-gray-300">{wrong}</span>
             <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Wrong</span>
           </div>
           <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-yellow-500">{skipped}</span>
+            <span className="text-2xl font-bold text-gray-700 dark:text-gray-300">{skipped}</span>
             <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Skipped</span>
           </div>
           <div className="flex flex-col items-center">
@@ -409,18 +409,18 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
       </div>
 
       {/* Stats bar */}
-      <div className="flex items-center justify-center gap-6 py-2 px-1 text-sm font-medium">
-        <span className="text-green-600 dark:text-green-400">
+      <div className="flex items-center justify-center gap-6 py-2 px-1 text-sm font-medium text-gray-500 dark:text-gray-400">
+        <span>
           {correct} correct
         </span>
-        <span className="text-red-500 dark:text-red-400">
+        <span>
           {wrong} wrong
         </span>
-        <span className="text-amber-500 dark:text-amber-400">
+        <span>
           {skipped} skip
         </span>
         <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
-        <span className="text-gray-500 dark:text-gray-400 tabular-nums">
+        <span className="tabular-nums">
           {currentIndex + 1} / {allQuestions.length}
         </span>
       </div>
