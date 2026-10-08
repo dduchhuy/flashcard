@@ -11,6 +11,8 @@ export function TabAllCards() {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
   const [sortBy, setSortBy] = useState<SortOption>('date_desc')
   const [showHighlights, setShowHighlights] = useState(true)
+  const [showPartOfSpeech, setShowPartOfSpeech] = useState(true)
+  const [showPhonetic, setShowPhonetic] = useState(true)
   const [isLocked, setIsLocked] = useState(false)
   
   const [selectedTags, setSelectedTags] = useState<string[]>([])
@@ -199,6 +201,30 @@ export function TabAllCards() {
             {showHighlights ? <Lightbulb size={18} /> : <LightbulbOff size={18} />}
           </button>
 
+          <button 
+            onClick={() => setShowPartOfSpeech(!showPartOfSpeech)}
+            className={`p-2.5 rounded-lg flex items-center justify-center transition-colors border shadow-sm ${
+              showPartOfSpeech 
+                ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800' 
+                : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+            title={showPartOfSpeech ? 'Hide Type' : 'Show Type'}
+          >
+            <Type size={18} />
+          </button>
+
+          <button 
+            onClick={() => setShowPhonetic(!showPhonetic)}
+            className={`p-2.5 rounded-lg flex items-center justify-center transition-colors border shadow-sm ${
+              showPhonetic 
+                ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800' 
+                : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+            title={showPhonetic ? 'Hide Phonetic' : 'Show Phonetic'}
+          >
+            <span className="text-xs font-bold italic">/a/</span>
+          </button>
+
           <div className="flex bg-gray-100 dark:bg-gray-900 p-1 rounded-lg border border-gray-200 dark:border-gray-700">
             <button
               onClick={() => setViewMode('list')}
@@ -239,6 +265,8 @@ export function TabAllCards() {
                   flashcard={card} 
                   viewMode={viewMode} 
                   showHighlights={showHighlights} 
+                  showPartOfSpeech={showPartOfSpeech}
+                  showPhonetic={showPhonetic}
                   isLocked={isLocked}
                 />
               </div>

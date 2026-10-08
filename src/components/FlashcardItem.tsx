@@ -7,6 +7,8 @@ interface Props {
   flashcard: Flashcard
   viewMode?: 'list' | 'grid'
   showHighlights?: boolean
+  showPartOfSpeech?: boolean
+  showPhonetic?: boolean
   isLocked?: boolean
 }
 
@@ -17,7 +19,7 @@ type Segment = {
   meaning?: string
 }
 
-export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = true, isLocked = false }: Props) {
+export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = true, showPartOfSpeech = true, showPhonetic = true, isLocked = false }: Props) {
   const { deleteFlashcard, updateFlashcard, updateFlashcardTag, saveHighlight, removeHighlight, settings, flashcards } = useFlashcardStore()
   
   const [editingHighlightId, setEditingHighlightId] = useState<string | null>(null)
@@ -540,14 +542,14 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
               )
             })}
             </div>
-            {(flashcard.partOfSpeech || flashcard.phonetic) && (
-              <div className="mt-1.5 flex flex-col gap-0.5">
-                {flashcard.partOfSpeech && (
+            {((showPartOfSpeech && flashcard.partOfSpeech) || (showPhonetic && flashcard.phonetic)) && (
+              <div className="mt-1.5 flex flex-col gap-0.5 break-words overflow-hidden">
+                {showPartOfSpeech && flashcard.partOfSpeech && (
                   <span className="text-sm text-gray-500 dark:text-gray-400 italic">
                     {flashcard.partOfSpeech}
                   </span>
                 )}
-                {flashcard.phonetic && (
+                {showPhonetic && flashcard.phonetic && (
                   <span className="text-sm text-gray-400 dark:text-gray-500 italic">
                     {flashcard.phonetic}
                   </span>
