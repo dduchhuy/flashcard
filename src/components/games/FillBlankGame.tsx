@@ -409,26 +409,23 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
       </div>
 
       {/* Stats bar */}
-      <div className="flex items-center justify-between gap-2 px-1">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs font-semibold border border-green-200 dark:border-green-800">
-            <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
-            {correct} correct
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-semibold border border-red-200 dark:border-red-800">
-            <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
-            {wrong} wrong
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-xs font-semibold border border-amber-200 dark:border-amber-800">
-            <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
-            {skipped} skip
-          </span>
-        </div>
-        <span className="text-xs font-medium text-gray-400 dark:text-gray-500 tabular-nums">
+      <div className="flex items-center justify-center gap-6 py-2 px-1 text-sm font-medium">
+        <span className="text-green-600 dark:text-green-400">
+          {correct} correct
+        </span>
+        <span className="text-red-500 dark:text-red-400">
+          {wrong} wrong
+        </span>
+        <span className="text-amber-500 dark:text-amber-400">
+          {skipped} skip
+        </span>
+        <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
+        <span className="text-gray-500 dark:text-gray-400 tabular-nums">
           {currentIndex + 1} / {allQuestions.length}
         </span>
       </div>
     </div>
   )
 }
+
 

@@ -524,7 +524,7 @@ function QuizGame({ onExit }: { onExit: () => void }) {
         </button>
       </div>
 
-      <div className={`grid gap-3 mb-4 ${answerCount <= 2 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
+      <div className="flex flex-row gap-2 mb-4 w-full">
         {options.map((opt, i) => {
           let baseBtnClass = "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
           let hoverBtnClass = "hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30"
@@ -548,13 +548,13 @@ function QuizGame({ onExit }: { onExit: () => void }) {
             : "bg-purple-50 dark:bg-gray-700 border-purple-300 dark:border-purple-500 text-gray-700 dark:text-gray-200"
 
           return (
-            <div key={i} className="relative group w-full h-24">
+            <div key={i} className="relative group flex-1 h-24 min-w-0">
               <button
                 onClick={() => handleSelect(opt)}
                 disabled={!!selectedOption}
-                className={`w-full h-full p-4 rounded-xl border-2 text-center font-medium transition-all duration-300 ${btnClass} flex items-center justify-center`}
+                className={`w-full h-full p-2 sm:p-3 rounded-xl border-2 text-center font-medium transition-all duration-300 ${btnClass} flex items-center justify-center`}
               >
-                <div className="line-clamp-2 whitespace-pre-wrap break-all">
+                <div className="line-clamp-3 text-xs sm:text-sm whitespace-pre-wrap break-words w-full">
                   {opt}
                 </div>
               </button>
@@ -563,9 +563,9 @@ function QuizGame({ onExit }: { onExit: () => void }) {
                 <button
                   onClick={() => handleSelect(opt)}
                   disabled={!!selectedOption}
-                  className={`w-full min-h-[6rem] h-auto p-4 rounded-xl border-2 text-center font-medium shadow-2xl flex items-center justify-center ${overlayClass}`}
+                  className={`w-full min-h-[6rem] h-auto p-3 rounded-xl border-2 text-center font-medium shadow-2xl flex items-center justify-center ${overlayClass}`}
                 >
-                  <div className="whitespace-pre-wrap break-all">
+                  <div className="whitespace-pre-wrap break-words text-sm w-full">
                     {opt}
                   </div>
                 </button>
@@ -576,28 +576,25 @@ function QuizGame({ onExit }: { onExit: () => void }) {
       </div>
 
       {/* Stats bar */}
-      <div className="flex items-center justify-between gap-2 mt-2 px-1">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs font-semibold border border-green-200 dark:border-green-800">
-            <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
-            {correct} correct
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-semibold border border-red-200 dark:border-red-800">
-            <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
-            {wrong} wrong
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-xs font-semibold border border-amber-200 dark:border-amber-800">
-            <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
-            {skipped} skip
-          </span>
-        </div>
-        <span className="text-xs font-medium text-gray-400 dark:text-gray-500 tabular-nums">
+      <div className="flex items-center justify-center gap-6 mt-2 px-1 text-sm font-medium">
+        <span className="text-green-600 dark:text-green-400">
+          {correct} correct
+        </span>
+        <span className="text-red-500 dark:text-red-400">
+          {wrong} wrong
+        </span>
+        <span className="text-amber-500 dark:text-amber-400">
+          {skipped} skip
+        </span>
+        <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
+        <span className="text-gray-500 dark:text-gray-400 tabular-nums">
           {currentIndex + 1} / {allQuestions.length}
         </span>
       </div>
     </div>
   )
 }
+
 
 
 function SwipeGame({ onExit }: { onExit: () => void }) {
