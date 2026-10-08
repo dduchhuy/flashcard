@@ -12,6 +12,7 @@ import { SentenceGame } from './games/SentenceGame'
 import { TrueFalseGame } from './games/TrueFalseGame'
 import { HangmanGame } from './games/HangmanGame'
 import { TypingGame } from './games/TypingGame'
+import { SelectDropdown } from './SelectDropdown'
 
 type Segment = {
   type: 'normal' | 'highlight'
@@ -471,19 +472,16 @@ function QuizGame({ onExit }: { onExit: () => void }) {
                 : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
             }`}
           >
-            1×
+            1 meaning
           </button>
-          {/* Answer count selector */}
-          <select
-            value={answerCount}
-            onChange={e => setAnswerCount(Number(e.target.value))}
-            className="text-xs font-medium px-2 py-1.5 rounded-lg border bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-400 cursor-pointer"
-            title="Number of answer options"
-          >
-            {[2,3,4,5,6,7,8].map(n => (
-              <option key={n} value={n}>{n} options</option>
-            ))}
-          </select>
+          {/* Answer count selector — styled like the library tag dropdown */}
+          <SelectDropdown
+            value={String(answerCount)}
+            onChange={v => setAnswerCount(Number(v))}
+            options={[2,3,4,5,6,7,8].map(n => ({ value: String(n), label: `${n} options` }))}
+            className="w-28"
+            buttonClassName="!py-1.5 !text-xs"
+          />
           {/* Context toggle */}
           <button 
             onClick={() => setShowContext(!showContext)}
@@ -498,6 +496,7 @@ function QuizGame({ onExit }: { onExit: () => void }) {
           </button>
         </div>
       </div>
+
 
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-6 text-center flex-1 flex flex-col items-center justify-center relative">
         {quizMode === 'w2m' && (
@@ -577,18 +576,29 @@ function QuizGame({ onExit }: { onExit: () => void }) {
       </div>
 
       {/* Stats bar */}
-      <div className="flex items-center justify-center gap-4 text-sm font-medium mt-2 py-2 px-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
-        <span className="text-green-600 dark:text-green-400">✅ {correct}</span>
-        <span className="text-gray-300 dark:text-gray-600">|</span>
-        <span className="text-red-500 dark:text-red-400">❌ {wrong}</span>
-        <span className="text-gray-300 dark:text-gray-600">|</span>
-        <span className="text-yellow-500 dark:text-yellow-400">⏭ {skipped}</span>
-        <span className="text-gray-300 dark:text-gray-600">|</span>
-        <span className="text-gray-500 dark:text-gray-400">{currentIndex + 1} / {allQuestions.length}</span>
+      <div className="flex items-center justify-between gap-2 mt-2 px-1">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs font-semibold border border-green-200 dark:border-green-800">
+            <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+            {correct} correct
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-semibold border border-red-200 dark:border-red-800">
+            <span className="w-2 h-2 rounded-full bg-red-500 inline-block" />
+            {wrong} wrong
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-xs font-semibold border border-amber-200 dark:border-amber-800">
+            <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
+            {skipped} skip
+          </span>
+        </div>
+        <span className="text-xs font-medium text-gray-400 dark:text-gray-500 tabular-nums">
+          {currentIndex + 1} / {allQuestions.length}
+        </span>
       </div>
     </div>
   )
 }
+
 
 function SwipeGame({ onExit }: { onExit: () => void }) {
   const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
