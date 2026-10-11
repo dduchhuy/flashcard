@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, Component, ReactNode, ErrorInfo } from 'react'
 import { useFlashcardStore, Flashcard, getCardTags, getCardsForMode } from '../store'
 import { RefreshCcw, ThumbsDown, ThumbsUp, Lightbulb, LightbulbOff, Layers, MousePointerClick, ArrowLeft, Grid2X2, Type, BrainCircuit, Headphones, Volume2, Shuffle, Zap, ListOrdered, ToggleLeft, Skull } from 'lucide-react'
 import { MatchGame } from './games/MatchGame'
-import { EmptyState } from './games/shared'
+import { EmptyState, CardDetailModal, RootCardButton } from './games/shared'
 import { MemoryGame } from './games/MemoryGame'
 import { FillBlankGame } from './games/FillBlankGame'
 import { ListenGame } from './games/ListenGame'
@@ -23,6 +23,56 @@ type Segment = {
 
 type GameMode = 'menu' | 'swipe' | 'quiz' | 'match' | 'memory' | 'fill' | 'listen' | 'scramble' | 'speed' | 'sentence' | 'truefalse' | 'hangman' | 'typing'
 
+interface ErrorBoundaryProps {
+  children: ReactNode
+  onReset: () => void
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean
+  error: Error | null
+}
+
+class GameErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('GameErrorBoundary caught an error:', error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="text-center py-20 px-4 max-w-md mx-auto animate-in fade-in flex flex-col items-center">
+          <div className="text-5xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">Đã xảy ra lỗi trong trò chơi</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+            {this.state.error?.message || 'Có lỗi khi khởi tạo hoặc tải dữ liệu trò chơi.'}
+          </p>
+          <button
+            onClick={() => {
+              this.setState({ hasError: false, error: null })
+              this.props.onReset()
+            }}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-xl font-medium shadow-sm transition-colors"
+          >
+            Quay lại Menu Trò chơi
+          </button>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
 export function TabGame() {
   const [gameMode, setGameMode] = useState<GameMode>('menu')
   const { flashcards } = useFlashcardStore()
@@ -37,18 +87,22 @@ export function TabGame() {
   return (
     <div className="h-full pb-8">
       {gameMode === 'menu' && <GameMenu onSelect={setGameMode} />}
-      {gameMode === 'swipe' && <SwipeGame onExit={() => setGameMode('menu')} />}
-      {gameMode === 'quiz' && <QuizGame onExit={() => setGameMode('menu')} />}
-      {gameMode === 'match' && <MatchGame onExit={() => setGameMode('menu')} />}
-      {gameMode === 'memory' && <MemoryGame onExit={() => setGameMode('menu')} />}
-      {gameMode === 'fill' && <FillBlankGame onExit={() => setGameMode('menu')} />}
-      {gameMode === 'listen' && <ListenGame onExit={() => setGameMode('menu')} />}
-      {gameMode === 'scramble' && <ScrambleGame onExit={() => setGameMode('menu')} />}
-      {gameMode === 'speed' && <SpeedGame onExit={() => setGameMode('menu')} />}
-      {gameMode === 'sentence' && <SentenceGame onExit={() => setGameMode('menu')} />}
-      {gameMode === 'truefalse' && <TrueFalseGame onExit={() => setGameMode('menu')} />}
-      {gameMode === 'hangman' && <HangmanGame onExit={() => setGameMode('menu')} />}
-      {gameMode === 'typing' && <TypingGame onExit={() => setGameMode('menu')} />}
+      {gameMode !== 'menu' && (
+        <GameErrorBoundary key={gameMode} onReset={() => setGameMode('menu')}>
+          {gameMode === 'swipe' && <SwipeGame onExit={() => setGameMode('menu')} />}
+          {gameMode === 'quiz' && <QuizGame onExit={() => setGameMode('menu')} />}
+          {gameMode === 'match' && <MatchGame onExit={() => setGameMode('menu')} />}
+          {gameMode === 'memory' && <MemoryGame onExit={() => setGameMode('menu')} />}
+          {gameMode === 'fill' && <FillBlankGame onExit={() => setGameMode('menu')} />}
+          {gameMode === 'listen' && <ListenGame onExit={() => setGameMode('menu')} />}
+          {gameMode === 'scramble' && <ScrambleGame onExit={() => setGameMode('menu')} />}
+          {gameMode === 'speed' && <SpeedGame onExit={() => setGameMode('menu')} />}
+          {gameMode === 'sentence' && <SentenceGame onExit={() => setGameMode('menu')} />}
+          {gameMode === 'truefalse' && <TrueFalseGame onExit={() => setGameMode('menu')} />}
+          {gameMode === 'hangman' && <HangmanGame onExit={() => setGameMode('menu')} />}
+          {gameMode === 'typing' && <TypingGame onExit={() => setGameMode('menu')} />}
+        </GameErrorBoundary>
+      )}
     </div>
   )
 }
@@ -307,9 +361,10 @@ function QuizGame({ onExit }: { onExit: () => void }) {
     if (uniqueWords) {
       // Each card appears only once, using only first highlight
       filtered.forEach(card => {
-        if (card.highlights.length === 0) return
-        const h = card.highlights[0]
-        const wordText = extractWordText(card.sentence, h.wordIndices)
+        const highlights = card.highlights || []
+        if (highlights.length === 0) return
+        const h = highlights[0]
+        const wordText = extractWordText(card.sentence, h.wordIndices) || card.sentence
         questions.push({
           cardId: card.id,
           highlightId: h.id,
@@ -320,8 +375,9 @@ function QuizGame({ onExit }: { onExit: () => void }) {
       })
     } else {
       filtered.forEach(card => {
-        card.highlights.forEach(h => {
-          const wordText = extractWordText(card.sentence, h.wordIndices)
+        const highlights = card.highlights || []
+        highlights.forEach(h => {
+          const wordText = extractWordText(card.sentence, h.wordIndices) || card.sentence
           questions.push({
             cardId: card.id,
             highlightId: h.id,
@@ -333,21 +389,22 @@ function QuizGame({ onExit }: { onExit: () => void }) {
       })
     }
     return questions.sort(() => Math.random() - 0.5)
-  }, [flashcards, seed, activeTags, uniqueWords])
+  }, [flashcards, seed, activeTags, uniqueWords, gameInputMode])
 
   const allMeanings = useMemo(() => {
-    return Array.from(new Set(allQuestions.map(q => q.correctMeaning)))
+    return Array.from(new Set(allQuestions.map(q => q.correctMeaning).filter(Boolean)))
   }, [allQuestions])
 
   const allWords = useMemo(() => {
-    return Array.from(new Set(allQuestions.map(q => q.word)))
+    return Array.from(new Set(allQuestions.map(q => q.word).filter(Boolean)))
   }, [allQuestions])
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
-  const [showContext, setShowContext] = useState(false)
+  const [showModalCard, setShowModalCard] = useState<Flashcard | null>(null)
 
   const currentQ = allQuestions[currentIndex]
+  const currentCardObj = currentQ ? flashcards.find(f => f.id === currentQ.cardId) : null
   const questionText = currentQ ? (quizMode === 'w2m' ? currentQ.word : currentQ.correctMeaning) : ''
   const correctOption = currentQ ? (quizMode === 'w2m' ? currentQ.correctMeaning : currentQ.word) : ''
 
@@ -358,17 +415,17 @@ function QuizGame({ onExit }: { onExit: () => void }) {
     
     if (quizMode === 'w2m') {
       const validWrongQs = allQuestions.filter(q => 
-        q.word.toLowerCase() !== currentQ.word.toLowerCase() &&
-        q.correctMeaning.toLowerCase() !== currentQ.correctMeaning.toLowerCase()
+        (q.word || '').toLowerCase() !== (currentQ.word || '').toLowerCase() &&
+        (q.correctMeaning || '').toLowerCase() !== (currentQ.correctMeaning || '').toLowerCase()
       )
-      const uniqueWrongMeanings = Array.from(new Set(validWrongQs.map(q => q.correctMeaning)))
+      const uniqueWrongMeanings = Array.from(new Set(validWrongQs.map(q => q.correctMeaning).filter(Boolean)))
       wrongOptions = uniqueWrongMeanings.sort(() => Math.random() - 0.5).slice(0, wrongCount)
     } else {
       const validWrongQs = allQuestions.filter(q => 
-        q.correctMeaning.toLowerCase() !== currentQ.correctMeaning.toLowerCase() &&
-        q.word.toLowerCase() !== currentQ.word.toLowerCase()
+        (q.correctMeaning || '').toLowerCase() !== (currentQ.correctMeaning || '').toLowerCase() &&
+        (q.word || '').toLowerCase() !== (currentQ.word || '').toLowerCase()
       )
-      const uniqueWrongWords = Array.from(new Set(validWrongQs.map(q => q.word)))
+      const uniqueWrongWords = Array.from(new Set(validWrongQs.map(q => q.word).filter(Boolean)))
       wrongOptions = uniqueWrongWords.sort(() => Math.random() - 0.5).slice(0, wrongCount)
     }
     
@@ -459,19 +516,6 @@ function QuizGame({ onExit }: { onExit: () => void }) {
         </button>
         
         <div className="flex items-center gap-2 flex-wrap justify-end flex-1">
-          {/* Context toggle */}
-          <button 
-            onClick={() => setShowContext(!showContext)}
-            className={`flex-shrink-0 text-sm font-medium px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5 transition-colors border ${
-              showContext 
-                ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800' 
-                : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-            }`}
-          >
-            {showContext ? <Lightbulb size={16} /> : <LightbulbOff size={16} />}
-            <span className="hidden sm:inline">Context</span>
-          </button>
-          
           {/* Answer count selector — styled like the library tag dropdown */}
           <SelectDropdown
             value={String(answerCount)}
@@ -503,6 +547,14 @@ function QuizGame({ onExit }: { onExit: () => void }) {
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-6 text-center flex-1 flex flex-col items-center justify-center relative">
+        {/* Top-left root card button */}
+        {currentCardObj && (
+          <RootCardButton 
+            onClick={() => setShowModalCard(currentCardObj)}
+            className="absolute top-4 left-4"
+          />
+        )}
+
         {quizMode === 'w2m' && (
           <button
             onClick={() => speakEnglish(currentQ.word)}
@@ -512,12 +564,24 @@ function QuizGame({ onExit }: { onExit: () => void }) {
             <Volume2 size={22} />
           </button>
         )}
-        {showContext && (
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-3 leading-relaxed whitespace-pre-wrap px-4 animate-in fade-in slide-in-from-bottom-2">
-            "...{currentQ.sentence}..."
-          </p>
-        )}
         <h2 className="text-4xl font-bold text-purple-600 dark:text-purple-400 break-words whitespace-pre-wrap">{questionText}</h2>
+        
+        {/* POS and phonetic when question is the word */}
+        {quizMode === 'w2m' && currentCardObj && (
+          <div className="flex flex-col items-center gap-0.5 mt-2">
+            {(currentCardObj.posEntries ? currentCardObj.posEntries.map(p => p.partOfSpeech).filter(Boolean).join(', ') : currentCardObj.partOfSpeech) && (
+              <span className="text-sm italic text-gray-500 dark:text-gray-400 font-normal">
+                {currentCardObj.posEntries ? currentCardObj.posEntries.map(p => p.partOfSpeech).filter(Boolean).join(', ') : currentCardObj.partOfSpeech}
+              </span>
+            )}
+            {currentCardObj.phonetic && (
+              <span className="text-sm italic text-gray-400 dark:text-gray-500 font-normal">
+                {currentCardObj.phonetic}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Skip button inside card */}
         <button
           onClick={handleSkip}
@@ -579,6 +643,12 @@ function QuizGame({ onExit }: { onExit: () => void }) {
           {currentIndex + 1} / {allQuestions.length}
         </span>
       </div>
+
+      <CardDetailModal
+        card={showModalCard}
+        isOpen={!!showModalCard}
+        onClose={() => setShowModalCard(null)}
+      />
     </div>
   )
 }
@@ -590,30 +660,43 @@ function SwipeGame({ onExit }: { onExit: () => void }) {
   const [learningCards, setLearningCards] = useState<{ card: Flashcard, hid: string | null }[]>([])
   const [swipeCount, setSwipeCount] = useState(0)
   const [showHighlights, setShowHighlights] = useState(false)
-  const [displayMode, setDisplayMode] = useState<'sentence' | 'words' | 'meanings'>('sentence')
+  const [displayMode, setDisplayMode] = useState<'sentence' | 'words' | 'meanings' | 'phrases'>('sentence')
+  const [filterMode, setFilterMode] = useState<'all' | 'unlearned' | 'learned'>('all')
+  const [showModalCard, setShowModalCard] = useState<Flashcard | null>(null)
   
   useEffect(() => {
     let cardsToLearn = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
     cardsToLearn = getCardsForMode(cardsToLearn, gameInputMode)
+    
+    if (filterMode === 'unlearned') {
+      cardsToLearn = cardsToLearn.filter(c => !c.srs || c.srs.reps < 2)
+    } else if (filterMode === 'learned') {
+      cardsToLearn = cardsToLearn.filter(c => Boolean(c.srs && c.srs.reps >= 2))
+    }
+
     let items: { card: Flashcard, hid: string | null }[]
-    if (gameInputMode === 'word') {
+    if (displayMode === 'phrases') {
+      items = cardsToLearn.flatMap(card => 
+        (card.phrasesAndIdioms || []).filter(p => p.phrase).map((p, idx) => ({ card, hid: p.id || `${card.id}-pi-${idx}` }))
+      )
+    } else if (gameInputMode === 'word') {
       if (displayMode === 'words') {
         items = cardsToLearn.map(card => ({ card, hid: null }))
       } else {
-        items = cardsToLearn.flatMap(card => card.highlights.map(h => ({ card, hid: h.id })))
+        items = cardsToLearn.flatMap(card => (card.highlights || []).map(h => ({ card, hid: h.id })))
       }
     } else {
       if (displayMode === 'sentence') {
         items = cardsToLearn.map(card => ({ card, hid: null }))
       } else {
-        items = cardsToLearn.flatMap(card => card.highlights.map(h => ({ card, hid: h.id })))
+        items = cardsToLearn.flatMap(card => (card.highlights || []).map(h => ({ card, hid: h.id })))
       }
     }
     setLearningCards(items.sort(() => Math.random() - 0.5))
-  }, [flashcards, displayMode, activeTags, gameInputMode])
+  }, [flashcards, displayMode, filterMode, activeTags, gameInputMode])
 
   if (learningCards.length === 0) {
-    if (swipeCount === 0) return <EmptyState onExit={onExit} />
+    if (swipeCount === 0) return <EmptyState onExit={onExit} text={displayMode === 'phrases' ? 'No phrases and idioms found.' : undefined} />
     return (
       <div className="text-center py-20 animate-in fade-in flex flex-col items-center">
         <div className="text-6xl mb-6">🎉</div>
@@ -624,22 +707,29 @@ function SwipeGame({ onExit }: { onExit: () => void }) {
           <button 
             onClick={() => {
               setSwipeCount(0)
-              // The useEffect will trigger and reload the cards when swipeCount is 0,
-              // but we need to force re-evaluation of items:
               let cardsToLearn = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
               cardsToLearn = getCardsForMode(cardsToLearn, gameInputMode)
+              if (filterMode === 'unlearned') {
+                cardsToLearn = cardsToLearn.filter(c => !c.srs || c.srs.reps < 2)
+              } else if (filterMode === 'learned') {
+                cardsToLearn = cardsToLearn.filter(c => Boolean(c.srs && c.srs.reps >= 2))
+              }
               let items: { card: Flashcard, hid: string | null }[]
-              if (gameInputMode === 'word') {
+              if (displayMode === 'phrases') {
+                items = cardsToLearn.flatMap(card => 
+                  (card.phrasesAndIdioms || []).filter(p => p.phrase).map((p, idx) => ({ card, hid: p.id || `${card.id}-pi-${idx}` }))
+                )
+              } else if (gameInputMode === 'word') {
                 if (displayMode === 'words') {
                   items = cardsToLearn.map(card => ({ card, hid: null }))
                 } else {
-                  items = cardsToLearn.flatMap(card => card.highlights.map(h => ({ card, hid: h.id })))
+                  items = cardsToLearn.flatMap(card => (card.highlights || []).map(h => ({ card, hid: h.id })))
                 }
               } else {
                 if (displayMode === 'sentence') {
                   items = cardsToLearn.map(card => ({ card, hid: null }))
                 } else {
-                  items = cardsToLearn.flatMap(card => card.highlights.map(h => ({ card, hid: h.id })))
+                  items = cardsToLearn.flatMap(card => (card.highlights || []).map(h => ({ card, hid: h.id })))
                 }
               }
               setLearningCards(items.sort(() => Math.random() - 0.5))
@@ -653,18 +743,17 @@ function SwipeGame({ onExit }: { onExit: () => void }) {
     )
   }
 
-
   const currentItem = learningCards[0]
   const currentCard = currentItem.card
 
   return (
-    <div className="max-w-md mx-auto h-[60vh] flex flex-col items-center justify-center relative animate-in fade-in pt-12">
-      <div className="absolute top-0 w-full flex justify-between items-center z-10 gap-2 flex-wrap">
+    <div className="max-w-md mx-auto flex flex-col items-center justify-start relative animate-in fade-in pt-12 pb-8">
+      <div className="w-full flex justify-between items-center z-10 gap-2 flex-wrap mb-6">
         <button onClick={onExit} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
           <ArrowLeft size={24} />
         </button>
 
-        <div className="flex bg-gray-100 dark:bg-gray-900 rounded-lg p-0.5 flex-1 max-w-[260px] mx-auto">
+        <div className="flex bg-gray-100 dark:bg-gray-900 rounded-lg p-0.5 flex-1 max-w-[340px] mx-auto">
           <button 
             onClick={() => setDisplayMode('sentence')}
             className={`flex-1 py-1 text-xs font-medium rounded-md transition-colors ${displayMode === 'sentence' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
@@ -683,6 +772,12 @@ function SwipeGame({ onExit }: { onExit: () => void }) {
           >
             Meanings
           </button>
+          <button 
+            onClick={() => setDisplayMode('phrases')}
+            className={`flex-1 py-1 text-xs font-medium rounded-md transition-colors ${displayMode === 'phrases' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+          >
+            Phrases
+          </button>
         </div>
 
         <button 
@@ -698,25 +793,69 @@ function SwipeGame({ onExit }: { onExit: () => void }) {
         </button>
       </div>
       
-      <SwipeableCard 
-        key={`${currentCard.id}-${currentItem.hid}-${swipeCount}`} 
-        card={currentCard}
-        onlyHighlightId={currentItem.hid}
-        showHighlights={showHighlights}
-        displayMode={displayMode}
-        onSwipedRight={() => {
-          setLearningCards(prev => prev.slice(1))
-          setSwipeCount(c => c + 1)
-        }}
-        onSwipedLeft={() => {
-          setLearningCards(prev => [...prev.slice(1), currentItem])
-          setSwipeCount(c => c + 1)
-        }}
-      />
-
-      <div className="absolute bottom-0 w-full text-center">
-        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{learningCards.length} left</span>
+      <div className="relative w-full max-w-sm aspect-square flex items-center justify-center">
+        <SwipeableCard 
+          key={`${currentCard.id}-${currentItem.hid}-${swipeCount}`} 
+          card={currentCard}
+          onlyHighlightId={currentItem.hid}
+          showHighlights={showHighlights}
+          displayMode={displayMode}
+          onShowDetail={setShowModalCard}
+          onSwipedRight={() => {
+            setLearningCards(prev => prev.slice(1))
+            setSwipeCount(c => c + 1)
+          }}
+          onSwipedLeft={() => {
+            setLearningCards(prev => [...prev.slice(1), currentItem])
+            setSwipeCount(c => c + 1)
+          }}
+        />
       </div>
+
+      <div className="mt-8 flex flex-col items-center gap-3 w-full">
+        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+          {learningCards.length} từ còn lại
+        </span>
+
+        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl gap-1 text-xs">
+          <button
+            onClick={() => setFilterMode('all')}
+            className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
+              filterMode === 'all'
+                ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+            }`}
+          >
+            Tất cả
+          </button>
+          <button
+            onClick={() => setFilterMode('unlearned')}
+            className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
+              filterMode === 'unlearned'
+                ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+            }`}
+          >
+            Chưa thuộc
+          </button>
+          <button
+            onClick={() => setFilterMode('learned')}
+            className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
+              filterMode === 'learned'
+                ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+            }`}
+          >
+            Đã thuộc
+          </button>
+        </div>
+      </div>
+
+      <CardDetailModal
+        card={showModalCard}
+        isOpen={!!showModalCard}
+        onClose={() => setShowModalCard(null)}
+      />
     </div>
   )
 }
@@ -726,13 +865,15 @@ function SwipeableCard({
   onlyHighlightId,
   showHighlights,
   displayMode,
+  onShowDetail,
   onSwipedRight, 
   onSwipedLeft 
 }: { 
   card: Flashcard, 
   onlyHighlightId: string | null,
   showHighlights: boolean,
-  displayMode: 'sentence' | 'words' | 'meanings',
+  displayMode: 'sentence' | 'words' | 'meanings' | 'phrases',
+  onShowDetail?: (card: Flashcard) => void,
   onSwipedRight: () => void, 
   onSwipedLeft: () => void 
 }) {
@@ -742,6 +883,7 @@ function SwipeableCard({
   const [offsetX, setOffsetX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [swiped, setSwiped] = useState(false)
+  const [hoveredHighlightId, setHoveredHighlightId] = useState<string | null>(null)
 
   // Keyboard navigation
   useEffect(() => {
@@ -835,7 +977,7 @@ function SwipeableCard({
   let currentSegment: Segment | null = null
 
   for (let i = 0; i < words.length; i++) {
-    const highlight = (showHighlights || displayMode !== 'sentence') ? card.highlights.find(h => h.wordIndices.includes(i)) : undefined
+    const highlight = (showHighlights || displayMode !== 'sentence') ? (card.highlights || []).find(h => h.wordIndices.includes(i)) : undefined
     
     const targetType = highlight ? 'highlight' : 'normal'
     const targetId = highlight?.id
@@ -849,9 +991,6 @@ function SwipeableCard({
     }
   }
   if (currentSegment) segments.push(currentSegment)
-
-
-  const [hoveredHighlightId, setHoveredHighlightId] = useState<string | null>(null)
 
   return (
     <div
@@ -887,15 +1026,26 @@ function SwipeableCard({
         </div>
       )}
 
+      {/* Top-left root card button */}
+      <RootCardButton
+        onClick={() => onShowDetail?.(card)}
+        className="absolute top-4 left-4"
+      />
+
       <button
         onPointerDown={e => e.stopPropagation()}
         onClick={e => {
           e.stopPropagation()
+          if (displayMode === 'phrases') {
+            const pi = (card.phrasesAndIdioms || []).find((x, idx) => (x.id || `${card.id}-pi-${idx}`) === onlyHighlightId)
+            speakEnglish(pi ? pi.phrase : card.sentence)
+            return
+          }
           if (gameInputMode === 'word') {
             if (displayMode === 'words') {
               speakEnglish(card.sentence)
             } else {
-              const h = card.highlights.find(x => x.id === onlyHighlightId)
+              const h = (card.highlights || []).find(x => x.id === onlyHighlightId)
               if (displayMode === 'sentence') {
                 speakEnglish(h?.example || card.sentence)
               } else {
@@ -903,7 +1053,7 @@ function SwipeableCard({
               }
             }
           } else {
-            const h = displayMode === 'sentence' ? null : card.highlights.find(x => x.id === onlyHighlightId)
+            const h = displayMode === 'sentence' ? null : (card.highlights || []).find(x => x.id === onlyHighlightId)
             if (h) {
               const w = extractWordText(card.sentence, h.wordIndices)
               speakEnglish(w)
@@ -920,15 +1070,59 @@ function SwipeableCard({
 
       <div className="text-center w-full">
         <div className="text-3xl font-medium leading-relaxed text-gray-800 dark:text-gray-200 flex flex-wrap justify-center items-center whitespace-pre-wrap">
-          {gameInputMode === 'word' ? (() => {
+          {displayMode === 'phrases' ? (() => {
+            const pi = (card.phrasesAndIdioms || []).find((x, idx) => (x.id || `${card.id}-pi-${idx}`) === onlyHighlightId)
+            if (!pi) return null
+            return (
+              <div className="flex flex-col items-center gap-2 w-full px-4 text-center">
+                <span className="font-bold text-2xl text-gray-800 dark:text-gray-100">{pi.phrase}</span>
+                <span className="text-xs uppercase tracking-wider text-purple-600 dark:text-purple-400 font-semibold bg-purple-50 dark:bg-purple-900/30 px-2.5 py-1 rounded-full">
+                  Phrase / Idiom
+                </span>
+                {showHighlights && (
+                  <span className="text-purple-600 dark:text-purple-400 text-lg font-medium mt-2">
+                    {pi.translation}
+                  </span>
+                )}
+              </div>
+            )
+          })() : gameInputMode === 'word' ? (() => {
             if (displayMode === 'words') {
-              return <span>{card.sentence}</span>
+              return (
+                <div className="flex flex-col items-center gap-1 w-full px-4 text-center">
+                  <span className="font-bold">{card.sentence}</span>
+                  {(card.posEntries ? card.posEntries.map(p => p.partOfSpeech).filter(Boolean).join(', ') : card.partOfSpeech) && (
+                    <span className="text-sm italic text-gray-500 dark:text-gray-400 font-normal">
+                      {card.posEntries ? card.posEntries.map(p => p.partOfSpeech).filter(Boolean).join(', ') : card.partOfSpeech}
+                    </span>
+                  )}
+                  {card.phonetic && (
+                    <span className="text-sm italic text-gray-400 dark:text-gray-500 font-normal">
+                      {card.phonetic}
+                    </span>
+                  )}
+                  {showHighlights && (card.highlights || []).length > 0 && (
+                    <span className="text-purple-600 dark:text-purple-400 text-lg font-medium mt-2">
+                      {(card.highlights || [])[0].meaning}
+                    </span>
+                  )}
+                </div>
+              )
             }
-            const h = card.highlights.find(x => x.id === onlyHighlightId)
+            const h = (card.highlights || []).find(x => x.id === onlyHighlightId)
             if (!h) return null
 
             if (displayMode === 'meanings') {
-              return <span>{h.meaning}</span>
+              return (
+                <div className="flex flex-col items-center gap-2 w-full px-4 text-center">
+                  <span>{h.meaning}</span>
+                  {showHighlights && (
+                    <span className="text-purple-600 dark:text-purple-400 text-lg font-medium mt-2">
+                      {card.sentence}
+                    </span>
+                  )}
+                </div>
+              )
             }
             
             // displayMode === 'sentence'

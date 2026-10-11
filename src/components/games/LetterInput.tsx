@@ -2,17 +2,19 @@ import { RefObject } from 'react'
 import { Check, X, SkipForward } from 'lucide-react'
 
 export function letterIndices(word: string) {
+  const safeWord = word || ''
   const res: number[] = []
-  for (let i = 0; i < word.length; i++) if (word[i] !== ' ') res.push(i)
+  for (let i = 0; i < safeWord.length; i++) if (safeWord[i] !== ' ') res.push(i)
   return res
 }
 
 export function buildGuess(word: string, typed: string, hinted: number[]) {
+  const safeWord = word || ''
   let k = 0
   let out = ''
-  for (let i = 0; i < word.length; i++) {
-    if (word[i] === ' ') { out += ' '; continue }
-    if (hinted.includes(i)) out += word[i]
+  for (let i = 0; i < safeWord.length; i++) {
+    if (safeWord[i] === ' ') { out += ' '; continue }
+    if (hinted.includes(i)) out += safeWord[i]
     else if (k < typed.length) out += typed[k++]
   }
   return out
@@ -31,7 +33,7 @@ export function LetterInput({
   accent: 'purple' | 'blue'
 }) {
   const freeCount = letterIndices(word).filter(i => !hinted.includes(i)).length
-  const reveal = status === 'correct' || status === 'skipped'
+  const reveal = status === 'correct' || status === 'skipped' || status === 'wrong'
   
   const displayLength = word.length
   const chars: any[] = []

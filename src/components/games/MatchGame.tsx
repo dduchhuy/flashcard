@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useFlashcardStore, getCardTags, getCardsForMode } from '../../store'
+import { useFlashcardStore, getCardTags, getCardsForMode, Flashcard } from '../../store'
 import { ArrowLeft, RefreshCcw, Shuffle, Volume2, VolumeX } from 'lucide-react'
 import { extractWordText, speakEnglish } from '../../utils'
-import { EmptyState } from './shared'
+import { EmptyState, CardDetailModal, RootCardButton } from './shared'
 
 type MixItem = {
   uid: string
@@ -14,29 +14,81 @@ type MixItem = {
 export function MatchGame({ onExit }: { onExit: () => void }) {
   const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
+  const [showModalCard, setShowModalCard] = useState<Flashcard | null>(null)
+  const [matchMode, setMatchMode] = useState<'words' | 'examples' | 'phrases'>('words')
 
   const allPairs = useMemo(() => {
-    const pairs: { id: string, word: string, meaning: string }[] = []
+    const pairs: { id: string, cardId: string, word: string, meaning: string }[] = []
     let filtered = activeTags && activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
     filtered = getCardsForMode(filtered, gameInputMode)
     
+    if (matchMode === 'examples') {
+      filtered.forEach(card => {
+        const posEntries = card.posEntries || []
+        posEntries.forEach((pos, pi) => {
+          pos.meanings.forEach((m, mi) => {
+            (m.examples || []).forEach((ex, ei) => {
+              if (!ex.sentence) return
+              pairs.push({
+                id: `${card.id}-ex-${pi}-${mi}-${ei}`,
+                cardId: card.id,
+                word: ex.sentence,
+                meaning: ex.translation || ex.sentence,
+              })
+            })
+          })
+        })
+        // Also check legacy highlights examples
+        const highlights = card.highlights || []
+        highlights.forEach((h, hi) => {
+          if (!h.example) return
+          pairs.push({
+            id: `${card.id}-hex-${hi}`,
+            cardId: card.id,
+            word: h.example,
+            meaning: h.exampleTranslation || h.meaning,
+          })
+        })
+      })
+      return pairs.sort(() => Math.random() - 0.5)
+    }
+
+    if (matchMode === 'phrases') {
+      filtered.forEach(card => {
+        const phrases = card.phrasesAndIdioms || []
+        phrases.forEach((pi, idx) => {
+          if (!pi.phrase) return
+          pairs.push({
+            id: pi.id || `${card.id}-pi-${idx}`,
+            cardId: card.id,
+            word: pi.phrase,
+            meaning: pi.translation || pi.phrase,
+          })
+        })
+      })
+      return pairs.sort(() => Math.random() - 0.5)
+    }
+
+    // Default: words mode
     filtered.forEach(card => {
-      if (card.highlights.length === 0) return
+      const highlights = card.highlights || []
+      if (highlights.length === 0) return
       
-      let selectedHighlight = card.highlights[0]
-      if (card.highlights.length > 1) {
-        const randIndex = Math.floor(Math.abs(Math.sin(card.id.length + seed)) * card.highlights.length)
-        selectedHighlight = card.highlights[randIndex]
+      let selectedHighlight = highlights[0]
+      if (highlights.length > 1) {
+        const randIndex = Math.floor(Math.abs(Math.sin(card.id.length + seed)) * highlights.length)
+        selectedHighlight = highlights[randIndex]
       }
       
       pairs.push({
         id: selectedHighlight.id,
+        cardId: card.id,
         word: extractWordText(card.sentence, selectedHighlight.wordIndices),
         meaning: selectedHighlight.meaning
       })
     })
     return pairs.sort(() => Math.random() - 0.5)
-  }, [flashcards, seed, activeTags, gameInputMode])
+  }, [flashcards, seed, activeTags, gameInputMode, matchMode])
 
   const [currentRound, setCurrentRound] = useState(0)
   const [autoSpeak, setAutoSpeak] = useState(true)
@@ -124,9 +176,19 @@ export function MatchGame({ onExit }: { onExit: () => void }) {
   return (
     <div className="max-w-2xl mx-auto py-6 animate-in fade-in flex flex-col h-full">
       <div className="flex justify-between items-center mb-8">
-        <button onClick={onExit} className="text-gray-500 hover:text-gray-700 dark:text-gray-400">
-          <ArrowLeft size={24} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={onExit} className="text-gray-500 hover:text-gray-700 dark:text-gray-400">
+            <ArrowLeft size={24} />
+          </button>
+          <RootCardButton 
+            onClick={() => {
+              const currentPairId = selectedWordId || selectedMeaningId || actualRoundPairs[0]?.id
+              const foundPair = actualRoundPairs.find(p => p.id === currentPairId)
+              const card = flashcards.find(f => f.id === foundPair?.cardId) || flashcards.find(f => f.id === actualRoundPairs[0]?.cardId)
+              if (card) setShowModalCard(card)
+            }}
+          />
+        </div>
         <div className="w-6" />
         <div className="flex items-center gap-3">
         <button
@@ -144,6 +206,28 @@ export function MatchGame({ onExit }: { onExit: () => void }) {
           <Shuffle size={20} />
         </button>
         </div>
+      </div>
+
+      {/* Mode switcher */}
+      <div className="flex bg-gray-100 dark:bg-gray-900 rounded-lg p-0.5 mb-6 self-center">
+        <button
+          onClick={() => { setMatchMode('words'); setCurrentRound(0); setSeed(s => s + 1) }}
+          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${matchMode === 'words' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+        >
+          Từ
+        </button>
+        <button
+          onClick={() => { setMatchMode('examples'); setCurrentRound(0); setSeed(s => s + 1) }}
+          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${matchMode === 'examples' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+        >
+          Câu ví dụ
+        </button>
+        <button
+          onClick={() => { setMatchMode('phrases'); setCurrentRound(0); setSeed(s => s + 1) }}
+          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${matchMode === 'phrases' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+        >
+          Phrases
+        </button>
       </div>
 
       <div className="grid grid-cols-2 gap-3 flex-1">
@@ -201,6 +285,12 @@ export function MatchGame({ onExit }: { onExit: () => void }) {
       <p className="text-center text-sm font-medium text-gray-500 dark:text-gray-400 mt-6">
         Round {currentRound + 1}
       </p>
+
+      <CardDetailModal
+        card={showModalCard}
+        isOpen={!!showModalCard}
+        onClose={() => setShowModalCard(null)}
+      />
     </div>
   )
 }

@@ -60,16 +60,16 @@ function buildQueue(
 
   if (mode === 'meaning') {
     filtered.forEach(card => {
-      card.highlights.forEach(highlight => {
+      (card.highlights || []).forEach(highlight => {
         const srs = highlight.srs
         if (srs && srs.due > now) return // not due
-        const word = extractWordText(card.sentence, highlight.wordIndices)
+        const word = extractWordText(card.sentence, highlight.wordIndices) || card.sentence
         items.push({ type: 'meaning', card, highlight, word })
       })
     })
   } else {
     filtered.forEach(card => {
-      if (card.highlights.length === 0) return
+      if ((card.highlights || []).length === 0) return
       const srs = card.srs
       if (srs && srs.due > now) return // not due
       items.push({ type: 'word', card })
@@ -346,7 +346,7 @@ export function TabLearn() {
   )
 
   // Word mode: navigate meanings
-  const wordMeanings = current.type === 'word' ? current.card.highlights : []
+  const wordMeanings = current.type === 'word' ? (current.card.highlights || []) : []
   const shownMeaning = wordMeanings[meaningIdx]
 
   const cardTypeBadge = () => {

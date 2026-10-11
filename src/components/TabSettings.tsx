@@ -1,5 +1,5 @@
 import { useRef, useState, useMemo } from 'react'
-import { useFlashcardStore, getCardTags } from '../store'
+import { useFlashcardStore, getCardTags, migrateFlashcard } from '../store'
 import { SelectDropdown } from './SelectDropdown'
 import { Download, Upload, RotateCcw, Moon, Sun, Palette, CheckCircle2, Trash2 } from 'lucide-react'
 
@@ -190,7 +190,8 @@ export function TabSettings() {
 
         const existingMap = new Map(currentFlashcards.map(f => [f.id, f]))
         
-        allImportedCards.forEach(newCard => {
+        allImportedCards.forEach(rawCard => {
+          const newCard = migrateFlashcard(rawCard)
           const existingCard = Array.from(existingMap.values()).find(
             c => c.sentence.toLowerCase().trim() === newCard.sentence.toLowerCase().trim()
           )
@@ -210,11 +211,34 @@ export function TabSettings() {
                 }
               })
             }
+
+            // Merge posEntries if any
+            const mergedPosEntries = [...(existingCard.posEntries || [])]
+            if (newCard.posEntries && Array.isArray(newCard.posEntries)) {
+              newCard.posEntries.forEach((np: any) => {
+                const existingPos = mergedPosEntries.find(p => p.partOfSpeech.toLowerCase().trim() === np.partOfSpeech.toLowerCase().trim())
+                if (!existingPos) {
+                  mergedPosEntries.push(np)
+                }
+              })
+            }
+
+            // Merge phrasesAndIdioms if any
+            const mergedPhrases = [...(existingCard.phrasesAndIdioms || [])]
+            if (newCard.phrasesAndIdioms && Array.isArray(newCard.phrasesAndIdioms)) {
+              newCard.phrasesAndIdioms.forEach((np: any) => {
+                if (!mergedPhrases.some(ep => ep.phrase.toLowerCase().trim() === np.phrase.toLowerCase().trim())) {
+                  mergedPhrases.push(np)
+                }
+              })
+            }
             
             existingMap.set(existingCard.id, {
               ...existingCard,
               tags: mergedTags,
-              highlights: mergedHighlights
+              highlights: mergedHighlights,
+              posEntries: mergedPosEntries.length > 0 ? mergedPosEntries : undefined,
+              phrasesAndIdioms: mergedPhrases.length > 0 ? mergedPhrases : undefined,
             })
           } else {
             existingMap.set(newCard.id, newCard)

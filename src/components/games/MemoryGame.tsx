@@ -15,18 +15,35 @@ type CardItem = {
 export function MemoryGame({ onExit }: { onExit: () => void }) {
   const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
+  const [memMode, setMemMode] = useState<'highlights' | 'phrases'>('highlights')
 
   const allPairs = useMemo(() => {
     const pairs: { id: string, word: string, meaning: string }[] = []
     let filtered = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
     filtered = getCardsForMode(filtered, gameInputMode)
     
+    if (memMode === 'phrases') {
+      filtered.forEach(card => {
+        const phrases = card.phrasesAndIdioms || []
+        phrases.forEach((pi, idx) => {
+          if (!pi.phrase) return
+          pairs.push({
+            id: pi.id || `${card.id}-pi-${idx}`,
+            word: pi.phrase,
+            meaning: pi.translation || pi.phrase,
+          })
+        })
+      })
+      return pairs.sort(() => Math.random() - 0.5)
+    }
+
     filtered.forEach(card => {
-      if (card.highlights.length === 0) return
-      let selectedHighlight = card.highlights[0]
-      if (card.highlights.length > 1) {
-        const randIndex = Math.floor(Math.abs(Math.sin(card.id.length + seed)) * card.highlights.length)
-        selectedHighlight = card.highlights[randIndex]
+      const highlights = card.highlights || []
+      if (highlights.length === 0) return
+      let selectedHighlight = highlights[0]
+      if (highlights.length > 1) {
+        const randIndex = Math.floor(Math.abs(Math.sin(card.id.length + seed)) * highlights.length)
+        selectedHighlight = highlights[randIndex]
       }
       const h = selectedHighlight
       pairs.push({
@@ -36,7 +53,7 @@ export function MemoryGame({ onExit }: { onExit: () => void }) {
       })
     })
     return pairs.sort(() => Math.random() - 0.5)
-  }, [flashcards, seed])
+  }, [flashcards, seed, memMode])
 
   const [currentRound, setCurrentRound] = useState(0)
   
@@ -77,10 +94,10 @@ export function MemoryGame({ onExit }: { onExit: () => void }) {
 
     if (newFlipped.length === 2) {
       setIsAnimating(true)
-      const c1 = cards.find(c => c.uid === newFlipped[0])!
-      const c2 = cards.find(c => c.uid === newFlipped[1])!
+      const c1 = cards.find(c => c.uid === newFlipped[0])
+      const c2 = cards.find(c => c.uid === newFlipped[1])
       
-      if (c1.pairId === c2.pairId) {
+      if (c1 && c2 && c1.pairId === c2.pairId) {
         // match
         setTimeout(() => {
           setCards(prev => prev.map(c => newFlipped.includes(c.uid) ? { ...c, isMatched: true } : c))

@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
-import { useFlashcardStore, getCardTags, getCardsForMode } from '../../store'
+import { useFlashcardStore, getCardTags, getCardsForMode, Flashcard } from '../../store'
 import { ArrowLeft, RefreshCcw, Volume2, Lightbulb } from 'lucide-react'
 import { extractWordText, fuzzyMatch, speakEnglish } from '../../utils'
 import { LetterInput, letterIndices, buildGuess } from './LetterInput'
+import { CardDetailModal, RootCardButton, GameStatsBar } from './shared'
 
 export function ListenGame({ onExit }: { onExit: () => void }) {
   const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
@@ -14,15 +15,17 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
     filtered = getCardsForMode(filtered, gameInputMode)
     
     filtered.forEach(card => {
-      if (card.highlights.length === 0) return
-      let selectedHighlight = card.highlights[0]
-      if (card.highlights.length > 1) {
-        const randIndex = Math.floor(Math.abs(Math.sin(card.id.length + seed)) * card.highlights.length)
-        selectedHighlight = card.highlights[randIndex]
+      const highlights = card.highlights || []
+      if (highlights.length === 0) return
+      let selectedHighlight = highlights[0]
+      if (highlights.length > 1) {
+        const randIndex = Math.floor(Math.abs(Math.sin(card.id.length + seed)) * highlights.length)
+        selectedHighlight = highlights[randIndex]
       }
       const h = selectedHighlight
       questions.push({
         id: h.id,
+        cardId: card.id,
         word: extractWordText(card.sentence, h.wordIndices),
         sentence: h.example ? h.example : card.sentence,
         meaning: h.meaning,
@@ -36,12 +39,14 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
   const [inputValue, setInputValue] = useState('')
   const [status, setStatus] = useState<'playing' | 'correct' | 'wrong' | 'skipped'>('playing')
   const [hinted, setHinted] = useState<number[]>([])
-  const [score, setScore] = useState(0)
+  const [correct, setCorrect] = useState(0)
+  const [wrong, setWrong] = useState(0)
+  const [skipped, setSkipped] = useState(0)
+  const [showModalCard, setShowModalCard] = useState<Flashcard | null>(null)
   
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Audio settings
-  const [readMode, setReadMode] = useState<'word' | 'sentence'>('word')
   const [hideMeaning, setHideMeaning] = useState(true)
 
   useEffect(() => {
@@ -55,19 +60,13 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
     setHideMeaning(true)
   }, [currentIndex])
 
-  useEffect(() => {
-    if (useFlashcardStore.getState().gameInputMode === 'word') {
-      setReadMode('word')
-    }
-  }, [])
-
   const currentQ = allQuestions[currentIndex]
 
   const playAudio = useCallback((text?: string) => {
     if (!currentQ) return
-    const textToPlay = text || (readMode === 'word' ? currentQ.word : currentQ.sentence)
+    const textToPlay = text || currentQ.word
     speakEnglish(textToPlay)
-  }, [currentQ, readMode])
+  }, [currentQ])
 
   // Auto-play ONLY when question changes
   useEffect(() => {
@@ -88,17 +87,29 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
   }
 
   if (currentIndex >= allQuestions.length) {
-    const percentage = Math.round((score / allQuestions.length) * 100)
+    const total = allQuestions.length
+    const percentage = total > 0 ? Math.round((correct / total) * 100) : 0
     return (
       <div className="text-center py-20 animate-in fade-in flex flex-col items-center">
         <div className="text-6xl mb-6">🏆</div>
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Practice Complete!</h2>
+        <div className="flex gap-4 my-6">
+          <div className="px-4 py-2 bg-green-50 dark:bg-green-900/30 rounded-xl text-green-600 dark:text-green-400 font-medium">
+            Correct: {correct}
+          </div>
+          <div className="px-4 py-2 bg-red-50 dark:bg-red-900/30 rounded-xl text-red-600 dark:text-red-400 font-medium">
+            Wrong: {wrong}
+          </div>
+          <div className="px-4 py-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-600 dark:text-orange-400 font-medium">
+            Skipped: {skipped}
+          </div>
+        </div>
         <p className="text-lg text-gray-500 dark:text-gray-400 mb-6">
-          You scored <span className="font-bold text-blue-600">{score}</span> out of {allQuestions.length} ({percentage}%)
+          Score: <span className="font-bold text-blue-600">{percentage}%</span>
         </p>
         <div className="flex gap-4 mt-2">
           <button onClick={onExit} className="bg-gray-200 dark:bg-gray-700 px-6 py-2 rounded-lg font-medium">Back</button>
-          <button onClick={() => { setSeed(s => s + 1); setCurrentIndex(0); setScore(0) }} className="bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium">
+          <button onClick={() => { setSeed(s => s + 1); setCurrentIndex(0); setCorrect(0); setWrong(0); setSkipped(0); setStatus('playing') }} className="bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium">
             <RefreshCcw size={18} /> Play Again
           </button>
         </div>
@@ -109,25 +120,31 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
   const checkAnswer = () => {
     if (fuzzyMatch(buildGuess(currentQ.word, inputValue, hinted), currentQ.word)) {
       setStatus('correct')
-      setScore(s => s + 1)
+      setCorrect(c => c + 1)
+      setTimeout(() => {
+        setStatus('playing')
+        setInputValue('')
+        setCurrentIndex(i => i + 1)
+      }, 1200)
+    } else {
+      setStatus('wrong')
+      setWrong(w => w + 1)
       setTimeout(() => {
         setStatus('playing')
         setInputValue('')
         setCurrentIndex(i => i + 1)
       }, 1500)
-    } else {
-      setStatus('wrong')
-      setTimeout(() => {
-        setStatus('playing')
-        setInputValue('')
-        inputRef.current?.focus()
-      }, 1500)
     }
   }
 
   const handleSkip = () => {
-    setInputValue('')
-    setCurrentIndex(i => i + 1)
+    setStatus('skipped')
+    setSkipped(s => s + 1)
+    setTimeout(() => {
+      setStatus('playing')
+      setInputValue('')
+      setCurrentIndex(i => i + 1)
+    }, 1000)
   }
 
   const handleHint = () => {
@@ -139,38 +156,24 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
     inputRef.current?.focus()
   }
 
-  const showFullSentence = hinted.length >= letterIndices(currentQ.word).length || status === 'correct' || status === 'skipped'
+  const showFullSentence = hinted.length >= letterIndices(currentQ.word).length || status === 'correct' || status === 'skipped' || status === 'wrong'
 
   return (
     <div className="max-w-2xl mx-auto py-6 animate-in fade-in flex flex-col h-full">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div className="flex items-center gap-4">
-          <button onClick={onExit} className="text-gray-500 hover:text-gray-700 dark:text-gray-400">
-            <ArrowLeft size={24} />
-          </button>
-        </div>
-        
-        <div className="flex items-center gap-2 bg-white dark:bg-gray-800 p-1 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex-wrap">
-          <div className="flex bg-gray-100 dark:bg-gray-900 rounded-lg p-0.5">
-            <button 
-              onClick={() => setReadMode('word')}
-              className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${readMode === 'word' ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
-            >
-              Word
-            </button>
-            {useFlashcardStore.getState().gameInputMode !== 'word' && (
-              <button 
-                onClick={() => setReadMode('sentence')}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${readMode === 'sentence' ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
-              >
-                Sentence
-              </button>
-            )}
-          </div>
-        </div>
+      <div className="flex justify-between items-center mb-8">
+        <button onClick={onExit} className="text-gray-500 hover:text-gray-700 dark:text-gray-400">
+          <ArrowLeft size={24} />
+        </button>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-6 text-center max-w-xl mx-auto w-full relative">
+        <RootCardButton
+          onClick={() => {
+            const c = flashcards.find(f => f.id === currentQ.cardId)
+            if (c) setShowModalCard(c)
+          }}
+          className="absolute top-4 left-4"
+        />
         
         {showFullSentence ? (
           <p className="text-lg text-gray-800 dark:text-gray-200 mb-8 leading-relaxed whitespace-pre-wrap px-4">
@@ -255,9 +258,15 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
           </button>
         </div>
       </div>
-      <p className="text-center text-sm font-medium text-gray-500 dark:text-gray-400">
-        {currentIndex + 1} / {allQuestions.length}
-      </p>
+      
+      <div className="mt-4 flex flex-col items-center gap-2">
+        <p className="text-center text-sm font-medium text-gray-500 dark:text-gray-400">
+          {currentIndex + 1} / {allQuestions.length}
+        </p>
+        <GameStatsBar correct={correct} wrong={wrong} skipped={skipped} />
+      </div>
+
+      <CardDetailModal card={showModalCard} onClose={() => setShowModalCard(null)} />
     </div>
   )
 }

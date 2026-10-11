@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { useFlashcardStore, getCardTags } from '../store'
+import { useFlashcardStore, getCardTags, isWordCard, Flashcard } from '../store'
 import { FlashcardItem } from './FlashcardItem'
 import { SelectDropdown } from './SelectDropdown'
 import { LayoutGrid, List, Lightbulb, LightbulbOff, Tag as TagIcon, ChevronDown, Check, Lock, Unlock, Type } from 'lucide-react'
@@ -49,7 +49,15 @@ export function TabAllCards() {
       result = result.filter(c => {
         if (c.sentence.toLowerCase().includes(q)) return true
         if (searchMode === 'all') {
-          if (c.highlights.some(h => h.meaning.toLowerCase().includes(q) || h.example?.toLowerCase().includes(q))) return true
+          if (c.highlights?.some(h => h.meaning.toLowerCase().includes(q) || h.example?.toLowerCase().includes(q))) return true
+          if (c.posEntries?.some(pos =>
+            pos.partOfSpeech.toLowerCase().includes(q) ||
+            pos.meanings.some(m =>
+              m.meaning.toLowerCase().includes(q) ||
+              m.examples.some(ex => ex.sentence.toLowerCase().includes(q) || ex.translation.toLowerCase().includes(q))
+            )
+          )) return true
+          if (c.phrasesAndIdioms?.some(pi => pi.phrase.toLowerCase().includes(q) || pi.translation.toLowerCase().includes(q))) return true
         }
         return false
       })
@@ -70,11 +78,29 @@ export function TabAllCards() {
     return 0
   })
 
+  const groupedCards = useMemo(() => {
+    const groups: { primaryCard: Flashcard, siblings: Flashcard[] }[] = []
+    const seenWords = new Map<string, { primaryCard: Flashcard, siblings: Flashcard[] }>()
+
+    sortedCards.forEach(card => {
+      const isWord = isWordCard(card)
+      const key = isWord ? card.sentence.trim().toLowerCase() : card.id
+      if (seenWords.has(key)) {
+        seenWords.get(key)!.siblings.push(card)
+      } else {
+        const group = { primaryCard: card, siblings: [card] }
+        seenWords.set(key, group)
+        groups.push(group)
+      }
+    })
+    return groups
+  }, [sortedCards])
+
   useEffect(() => {
     setDisplayCount(50)
   }, [searchQuery, searchMode, selectedTags, sortBy])
 
-  const displayedCards = sortedCards.slice(0, displayCount)
+  const displayedGroups = groupedCards.slice(0, displayCount)
 
   return (
     <div className="space-y-4 animate-in fade-in">
@@ -259,10 +285,11 @@ export function TabAllCards() {
               ? "flex flex-col gap-4" 
               : "columns-1 sm:columns-2 lg:columns-3 gap-4"
           }>
-            {displayedCards.map((card) => (
-              <div key={card.id} className={`break-inside-avoid ${viewMode === 'grid' ? 'mb-4' : ''}`}>
+            {displayedGroups.map((group) => (
+              <div key={group.primaryCard.id} className={`break-inside-avoid ${viewMode === 'grid' ? 'mb-4' : ''}`}>
                 <FlashcardItem 
-                  flashcard={card} 
+                  flashcard={group.primaryCard} 
+                  siblingCards={group.siblings}
                   viewMode={viewMode} 
                   showHighlights={showHighlights} 
                   showPartOfSpeech={showPartOfSpeech}
@@ -273,13 +300,13 @@ export function TabAllCards() {
             ))}
           </div>
           
-          {displayCount < sortedCards.length && (
+          {displayCount < groupedCards.length && (
             <div className="flex justify-center pt-6 pb-12">
               <button
                 onClick={() => setDisplayCount(c => c + 50)}
                 className="bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/40 dark:text-purple-300 dark:hover:bg-purple-900/60 px-6 py-2.5 rounded-full font-medium transition-colors"
               >
-                Load More ({sortedCards.length - displayCount} left)
+                Load More ({groupedCards.length - displayCount} left)
               </button>
             </div>
           )}

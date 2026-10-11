@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { useFlashcardStore, getCardTags, getCardsForMode } from '../../store'
+import { useFlashcardStore, getCardTags, getCardsForMode, Flashcard } from '../../store'
 import { ArrowLeft, RefreshCcw, Lightbulb, Volume2 } from 'lucide-react'
-import { extractWordText, extractWordsAndSpaces, fuzzyMatch, speakEnglish } from '../../utils'
+import { extractWordText, extractWordsAndSpaces, fuzzyMatch, speakEnglish, escapeRegExp } from '../../utils'
 import { LetterInput, letterIndices, buildGuess } from './LetterInput'
-import { EmptyState } from './shared'
+import { EmptyState, CardDetailModal, RootCardButton } from './shared'
 
-type FillMode = 'meaning' | 'meaning-all' | 'sentence'
+type FillMode = 'meaning' | 'meaning-all' | 'sentence' | 'phrase'
 
 export function FillBlankGame({ onExit }: { onExit: () => void }) {
   const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
@@ -20,15 +20,38 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
     let filtered = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
     filtered = getCardsForMode(filtered, gameInputMode)
     
+    if (fillMode === 'phrase') {
+      filtered.forEach(card => {
+        const phrases = card.phrasesAndIdioms || []
+        phrases.forEach((pi, idx) => {
+          if (!pi.phrase) return
+          questions.push({
+            id: pi.id || `${card.id}-pi-${idx}`,
+            cardId: card.id,
+            word: card.sentence.trim(),
+            sentence: pi.phrase,
+            meaning: pi.translation || pi.phrase,
+            displayMeaning: pi.translation || pi.phrase,
+            wordIndices: [],
+            isExample: true,
+            mode: 'phrase',
+          })
+        })
+      })
+      return questions.sort(() => Math.random() - 0.5)
+    }
+
     filtered.forEach(card => {
-      if (card.highlights.length === 0) return
+      const highlights = card.highlights || []
+      if (highlights.length === 0) return
 
       if (fillMode === 'meaning') {
         // Only first highlight, show first meaning
-        const h = card.highlights[0]
+        const h = highlights[0]
         const wordText = extractWordText(card.sentence, h.wordIndices)
         questions.push({
           id: h.id,
+          cardId: card.id,
           word: wordText,
           sentence: h.example ? h.example : card.sentence,
           meaning: h.meaning,
@@ -39,11 +62,12 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
         })
       } else if (fillMode === 'meaning-all') {
         // Only first highlight (one question per card), show ALL meanings of the card
-        const h = card.highlights[0]
+        const h = highlights[0]
         const wordText = extractWordText(card.sentence, h.wordIndices)
-        const allMeanings = card.highlights.map(hl => hl.meaning).join('\n')
+        const allMeanings = highlights.map(hl => hl.meaning).join('\n')
         questions.push({
           id: h.id,
+          cardId: card.id,
           word: wordText,
           sentence: h.example ? h.example : card.sentence,
           meaning: h.meaning,
@@ -53,35 +77,38 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
           mode: 'meaning-all',
         })
       } else {
-        // sentence mode (original behavior): pick one highlight per card
-        let selectedHighlight = card.highlights[0]
-        if (card.highlights.length > 1) {
-          const randIndex = Math.floor(Math.abs(Math.sin(card.id.length + seed)) * card.highlights.length)
-          selectedHighlight = card.highlights[randIndex]
+        // sentence mode: pick one highlight per card
+        let selectedHighlight = highlights[0]
+        if (highlights.length > 1) {
+          const randIndex = Math.floor(Math.abs(Math.sin(card.id.length + seed)) * highlights.length)
+          selectedHighlight = highlights[randIndex]
         }
         const h = selectedHighlight
         
         if (gameInputMode === 'word') {
           const sentence = h.example ? h.example : card.sentence
           const { words } = extractWordsAndSpaces(sentence)
-          const validWords = words.map((w, i) => ({w, i})).filter(x => /[a-zA-Z]{2,}/.test(x.w))
-          if (validWords.length > 0) {
-            const rIdx = Math.floor(Math.abs(Math.sin(h.id.length + seed)) * validWords.length)
-            const target = validWords[rIdx]
-            questions.push({
-              id: h.id,
-              word: target.w,
-              sentence: sentence,
-              meaning: h.meaning,
-              displayMeaning: h.meaning,
-              wordIndices: [target.i],
-              isExample: false,
-              mode: 'sentence',
-            })
+          const rootClean = card.sentence.trim().toLowerCase()
+          let foundTarget = words.map((w, i) => ({w, i})).find(x => x.w.toLowerCase() === rootClean)
+          if (!foundTarget) {
+            foundTarget = words.map((w, i) => ({w, i})).find(x => x.w.toLowerCase().includes(rootClean) || rootClean.includes(x.w.toLowerCase()))
           }
+          const target = foundTarget || { w: card.sentence, i: 0 }
+          questions.push({
+            id: h.id,
+            cardId: card.id,
+            word: target.w,
+            sentence: sentence,
+            meaning: h.meaning,
+            displayMeaning: h.meaning,
+            wordIndices: [target.i],
+            isExample: !!h.example,
+            mode: 'sentence',
+          })
         } else {
           questions.push({
             id: h.id,
+            cardId: card.id,
             word: extractWordText(card.sentence, h.wordIndices),
             sentence: h.example ? h.example : card.sentence,
             meaning: h.meaning,
@@ -99,6 +126,7 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [inputValue, setInputValue] = useState('')
   const [status, setStatus] = useState<'playing' | 'correct' | 'wrong' | 'skipped'>('playing')
+  const [showModalCard, setShowModalCard] = useState<Flashcard | null>(null)
   
   const [hinted, setHinted] = useState<number[]>([])
   const [hideMeaning, setHideMeaning] = useState(false)
@@ -114,7 +142,7 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
   useEffect(() => {
     setHinted([])
     // In meaning/meaning-all modes, meaning is the question so show it by default
-    setHideMeaning(fillMode === 'sentence')
+    setHideMeaning(fillMode === 'sentence' || fillMode === 'phrase')
   }, [currentIndex, fillMode])
 
   // Reset index when mode changes
@@ -248,6 +276,12 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
           >
             Sentence
           </button>
+          <button
+            onClick={() => setFillMode('phrase')}
+            className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${fillMode === 'phrase' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+          >
+            Phrases
+          </button>
         </div>
 
         <button 
@@ -260,6 +294,15 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-6 text-center max-w-xl mx-auto w-full relative">
+        {(() => {
+          const rootCard = currentQ ? flashcards.find(f => f.id === currentQ.cardId) : null
+          return rootCard ? (
+            <RootCardButton 
+              onClick={() => setShowModalCard(rootCard)}
+              className="absolute top-4 left-4"
+            />
+          ) : null
+        })()}
         
         {/* Meaning display area */}
         {isMeaningMode ? (
@@ -286,31 +329,36 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
               {(() => {
                 if (showFullSentence) return currentQ.sentence
                 if (currentQ.isExample) {
-                  const regex = new RegExp(`\\b${currentQ.word}\\b`, 'gi')
-                  const parts = currentQ.sentence.split(regex)
-                  if (parts.length === 1) {
-                    const parts2 = currentQ.sentence.split(new RegExp(currentQ.word, 'gi'))
+                  try {
+                    const escaped = escapeRegExp(currentQ.word)
+                    const regex = new RegExp(`\\b${escaped}\\b`, 'gi')
+                    const parts = currentQ.sentence.split(regex)
+                    if (parts.length === 1) {
+                      const parts2 = currentQ.sentence.split(new RegExp(escaped, 'gi'))
+                      return (
+                        <>
+                          {parts2.map((part: string, i: number) => (
+                            <span key={i}>
+                              {part}
+                              {i < parts2.length - 1 && <span className="text-purple-400 dark:text-purple-500 font-bold opacity-70">{'___'}</span>}
+                            </span>
+                          ))}
+                        </>
+                      )
+                    }
                     return (
                       <>
-                        {parts2.map((part: string, i: number) => (
+                        {parts.map((part: string, i: number) => (
                           <span key={i}>
                             {part}
-                            {i < parts2.length - 1 && <span className="text-purple-400 dark:text-purple-500 font-bold opacity-70">{'___'}</span>}
+                            {i < parts.length - 1 && <span className="text-purple-400 dark:text-purple-500 font-bold opacity-70">{'___'}</span>}
                           </span>
                         ))}
                       </>
                     )
+                  } catch {
+                    return currentQ.sentence
                   }
-                  return (
-                    <>
-                      {parts.map((part: string, i: number) => (
-                        <span key={i}>
-                          {part}
-                          {i < parts.length - 1 && <span className="text-purple-400 dark:text-purple-500 font-bold opacity-70">{'___'}</span>}
-                        </span>
-                      ))}
-                    </>
-                  )
                 }
                 const { words, spaces, initialSpace } = extractWordsAndSpaces(currentQ.sentence)
                 return (
@@ -424,6 +472,12 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
           {currentIndex + 1} / {allQuestions.length}
         </span>
       </div>
+
+      <CardDetailModal
+        card={showModalCard}
+        isOpen={!!showModalCard}
+        onClose={() => setShowModalCard(null)}
+      />
     </div>
   )
 }

@@ -1,28 +1,36 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Zap, Volume2 } from 'lucide-react'
-import { shuffle, useNotes, EmptyState, BackBar, BottomCounter } from './shared'
+import { shuffle, useNotes, EmptyState, BackBar, RootCardButton, GameStatsBar, CardDetailModal } from './shared'
+import { useFlashcardStore, Flashcard } from '../../store'
 import { speakEnglish } from '../../utils'
 
-const DURATION = 60
 const BEST_KEY = 'flashcard_speed_best'
 
 export function SpeedGame({ onExit }: { onExit: () => void }) {
+  const { flashcards } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
   const notes = useNotes(seed)
   const [stage, setStage] = useState<'ready' | 'playing' | 'done'>('ready')
-  const [timeLeft, setTimeLeft] = useState(DURATION)
+  const [customDuration, setCustomDuration] = useState(60)
+  const [timeLeft, setTimeLeft] = useState(60)
   const [qi, setQi] = useState(0)
   const [score, setScore] = useState(0)
   const [combo, setCombo] = useState(0)
   const [bestCombo, setBestCombo] = useState(0)
   const [correct, setCorrect] = useState(0)
   const [wrong, setWrong] = useState(0)
+  const [skipped, setSkipped] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
   const [best, setBest] = useState<number>(() => Number(localStorage.getItem(BEST_KEY) || 0))
   const [newRecord, setNewRecord] = useState(false)
   const [mode, setMode] = useState<'word' | 'meaning'>('word')
+  const [showModalCard, setShowModalCard] = useState<Flashcard | null>(null)
 
   const note = notes.length ? notes[qi % notes.length] : undefined
+  const currentCard = useMemo(() => {
+    if (!note) return null
+    return flashcards.find(f => f.id === note.cardId) || null
+  }, [note, flashcards])
 
   const options = useMemo(() => {
     if (!note) return []
@@ -59,15 +67,24 @@ export function SpeedGame({ onExit }: { onExit: () => void }) {
   const start = () => {
     setSeed(s => s + 1)
     setStage('playing')
-    setTimeLeft(DURATION)
+    setTimeLeft(customDuration)
     setQi(0)
     setScore(0)
     setCombo(0)
     setBestCombo(0)
     setCorrect(0)
     setWrong(0)
+    setSkipped(0)
     setSelected(null)
     setNewRecord(false)
+  }
+
+  const handleSkip = () => {
+    if (stage !== 'playing' || !note) return
+    setSkipped(s => s + 1)
+    setCombo(0)
+    setSelected(null)
+    setQi(q => q + 1)
   }
 
   const choose = (opt: string) => {
@@ -107,7 +124,36 @@ export function SpeedGame({ onExit }: { onExit: () => void }) {
         <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-10 text-center">
           <div className="inline-flex bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600 dark:text-yellow-400 p-4 rounded-full mb-4"><Zap size={36} /></div>
           <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Speed Match</h2>
-          <p className="text-gray-500 dark:text-gray-400 mb-2">Pick the right meaning as fast as you can in {DURATION} seconds. Streaks give bonus points.</p>
+          <p className="text-gray-500 dark:text-gray-400 mb-6">Pick the right answer as fast as you can. Streaks give bonus points.</p>
+          
+          <div className="mb-6 flex flex-col items-center gap-2">
+            <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Duration:</span>
+            <div className="flex items-center gap-2">
+              {[30, 60, 90, 120].map(d => (
+                <button
+                  key={d}
+                  onClick={() => setCustomDuration(d)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                    customDuration === d
+                      ? 'bg-yellow-500 text-white border-yellow-500'
+                      : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300'
+                  }`}
+                >
+                  {d}s
+                </button>
+              ))}
+              <input
+                type="number"
+                min="5"
+                max="600"
+                value={customDuration}
+                onChange={e => setCustomDuration(Math.max(5, Math.min(600, Number(e.target.value) || 30)))}
+                className="w-16 px-2 py-1.5 rounded-lg text-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-center font-medium"
+              />
+              <span className="text-sm text-gray-500">sec</span>
+            </div>
+          </div>
+
           <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">Best score: <span className="font-bold text-yellow-600 dark:text-yellow-400">{best}</span></p>
           <button onClick={start} className="bg-yellow-500 hover:bg-yellow-600 text-white px-10 py-3 rounded-xl font-bold shadow-sm transition-colors">Start</button>
         </div>
@@ -116,15 +162,24 @@ export function SpeedGame({ onExit }: { onExit: () => void }) {
   }
 
   if (stage === 'done') {
-    const total = correct + wrong
+    const total = correct + wrong + skipped
     return (
       <div className="text-center py-20 animate-in fade-in flex flex-col items-center">
         <div className="text-6xl mb-6">⚡</div>
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-1">Time's up!</h2>
         {newRecord && <p className="text-yellow-600 dark:text-yellow-400 font-bold mb-2">🎉 New record!</p>}
-        <p className="text-4xl font-bold text-purple-600 dark:text-purple-400 my-3">{score}</p>
-        <p className="text-gray-500 dark:text-gray-400 mb-1">{correct} correct of {total} answered ({total ? Math.round((correct / total) * 100) : 0}%)</p>
-        <p className="text-gray-500 dark:text-gray-400 mb-6">Best streak: {bestCombo} · Best score: {best}</p>
+        <div className="flex gap-4 my-6">
+          <div className="px-4 py-2 bg-green-50 dark:bg-green-900/30 rounded-xl text-green-600 dark:text-green-400 font-medium">
+            Correct: {correct}
+          </div>
+          <div className="px-4 py-2 bg-red-50 dark:bg-red-900/30 rounded-xl text-red-600 dark:text-red-400 font-medium">
+            Wrong: {wrong}
+          </div>
+          <div className="px-4 py-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-600 dark:text-orange-400 font-medium">
+            Skipped: {skipped}
+          </div>
+        </div>
+        <p className="text-gray-500 dark:text-gray-400 mb-6">Accuracy: {total > 0 ? Math.round((correct / total) * 100) : 0}% · Best streak: {bestCombo}</p>
         <div className="flex gap-4">
           <button onClick={onExit} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-6 py-2 rounded-lg font-medium">Back</button>
           <button onClick={start} className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700">Play Again</button>
@@ -138,17 +193,38 @@ export function SpeedGame({ onExit }: { onExit: () => void }) {
       <BackBar onExit={() => { setStage('ready') ; onExit() }} />
 
       <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-6">
-        <div className={`h-full transition-all duration-1000 ease-linear ${timeLeft <= 10 ? 'bg-red-500' : 'bg-yellow-500'}`} style={{ width: `${(timeLeft / DURATION) * 100}%` }} />
+        <div className={`h-full transition-all duration-1000 ease-linear ${timeLeft <= 10 ? 'bg-red-500' : 'bg-yellow-500'}`} style={{ width: `${(timeLeft / customDuration) * 100}%` }} />
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-6 text-center relative min-h-[10rem] flex items-center justify-center">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-6 text-center relative min-h-[10rem] flex flex-col items-center justify-center">
+        <RootCardButton
+          onClick={() => {
+            if (currentCard) setShowModalCard(currentCard)
+          }}
+          className="absolute top-4 left-4"
+        />
+
         <button
           onClick={() => setMode(m => m === 'word' ? 'meaning' : 'word')}
-          className="absolute top-4 left-4 text-xs font-bold px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+          className="absolute top-4 right-4 text-xs font-bold px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
         >
           {mode === 'word' ? 'EN → VI' : 'VI → EN'}
         </button>
-        <h3 className="text-3xl font-bold text-gray-800 dark:text-gray-100 break-words whitespace-pre-wrap px-4">{mode === 'word' ? note!.word : note!.meaning}</h3>
+
+        {mode === 'word' ? (
+          <div className="text-center px-4">
+            <h3 className="text-3xl font-bold text-gray-800 dark:text-gray-100 break-words whitespace-pre-wrap">{note!.word}</h3>
+            {(currentCard?.posEntries ? currentCard.posEntries.map(p => p.partOfSpeech).filter(Boolean).join(', ') : currentCard?.partOfSpeech) && (
+              <span className="text-sm font-normal text-gray-500 dark:text-gray-400 block mt-1 break-words">{currentCard?.posEntries ? currentCard.posEntries.map(p => p.partOfSpeech).filter(Boolean).join(', ') : currentCard?.partOfSpeech}</span>
+            )}
+            {currentCard?.phonetic && (
+              <span className="text-sm font-normal text-gray-400 dark:text-gray-500 block font-mono mt-0.5 break-words">{currentCard.phonetic}</span>
+            )}
+          </div>
+        ) : (
+          <h3 className="text-3xl font-bold text-gray-800 dark:text-gray-100 break-words whitespace-pre-wrap px-4">{note!.meaning}</h3>
+        )}
+
         {mode === 'word' && (
           <button
             onClick={() => speakEnglish(note!.word)}
@@ -176,9 +252,22 @@ export function SpeedGame({ onExit }: { onExit: () => void }) {
         })}
       </div>
 
-      <BottomCounter>
-        {timeLeft}s · Score {score}{combo > 1 ? ` · 🔥 x${combo}` : ''}
-      </BottomCounter>
+      <div className="mt-4 flex justify-center">
+        <button
+          onClick={handleSkip}
+          disabled={selected !== null}
+          className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-8 py-2.5 rounded-xl font-medium transition-colors"
+        >
+          Skip
+        </button>
+      </div>
+
+      <div className="mt-4 flex flex-col items-center gap-1">
+        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{timeLeft}s remaining{combo > 1 ? ` · 🔥 x${combo}` : ''}</span>
+        <GameStatsBar correct={correct} wrong={wrong} skipped={skipped} />
+      </div>
+
+      <CardDetailModal card={showModalCard} onClose={() => setShowModalCard(null)} />
     </div>
   )
 }

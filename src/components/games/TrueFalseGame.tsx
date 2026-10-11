@@ -1,14 +1,19 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Check, X, Volume2 } from 'lucide-react'
-import { useNotes, EmptyState, ResultScreen, BackBar, BottomCounter } from './shared'
+import { Check, X, Volume2, RefreshCcw } from 'lucide-react'
+import { useNotes, EmptyState, BackBar, RootCardButton, GameStatsBar, CardDetailModal } from './shared'
+import { useFlashcardStore, Flashcard } from '../../store'
 import { speakEnglish } from '../../utils'
 
 export function TrueFalseGame({ onExit }: { onExit: () => void }) {
+  const { flashcards } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
   const notes = useNotes(seed, true)
   const [index, setIndex] = useState(0)
-  const [score, setScore] = useState(0)
+  const [correct, setCorrect] = useState(0)
+  const [wrong, setWrong] = useState(0)
+  const [skipped, setSkipped] = useState(0)
   const [answer, setAnswer] = useState<null | { right: boolean }>(null)
+  const [showModalCard, setShowModalCard] = useState<Flashcard | null>(null)
 
   const questions = useMemo(() => {
     const meanings = Array.from(new Set(notes.map(n => n.meaning)))
@@ -20,16 +25,30 @@ export function TrueFalseGame({ onExit }: { onExit: () => void }) {
   }, [notes])
 
   const q = questions[index]
+  const currentCard = useMemo(() => {
+    if (!q) return null
+    return flashcards.find(f => f.id === q.note.cardId) || null
+  }, [q, flashcards])
 
   const choose = (userSaysTrue: boolean) => {
     if (answer || !q) return
     const right = userSaysTrue === q.isTrue
     setAnswer({ right })
-    if (right) setScore(s => s + 1)
+    if (right) {
+      setCorrect(c => c + 1)
+    } else {
+      setWrong(w => w + 1)
+    }
     setTimeout(() => {
       setAnswer(null)
       setIndex(i => i + 1)
     }, right ? 600 : 1500)
+  }
+
+  const handleSkip = () => {
+    if (answer || !q) return
+    setSkipped(s => s + 1)
+    setIndex(i => i + 1)
   }
 
   useEffect(() => {
@@ -43,12 +62,33 @@ export function TrueFalseGame({ onExit }: { onExit: () => void }) {
 
   if (notes.length === 0) return <EmptyState onExit={onExit} />
   if (index >= questions.length) {
+    const total = questions.length
+    const percentage = total > 0 ? Math.round((correct / total) * 100) : 0
     return (
-      <ResultScreen
-        onExit={onExit}
-        onAgain={() => { setSeed(s => s + 1); setIndex(0); setScore(0); setAnswer(null) }}
-        lines={<>You scored <span className="font-bold text-purple-600">{score}</span> out of {questions.length} ({Math.round((score / questions.length) * 100)}%)</>}
-      />
+      <div className="text-center py-20 animate-in fade-in flex flex-col items-center">
+        <div className="text-6xl mb-6">🏆</div>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Practice Complete!</h2>
+        <div className="flex gap-4 my-6">
+          <div className="px-4 py-2 bg-green-50 dark:bg-green-900/30 rounded-xl text-green-600 dark:text-green-400 font-medium">
+            Correct: {correct}
+          </div>
+          <div className="px-4 py-2 bg-red-50 dark:bg-red-900/30 rounded-xl text-red-600 dark:text-red-400 font-medium">
+            Wrong: {wrong}
+          </div>
+          <div className="px-4 py-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-600 dark:text-orange-400 font-medium">
+            Skipped: {skipped}
+          </div>
+        </div>
+        <p className="text-lg text-gray-500 dark:text-gray-400 mb-6">
+          Score: <span className="font-bold text-purple-600">{percentage}%</span>
+        </p>
+        <div className="flex gap-4 mt-2">
+          <button onClick={onExit} className="bg-gray-200 dark:bg-gray-700 px-6 py-2 rounded-lg font-medium">Back</button>
+          <button onClick={() => { setSeed(s => s + 1); setIndex(0); setCorrect(0); setWrong(0); setSkipped(0); setAnswer(null) }} className="bg-purple-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium hover:bg-purple-700">
+            <RefreshCcw size={18} /> Play Again
+          </button>
+        </div>
+      </div>
     )
   }
 
@@ -60,7 +100,23 @@ export function TrueFalseGame({ onExit }: { onExit: () => void }) {
         answer === null ? 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700' :
         answer.right ? 'bg-green-50 dark:bg-green-900/20 border-green-500' : 'bg-red-50 dark:bg-red-900/20 border-red-500'
       }`}>
-        <h3 className="text-3xl font-bold text-gray-800 dark:text-gray-100 break-words whitespace-pre-wrap mb-4">{q.note.word}</h3>
+        <RootCardButton
+          onClick={() => {
+            if (currentCard) setShowModalCard(currentCard)
+          }}
+          className="absolute top-4 left-4"
+        />
+
+        <div className="mb-4">
+          <h3 className="text-3xl font-bold text-gray-800 dark:text-gray-100 break-words whitespace-pre-wrap">{q.note.word}</h3>
+          {(currentCard?.posEntries ? currentCard.posEntries.map(p => p.partOfSpeech).filter(Boolean).join(', ') : currentCard?.partOfSpeech) && (
+            <span className="text-sm font-normal text-gray-500 dark:text-gray-400 block mt-1 break-words">{currentCard?.posEntries ? currentCard.posEntries.map(p => p.partOfSpeech).filter(Boolean).join(', ') : currentCard?.partOfSpeech}</span>
+          )}
+          {currentCard?.phonetic && (
+            <span className="text-sm font-normal text-gray-400 dark:text-gray-500 block font-mono mt-0.5 break-words">{currentCard.phonetic}</span>
+          )}
+        </div>
+
         <p className="text-sm text-gray-400 dark:text-gray-500 mb-2">means</p>
         <p className="text-xl font-medium text-purple-700 dark:text-purple-300 break-words whitespace-pre-wrap">{q.shown}</p>
 
@@ -85,9 +141,25 @@ export function TrueFalseGame({ onExit }: { onExit: () => void }) {
           <Check size={22} /> True
         </button>
       </div>
-      <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-3">Use ← False · True →</p>
 
-      <BottomCounter>{index + 1} / {questions.length}</BottomCounter>
+      <div className="mt-4 flex justify-center">
+        <button
+          onClick={handleSkip}
+          disabled={!!answer}
+          className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-8 py-2.5 rounded-xl font-medium transition-colors"
+        >
+          Skip
+        </button>
+      </div>
+
+      <div className="mt-4 flex flex-col items-center gap-2">
+        <p className="text-center text-sm font-medium text-gray-500 dark:text-gray-400">
+          {index + 1} / {questions.length}
+        </p>
+        <GameStatsBar correct={correct} wrong={wrong} skipped={skipped} />
+      </div>
+
+      <CardDetailModal card={showModalCard} onClose={() => setShowModalCard(null)} />
     </div>
   )
 }

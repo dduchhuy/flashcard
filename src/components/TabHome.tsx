@@ -1,20 +1,42 @@
-import { useState, useRef } from 'react'
-import { useFlashcardStore, getCardTags } from '../store'
+import { useState, useRef, useMemo } from 'react'
+import { useFlashcardStore, getCardTags, isWordCard } from '../store'
 import { FlashcardItem } from './FlashcardItem'
 import { Plus, Sparkles, Tag, X, Check, BookOpen, Command, Lock, Unlock, Type, FileText } from 'lucide-react'
-import { extractWordsAndSpaces } from '../utils'
+
+interface FormExample {
+  sentence: string
+  translation: string
+}
+
+interface FormMeaning {
+  meaning: string
+  examples: FormExample[]
+}
+
+interface FormPosEntry {
+  partOfSpeech: string
+  phonetic?: string
+  meanings: FormMeaning[]
+}
+
+const emptyExample = (): FormExample => ({ sentence: '', translation: '' })
+const emptyMeaning = (): FormMeaning => ({ meaning: '', examples: [emptyExample()] })
+const emptyPosEntry = (): FormPosEntry => ({ partOfSpeech: '', phonetic: '', meanings: [emptyMeaning()] })
 
 export function TabHome() {
-  const { flashcards, addFlashcard } = useFlashcardStore()
+  const { flashcards, addFlashcard, addWordCard } = useFlashcardStore()
   const [newSentence, setNewSentence] = useState('')
   const [tagInput, setTagInput] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [showSuccess, setShowSuccess] = useState(false)
   const [isTagsLocked, setIsTagsLocked] = useState(false)
   const [inputMode, setInputMode] = useState<'sentence' | 'word'>('sentence')
-  const [wordMeanings, setWordMeanings] = useState([{ meaning: '', example: '' }])
   const [phoneticInput, setPhoneticInput] = useState('')
   const [partOfSpeechInput, setPartOfSpeechInput] = useState('')
+  
+  // Word mode state
+  const [posFormEntries, setPosFormEntries] = useState<FormPosEntry[]>([emptyPosEntry()])
+  const [phrasesForm, setPhrasesForm] = useState<{ phrase: string, translation: string }[]>([])
   
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -57,17 +79,28 @@ export function TabHome() {
       if (inputMode === 'sentence') {
         addFlashcard(newSentence, finalTags, undefined, phoneticInput, partOfSpeechInput)
       } else {
-        const { words } = extractWordsAndSpaces(newSentence)
-        const indices = Array.from({ length: words.length }, (_, i) => i)
-        const highlights = wordMeanings
-          .filter(m => m.meaning.trim() !== '')
-          .map(m => ({
-            wordIndices: indices,
-            meaning: m.meaning.trim(),
-            example: m.example?.trim()
+        const validPosEntries = posFormEntries
+          .map(pos => ({
+            partOfSpeech: pos.partOfSpeech.trim(),
+            phonetic: pos.phonetic?.trim() || undefined,
+            meanings: pos.meanings
+              .filter(m => m.meaning.trim() !== '')
+              .map(m => ({
+                meaning: m.meaning.trim(),
+                examples: m.examples
+                  .filter(ex => ex.sentence.trim() !== '')
+                  .map(ex => ({ sentence: ex.sentence.trim(), translation: ex.translation.trim() }))
+              }))
           }))
-        addFlashcard(newSentence, finalTags, highlights, phoneticInput, partOfSpeechInput)
-        setWordMeanings([{ meaning: '', example: '' }])
+          .filter(pos => pos.meanings.length > 0 || pos.partOfSpeech !== '')
+
+        const validPhrases = phrasesForm
+          .filter(p => p.phrase.trim() !== '')
+          .map(p => ({ phrase: p.phrase.trim(), translation: p.translation.trim() }))
+
+        addWordCard(newSentence, validPosEntries, validPhrases, finalTags, phoneticInput)
+        setPosFormEntries([emptyPosEntry()])
+        setPhrasesForm([])
       }
 
       setNewSentence('')
@@ -86,9 +119,21 @@ export function TabHome() {
 
   const wordCount = newSentence.trim() ? newSentence.trim().split(/\s+/).length : 0
 
-  const recentFlashcards = [...flashcards]
-    .sort((a, b) => b.createdAt - a.createdAt)
-    .slice(0, 5)
+  const sortedRecent = [...flashcards].sort((a, b) => b.createdAt - a.createdAt)
+  const recentFlashcards = useMemo(() => {
+    const list: typeof flashcards = []
+    const seenWords = new Set<string>()
+    for (const card of sortedRecent) {
+      const isWord = isWordCard(card)
+      const key = isWord ? card.sentence.trim().toLowerCase() : card.id
+      if (!seenWords.has(key)) {
+        seenWords.add(key)
+        list.push(card)
+        if (list.length >= 5) break
+      }
+    }
+    return list
+  }, [sortedRecent])
 
   return (
     <div className="space-y-8 animate-in fade-in max-w-4xl mx-auto">
@@ -178,73 +223,229 @@ export function TabHome() {
               </div>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-5">
+              {/* Word & Phonetic inputs */}
               <div className="relative rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50 focus-within:bg-white dark:focus-within:bg-gray-800 focus-within:border-purple-500 dark:focus-within:border-purple-500 focus-within:ring-4 focus-within:ring-purple-500/10 transition-all p-3.5 flex flex-col sm:flex-row gap-3">
                 <input
                   ref={textareaRef as any}
                   value={newSentence}
                   onChange={(e) => setNewSentence(e.target.value)}
-                  placeholder="Enter a word or phrase (e.g. 'Apple')..."
-                  className="flex-1 bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg leading-relaxed focus:outline-none"
-                />
-                <input
-                  value={partOfSpeechInput}
-                  onChange={(e) => setPartOfSpeechInput(e.target.value)}
-                  placeholder="Type (noun)"
-                  className="w-full sm:w-28 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 text-sm italic focus:outline-none sm:border-l sm:border-gray-200 sm:dark:border-gray-700 sm:pl-3"
+                  placeholder="Enter word or phrase (e.g. 'Action')..."
+                  className="flex-1 bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg font-bold leading-relaxed focus:outline-none"
                 />
                 <input
                   value={phoneticInput}
                   onChange={(e) => setPhoneticInput(e.target.value)}
-                  placeholder="Phonetic (e.g. /ˈæp.əl/)"
-                  className="w-full sm:w-32 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 text-sm italic focus:outline-none sm:border-l sm:border-gray-200 sm:dark:border-gray-700 sm:pl-3"
+                  placeholder="Phonetic (e.g. /ˈæk.ʃən/)"
+                  className="w-full sm:w-48 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 text-sm italic focus:outline-none sm:border-l sm:border-gray-200 sm:dark:border-gray-700 sm:pl-3"
                 />
               </div>
 
-              <div className="space-y-3">
-                <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Meanings & Examples</div>
-                {wordMeanings.map((m, i) => (
-                  <div key={i} className="flex gap-2 items-start relative group">
-                    <div className="flex-1 space-y-2 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-700/50">
+              {/* Parts of Speech list */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Parts of Speech &amp; Meanings
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPosFormEntries([...posFormEntries, emptyPosEntry()])}
+                    className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 font-medium flex items-center gap-1 bg-purple-50 dark:bg-purple-900/30 px-2.5 py-1.5 rounded-lg transition-colors"
+                  >
+                    <Plus size={14} /> Add another Part of Speech
+                  </button>
+                </div>
+
+                {posFormEntries.map((pos, pIdx) => (
+                  <div key={pIdx} className="bg-gray-50/80 dark:bg-gray-800/40 rounded-2xl p-4 border border-gray-200/80 dark:border-gray-700/80 space-y-3.5">
+                    {/* POS Header */}
+                    <div className="flex items-center gap-2">
                       <input
-                        placeholder="Meaning (e.g. Trái táo)"
-                        value={m.meaning}
+                        placeholder="Part of speech (e.g. noun, verb, danh từ...)"
+                        value={pos.partOfSpeech}
                         onChange={e => {
-                          const newM = [...wordMeanings]
-                          newM[i].meaning = e.target.value
-                          setWordMeanings(newM)
+                          const updated = [...posFormEntries]
+                          updated[pIdx].partOfSpeech = e.target.value
+                          setPosFormEntries(updated)
                         }}
-                        className="w-full bg-transparent text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none font-medium"
+                        className="flex-1 bg-white dark:bg-gray-700/60 text-sm font-semibold text-gray-800 dark:text-gray-100 placeholder-gray-400 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
                       />
                       <input
-                        placeholder="Example sentence (e.g. I eat an apple everyday)"
-                        value={m.example}
+                        placeholder="POS Phonetic (optional)"
+                        value={pos.phonetic || ''}
                         onChange={e => {
-                          const newM = [...wordMeanings]
-                          newM[i].example = e.target.value
-                          setWordMeanings(newM)
+                          const updated = [...posFormEntries]
+                          updated[pIdx].phonetic = e.target.value
+                          setPosFormEntries(updated)
                         }}
-                        className="w-full bg-transparent text-sm text-gray-600 dark:text-gray-300 placeholder-gray-400 focus:outline-none italic"
+                        className="w-40 bg-white dark:bg-gray-700/60 text-sm italic text-gray-600 dark:text-gray-300 placeholder-gray-400 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
                       />
+                      {posFormEntries.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setPosFormEntries(posFormEntries.filter((_, idx) => idx !== pIdx))}
+                          className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-colors"
+                          title="Delete part of speech"
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
                     </div>
-                    {wordMeanings.length > 1 && (
+
+                    {/* Meanings within this POS */}
+                    <div className="space-y-3 pl-2 sm:pl-3 border-l-2 border-purple-200 dark:border-purple-800/60">
+                      {pos.meanings.map((m, mIdx) => (
+                        <div key={mIdx} className="bg-white dark:bg-gray-700/40 rounded-xl p-3 border border-gray-200 dark:border-gray-600/60 space-y-2.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-purple-600 dark:text-purple-400">#{mIdx + 1}</span>
+                            <input
+                              placeholder="Meaning (e.g. hành động; hành vi; hoạt động; việc làm)"
+                              value={m.meaning}
+                              onChange={e => {
+                                const updated = [...posFormEntries]
+                                updated[pIdx].meanings[mIdx].meaning = e.target.value
+                                setPosFormEntries(updated)
+                              }}
+                              className="flex-1 bg-transparent text-sm font-medium text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none"
+                            />
+                            {pos.meanings.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = [...posFormEntries]
+                                  updated[pIdx].meanings = updated[pIdx].meanings.filter((_, idx) => idx !== mIdx)
+                                  setPosFormEntries(updated)
+                                }}
+                                className="p-1 text-red-400 hover:text-red-600 transition-colors"
+                                title="Remove meaning"
+                              >
+                                <X size={14} />
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Examples for this meaning */}
+                          <div className="space-y-2 pt-1 border-t border-gray-100 dark:border-gray-600/40">
+                            {m.examples.map((ex, exIdx) => (
+                              <div key={exIdx} className="flex flex-col sm:flex-row gap-2 items-start sm:items-center bg-gray-50/60 dark:bg-gray-800/40 p-2 rounded-lg">
+                                <input
+                                  placeholder="Example sentence (e.g. He is a man of action...)"
+                                  value={ex.sentence}
+                                  onChange={e => {
+                                    const updated = [...posFormEntries]
+                                    updated[pIdx].meanings[mIdx].examples[exIdx].sentence = e.target.value
+                                    setPosFormEntries(updated)
+                                  }}
+                                  className="flex-1 bg-transparent text-xs text-gray-700 dark:text-gray-200 italic placeholder-gray-400 focus:outline-none w-full"
+                                />
+                                <input
+                                  placeholder="Translation (e.g. Anh ấy là con người hành động...)"
+                                  value={ex.translation}
+                                  onChange={e => {
+                                    const updated = [...posFormEntries]
+                                    updated[pIdx].meanings[mIdx].examples[exIdx].translation = e.target.value
+                                    setPosFormEntries(updated)
+                                  }}
+                                  className="flex-1 bg-transparent text-xs text-gray-500 dark:text-gray-400 placeholder-gray-400 focus:outline-none w-full sm:border-l sm:border-gray-200 sm:dark:border-gray-600 sm:pl-2"
+                                />
+                                {m.examples.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updated = [...posFormEntries]
+                                      updated[pIdx].meanings[mIdx].examples = updated[pIdx].meanings[mIdx].examples.filter((_, idx) => idx !== exIdx)
+                                      setPosFormEntries(updated)
+                                    }}
+                                    className="p-1 text-gray-400 hover:text-red-500"
+                                  >
+                                    <X size={13} />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...posFormEntries]
+                                updated[pIdx].meanings[mIdx].examples.push(emptyExample())
+                                setPosFormEntries(updated)
+                              }}
+                              className="text-[11px] text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 font-medium pt-0.5"
+                            >
+                              <Plus size={11} /> Add example sentence
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+
                       <button
                         type="button"
-                        onClick={() => setWordMeanings(wordMeanings.filter((_, idx) => idx !== i))}
-                        className="p-1.5 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity mt-2"
+                        onClick={() => {
+                          const updated = [...posFormEntries]
+                          updated[pIdx].meanings.push(emptyMeaning())
+                          setPosFormEntries(updated)
+                        }}
+                        className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 font-medium pt-1"
                       >
-                        <X size={16} />
+                        <Plus size={12} /> Add another meaning to this part of speech
                       </button>
-                    )}
+                    </div>
                   </div>
                 ))}
-                <button
-                  type="button"
-                  onClick={() => setWordMeanings([...wordMeanings, { meaning: '', example: '' }])}
-                  className="text-xs text-purple-600 dark:text-purple-400 hover:underline font-medium flex items-center gap-1 mt-1"
-                >
-                  <Plus size={12} /> Add another meaning
-                </button>
+              </div>
+
+              {/* Phrases & Idioms section */}
+              <div className="bg-purple-50/40 dark:bg-purple-950/20 rounded-2xl p-4 border border-purple-100 dark:border-purple-900/40 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Phrases &amp; Idioms (optional)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPhrasesForm([...phrasesForm, { phrase: '', translation: '' }])}
+                    className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 font-medium flex items-center gap-1"
+                  >
+                    <Plus size={12} /> Add phrase / idiom
+                  </button>
+                </div>
+
+                {phrasesForm.length === 0 ? (
+                  <p className="text-xs text-gray-400 italic">No phrases or idioms added yet. Click above to add (e.g. "go into action").</p>
+                ) : (
+                  <div className="space-y-2">
+                    {phrasesForm.map((item, pIdx) => (
+                      <div key={pIdx} className="flex flex-col sm:flex-row gap-2 items-start sm:items-center bg-white dark:bg-gray-800/80 p-2.5 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <input
+                          placeholder="Phrase or idiom (e.g. go into action)"
+                          value={item.phrase}
+                          onChange={e => {
+                            const updated = [...phrasesForm]
+                            updated[pIdx].phrase = e.target.value
+                            setPhrasesForm(updated)
+                          }}
+                          className="flex-1 bg-transparent text-xs font-medium text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none w-full"
+                        />
+                        <input
+                          placeholder="Translation (e.g. bắt đầu hành động, bắt đầu chiến đấu)"
+                          value={item.translation}
+                          onChange={e => {
+                            const updated = [...phrasesForm]
+                            updated[pIdx].translation = e.target.value
+                            setPhrasesForm(updated)
+                          }}
+                          className="flex-1 bg-transparent text-xs text-gray-600 dark:text-gray-300 placeholder-gray-400 focus:outline-none w-full sm:border-l sm:border-gray-200 sm:dark:border-gray-700 sm:pl-2"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setPhrasesForm(phrasesForm.filter((_, idx) => idx !== pIdx))}
+                          className="p-1 text-red-400 hover:text-red-600 transition-colors"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}

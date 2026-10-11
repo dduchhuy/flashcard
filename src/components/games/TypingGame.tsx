@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react'
-import { Volume2, Eye, EyeOff } from 'lucide-react'
-import { useFlashcardStore, getCardTags, getCardsForMode } from '../../store'
-import { extractWordText, speakEnglish, extractWordsAndSpaces } from '../../utils'
-import { shuffle, EmptyState, ResultScreen, BackBar, BottomCounter } from './shared'
+import { Volume2, Eye, EyeOff, RefreshCcw } from 'lucide-react'
+import { useFlashcardStore, getCardTags, getCardsForMode, Flashcard } from '../../store'
+import { extractWordText, speakEnglish } from '../../utils'
+import { shuffle, EmptyState, BackBar, RootCardButton, GameStatsBar, CardDetailModal } from './shared'
 
 export function TypingGame({ onExit }: { onExit: () => void }) {
   const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
+  const [quizTarget, setQuizTarget] = useState<'sentence' | 'meaning'>('sentence')
 
   // Extract all questions with missing word/phrase and options
   const allQuestions = useMemo(() => {
@@ -26,83 +27,96 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
     filtered = getCardsForMode(filtered, gameInputMode)
 
     filtered.forEach(card => {
-      if (card.highlights.length === 0) return
+      const highlights = card.highlights || []
+      if (highlights.length === 0) return
       
-      card.highlights.forEach(h => {
-        let targetWordIndices = h.wordIndices
+      highlights.forEach(h => {
+        let targetWord = ''
         let targetSentence = card.sentence
-        let targetMeaning = h.meaning
-        
+        let targetMeaning = h.meaning || ''
+        let sentenceWithBlank = ''
+
         if (gameInputMode === 'word') {
+          targetWord = card.sentence.trim()
           targetSentence = h.example || card.sentence
-          const { words } = extractWordsAndSpaces(targetSentence)
-          const validWords = words.map((w, i) => ({w, i})).filter(x => /[a-zA-Z]{2,}/.test(x.w))
-          if (validWords.length > 0) {
-            const rIdx = Math.floor(Math.abs(Math.sin(h.id.length + seed)) * validWords.length)
-            targetWordIndices = [validWords[rIdx].i]
-            targetMeaning = ''
-          } else {
-            return
-          }
-        }
-
-        const wordText = extractWordText(targetSentence, targetWordIndices)
-        if (!wordText) return
-
-        // Build blank sentence
-        const parts = targetSentence.trim().split(/(\s+)/)
-        const words: string[] = []
-        const spaces: string[] = []
-        let initialSpace = ''
-
-        for (let i = 0; i < parts.length; i += 2) {
-          let w = parts[i]
-          let s = parts[i + 1] || ''
-
-          if (/^[.,!?;:"'()[\]{}<>]+$/.test(w)) {
-            words.push(w)
-            spaces.push(s)
-            continue
-          }
-
-          const matchLeading = w.match(/^([.,!?;:"'()[\]{}<>]+)(.*)$/)
-          if (matchLeading) {
-            if (words.length > 0) spaces[spaces.length - 1] += matchLeading[1]
-            else initialSpace += matchLeading[1]
-            w = matchLeading[2]
-          }
-
-          const matchTrailing = w.match(/^(.*?)([.,!?;:"'()[\]{}<>]+)$/)
-          if (matchTrailing) {
-            w = matchTrailing[1]
-            s = matchTrailing[2] + s
-          }
-
-          words.push(w)
-          spaces.push(s)
-        }
-
-        let sentenceWithBlank = initialSpace
-        let inBlank = false
-        for (let i = 0; i < words.length; i++) {
-          if (targetWordIndices.includes(i)) {
-            if (!inBlank) {
-              sentenceWithBlank += '______'
-              inBlank = true
+          
+          if (h.example) {
+            const regex = new RegExp(`\\b${targetWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
+            if (regex.test(targetSentence)) {
+              sentenceWithBlank = targetSentence.replace(regex, '______')
+            } else {
+              const idx = targetSentence.toLowerCase().indexOf(targetWord.toLowerCase())
+              if (idx !== -1) {
+                sentenceWithBlank = targetSentence.slice(0, idx) + '______' + targetSentence.slice(idx + targetWord.length)
+              } else {
+                sentenceWithBlank = `______ (${targetSentence})`
+              }
             }
           } else {
-            inBlank = false
-            sentenceWithBlank += words[i]
+            sentenceWithBlank = '______'
           }
-          sentenceWithBlank += spaces[i]
+        } else {
+          targetWord = extractWordText(card.sentence, h.wordIndices)
+          if (!targetWord) return
+          targetSentence = card.sentence
+
+          const parts = targetSentence.trim().split(/(\s+)/)
+          const words: string[] = []
+          const spaces: string[] = []
+          let initialSpace = ''
+
+          for (let i = 0; i < parts.length; i += 2) {
+            let w = parts[i]
+            let s = parts[i + 1] || ''
+
+            if (/^[.,!?;:"'()[\]{}<>]+$/.test(w)) {
+              words.push(w)
+              spaces.push(s)
+              continue
+            }
+
+            const matchLeading = w.match(/^([.,!?;:"'()[\]{}<>]+)(.*)$/)
+            if (matchLeading) {
+              if (words.length > 0) spaces[spaces.length - 1] += matchLeading[1]
+              else initialSpace += matchLeading[1]
+              w = matchLeading[2]
+            }
+
+            const matchTrailing = w.match(/^(.*?)([.,!?;:"'()[\]{}<>]+)$/)
+            if (matchTrailing) {
+              w = matchTrailing[1]
+              s = matchTrailing[2] + s
+            }
+
+            words.push(w)
+            spaces.push(s)
+          }
+
+          let blankBuilt = initialSpace
+          let inBlank = false
+          for (let i = 0; i < words.length; i++) {
+            if (h.wordIndices.includes(i)) {
+              if (!inBlank) {
+                blankBuilt += '______'
+                inBlank = true
+              }
+            } else {
+              inBlank = false
+              blankBuilt += words[i]
+            }
+            blankBuilt += spaces[i]
+          }
+          sentenceWithBlank = blankBuilt.trim()
         }
+
+        if (!targetWord) return
 
         questions.push({
           cardId: card.id,
           highlightId: h.id,
-          targetWord: wordText,
+          targetWord,
           meaning: targetMeaning,
-          sentenceWithBlank: sentenceWithBlank.trim(),
+          sentenceWithBlank: sentenceWithBlank || '______',
           sentenceFull: targetSentence,
         })
       })
@@ -117,8 +131,11 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
   }, [allQuestions])
 
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [score, setScore] = useState(0)
+  const [correct, setCorrect] = useState(0)
+  const [wrong, setWrong] = useState(0)
+  const [skipped, setSkipped] = useState(0)
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
+  const [showModalCard, setShowModalCard] = useState<Flashcard | null>(null)
 
   const currentQ = allQuestions[currentIndex]
 
@@ -135,22 +152,43 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
   }
 
   if (currentIndex >= allQuestions.length) {
-    const percentage = Math.round((score / allQuestions.length) * 100)
+    const total = allQuestions.length
+    const percentage = total > 0 ? Math.round((correct / total) * 100) : 0
     return (
-      <ResultScreen
-        onExit={onExit}
-        onAgain={() => {
-          setSeed(s => s + 1)
-          setCurrentIndex(0)
-          setScore(0)
-          setSelectedOption(null)
-        }}
-        lines={
-          <>
-            You answered <span className="font-bold text-purple-600">{score}</span> of {allQuestions.length} sentences correctly ({percentage}%)
-          </>
-        }
-      />
+      <div className="text-center py-20 animate-in fade-in flex flex-col items-center">
+        <div className="text-6xl mb-6">🏆</div>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Practice Complete!</h2>
+        <div className="flex gap-4 my-6">
+          <div className="px-4 py-2 bg-green-50 dark:bg-green-900/30 rounded-xl text-green-600 dark:text-green-400 font-medium">
+            Correct: {correct}
+          </div>
+          <div className="px-4 py-2 bg-red-50 dark:bg-red-900/30 rounded-xl text-red-600 dark:text-red-400 font-medium">
+            Wrong: {wrong}
+          </div>
+          <div className="px-4 py-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-600 dark:text-orange-400 font-medium">
+            Skipped: {skipped}
+          </div>
+        </div>
+        <p className="text-lg text-gray-500 dark:text-gray-400 mb-6">
+          Score: <span className="font-bold text-purple-600">{percentage}%</span>
+        </p>
+        <div className="flex gap-4 mt-2">
+          <button onClick={onExit} className="bg-gray-200 dark:bg-gray-700 px-6 py-2 rounded-lg font-medium">Back</button>
+          <button
+            onClick={() => {
+              setSeed(s => s + 1)
+              setCurrentIndex(0)
+              setCorrect(0)
+              setWrong(0)
+              setSkipped(0)
+              setSelectedOption(null)
+            }}
+            className="bg-purple-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium hover:bg-purple-700"
+          >
+            <RefreshCcw size={18} /> Play Again
+          </button>
+        </div>
+      </div>
     )
   }
 
@@ -160,14 +198,26 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
 
     const isCorrect = option.toLowerCase() === currentQ.targetWord.toLowerCase()
     if (isCorrect) {
-      setScore(s => s + 1)
+      setCorrect(c => c + 1)
       speakEnglish(currentQ.targetWord)
+    } else {
+      setWrong(w => w + 1)
     }
 
     setTimeout(() => {
       setSelectedOption(null)
       setCurrentIndex(i => i + 1)
     }, 1500)
+  }
+
+  const handleSkip = () => {
+    if (selectedOption !== null) return
+    setSkipped(s => s + 1)
+    setSelectedOption(currentQ.targetWord)
+    setTimeout(() => {
+      setSelectedOption(null)
+      setCurrentIndex(i => i + 1)
+    }, 1200)
   }
 
   const [showHint, setShowHint] = useState(false)
@@ -177,44 +227,90 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
       <BackBar 
         onExit={onExit} 
         right={
-          <button 
-            onClick={() => setShowHint(!showHint)}
-            className={`px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors border ${
-              showHint 
-                ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800' 
-                : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
-            }`}
-          >
-            {showHint ? <EyeOff size={16} /> : <Eye size={16} />}
-            <span className="hidden sm:inline">{showHint ? 'Hide Hint' : 'Show Hint'}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg border border-gray-200 dark:border-gray-700 text-xs font-semibold">
+              <button
+                onClick={() => setQuizTarget('sentence')}
+                className={`px-2.5 py-1 rounded-md transition-colors ${
+                  quizTarget === 'sentence'
+                    ? 'bg-white dark:bg-gray-700 text-purple-700 dark:text-purple-300 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                }`}
+              >
+                Sentence
+              </button>
+              <button
+                onClick={() => setQuizTarget('meaning')}
+                className={`px-2.5 py-1 rounded-md transition-colors ${
+                  quizTarget === 'meaning'
+                    ? 'bg-white dark:bg-gray-700 text-purple-700 dark:text-purple-300 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                }`}
+              >
+                Meaning
+              </button>
+            </div>
+
+            {quizTarget === 'sentence' && (
+              <button 
+                onClick={() => setShowHint(!showHint)}
+                className={`px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-medium transition-colors border ${
+                  showHint 
+                    ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800' 
+                    : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                }`}
+              >
+                {showHint ? <EyeOff size={14} /> : <Eye size={14} />}
+                <span className="hidden sm:inline">{showHint ? 'Hide' : 'Hint'}</span>
+              </button>
+            )}
+          </div>
         }
       />
 
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 text-center max-w-xl mx-auto w-full relative mb-6">
+        <RootCardButton
+          onClick={() => {
+            const c = flashcards.find(f => f.id === currentQ.cardId)
+            if (c) setShowModalCard(c)
+          }}
+          className="absolute top-4 left-4"
+        />
+
         <p className="text-xs font-semibold tracking-wider text-purple-600 dark:text-purple-400 uppercase mb-3">
-          Fill in the blank
+          {quizTarget === 'sentence' ? 'Fill in the blank' : 'Match word to meaning'}
         </p>
 
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 leading-relaxed whitespace-pre-wrap">
-          {currentQ.sentenceWithBlank.split('______').map((part, i, arr) => (
-            <span key={i}>
-              {part}
-              {i < arr.length - 1 && (
-                selectedOption && selectedOption.toLowerCase() === currentQ.targetWord.toLowerCase()
-                  ? <span className="inline-block mx-1 px-3 py-0.5 rounded bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 font-bold">{currentQ.targetWord}</span>
-                  : <span className="inline-block mx-1 w-28 h-8 rounded bg-gray-200 dark:bg-gray-700 align-middle" />
-              )}
-            </span>
-          ))}
-        </h2>
+        {quizTarget === 'sentence' ? (
+          <>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6 leading-relaxed whitespace-pre-wrap">
+              {currentQ.sentenceWithBlank.split('______').map((part, i, arr) => (
+                <span key={i}>
+                  {part}
+                  {i < arr.length - 1 && (
+                    selectedOption && selectedOption.toLowerCase() === currentQ.targetWord.toLowerCase()
+                      ? <span className="inline-block mx-1 px-3 py-0.5 rounded bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 font-bold">{currentQ.targetWord}</span>
+                      : <span className="inline-block mx-1 w-28 h-8 rounded bg-gray-200 dark:bg-gray-700 align-middle" />
+                  )}
+                </span>
+              ))}
+            </h2>
 
-        {showHint && currentQ.meaning && (
-          <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-3 inline-block border border-purple-100 dark:border-purple-800/50 mb-4 animate-in fade-in slide-in-from-top-2">
-            <span className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Meaning hint</span>
-            <span className="font-medium text-purple-700 dark:text-purple-300 text-sm break-words whitespace-pre-wrap">
-              {currentQ.meaning}
-            </span>
+            {showHint && currentQ.meaning && (
+              <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-3 inline-block border border-purple-100 dark:border-purple-800/50 mb-4 animate-in fade-in slide-in-from-top-2">
+                <span className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Meaning hint</span>
+                <span className="font-medium text-purple-700 dark:text-purple-300 text-sm break-words whitespace-pre-wrap">
+                  {currentQ.meaning}
+                </span>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="py-2">
+            <span className="text-xs text-gray-500 dark:text-gray-400 block mb-2 uppercase tracking-wider font-semibold">Meaning</span>
+            <h2 className="text-2xl font-bold text-purple-700 dark:text-purple-300 break-words whitespace-pre-wrap px-4">
+              {currentQ.meaning || 'No definition available'}
+            </h2>
           </div>
         )}
 
@@ -260,7 +356,24 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
         })}
       </div>
 
-      <BottomCounter>{currentIndex + 1} / {allQuestions.length}</BottomCounter>
+      <div className="mt-2 mb-4 flex justify-center">
+        <button
+          onClick={handleSkip}
+          disabled={selectedOption !== null}
+          className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-8 py-2.5 rounded-xl font-medium transition-colors"
+        >
+          Skip
+        </button>
+      </div>
+
+      <div className="mt-2 flex flex-col items-center gap-2">
+        <p className="text-center text-sm font-medium text-gray-500 dark:text-gray-400">
+          {currentIndex + 1} / {allQuestions.length}
+        </p>
+        <GameStatsBar correct={correct} wrong={wrong} skipped={skipped} />
+      </div>
+
+      <CardDetailModal card={showModalCard} onClose={() => setShowModalCard(null)} />
     </div>
   )
 }

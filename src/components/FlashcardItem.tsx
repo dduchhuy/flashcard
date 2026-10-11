@@ -1,10 +1,12 @@
-import { useState, useRef, useEffect } from 'react'
-import { Flashcard, useFlashcardStore, getCardTags } from '../store'
+import { useState, useRef, useEffect, useMemo } from 'react'
+import { Flashcard, useFlashcardStore, getCardTags, isWordCard as checkIsWordCard } from '../store'
 import { MoreVertical, Trash2, Edit2, Check, Tag, ChevronRight, Plus, Volume2 } from 'lucide-react'
 import { speakEnglish } from '../utils'
+import { WordCardEditModal } from './WordCardEditModal'
 
 interface Props {
   flashcard: Flashcard
+  siblingCards?: Flashcard[]
   viewMode?: 'list' | 'grid'
   showHighlights?: boolean
   showPartOfSpeech?: boolean
@@ -19,9 +21,53 @@ type Segment = {
   meaning?: string
 }
 
-export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = true, showPartOfSpeech = true, showPhonetic = true, isLocked = false }: Props) {
+export function FlashcardItem({ flashcard, siblingCards, viewMode = 'list', showHighlights = true, showPartOfSpeech = true, showPhonetic = true, isLocked = false }: Props) {
   const { deleteFlashcard, updateFlashcard, updateFlashcardTag, saveHighlight, removeHighlight, settings, flashcards } = useFlashcardStore()
-  
+
+  const wordKey = flashcard.sentence.trim().toLowerCase()
+  const allVariants = useMemo(() => {
+    if (siblingCards && siblingCards.length > 0) return siblingCards
+    return flashcards.filter(f => f.sentence.trim().toLowerCase() === wordKey)
+  }, [siblingCards, flashcards, wordKey])
+
+  const [activeCardId, setActiveCardId] = useState<string>(flashcard.id)
+  const [activePosIdx, setActivePosIdx] = useState<number>(0)
+  const [showPhrases, setShowPhrases] = useState(false)
+
+  useEffect(() => {
+    setActiveCardId(flashcard.id)
+    setActivePosIdx(0)
+  }, [flashcard.id])
+
+  const currentCard = allVariants.find(c => c.id === activeCardId) || flashcard
+
+  const hasPosEntries = Boolean(currentCard.posEntries && currentCard.posEntries.length > 0)
+  const posList = useMemo(() => {
+    if (hasPosEntries) {
+      return currentCard.posEntries!.map((p, idx) => ({
+        key: p.id || String(idx),
+        label: p.partOfSpeech,
+        isActive: idx === activePosIdx,
+        onClick: (e: React.MouseEvent) => {
+          e.stopPropagation()
+          setActivePosIdx(idx)
+        }
+      }))
+    }
+    return allVariants.filter(v => v.partOfSpeech).map(v => ({
+      key: v.id,
+      label: v.partOfSpeech!,
+      isActive: v.id === currentCard.id,
+      onClick: (e: React.MouseEvent) => {
+        e.stopPropagation()
+        setActiveCardId(v.id)
+      }
+    }))
+  }, [hasPosEntries, currentCard.posEntries, activePosIdx, allVariants, currentCard.id])
+
+  const activePosEntry = hasPosEntries ? (currentCard.posEntries![activePosIdx] || currentCard.posEntries![0]) : null
+  const displayPhonetic = activePosEntry?.phonetic || currentCard.phonetic
+
   const [editingHighlightId, setEditingHighlightId] = useState<string | null>(null)
   const [editingIndices, setEditingIndices] = useState<number[]>([])
   const [meaningInput, setMeaningInput] = useState('')
@@ -44,8 +90,9 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
   const menuRef = useRef<HTMLDivElement>(null)
   const itemRef = useRef<HTMLDivElement>(null)
 
-  const isWordCard = flashcard.highlights.some(h => h.example !== undefined)
+  const isWordCard = checkIsWordCard(currentCard)
   const [isPopupOpen, setIsPopupOpen] = useState(false)
+  const [isWordEditModalOpen, setIsWordEditModalOpen] = useState(false)
 
   const [lockedDragStart, setLockedDragStart] = useState<number | null>(null)
   const [lockedDragIndices, setLockedDragIndices] = useState<number[]>([])
@@ -332,7 +379,11 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
           <div className="absolute right-0 mt-1 w-36 bg-white border border-gray-100 rounded-lg shadow-lg z-20 py-1" onClick={e => e.stopPropagation()}>
             <button
               onClick={() => {
-                setIsEditingSentence(true)
+                if (isWordCard) {
+                  setIsWordEditModalOpen(true)
+                } else {
+                  setIsEditingSentence(true)
+                }
                 setShowMenu(false)
               }}
               className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
@@ -542,16 +593,32 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
               )
             })}
             </div>
-            {((showPartOfSpeech && flashcard.partOfSpeech) || (showPhonetic && flashcard.phonetic)) && (
+            {((showPartOfSpeech && posList.length > 0) || (showPhonetic && displayPhonetic)) && (
               <div className="mt-1.5 flex flex-col gap-0.5 break-words overflow-hidden">
-                {showPartOfSpeech && flashcard.partOfSpeech && (
-                  <span className="text-sm text-gray-500 dark:text-gray-400 italic">
-                    {flashcard.partOfSpeech}
-                  </span>
+                {showPartOfSpeech && posList.length > 0 && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {posList.map(p => {
+                      if (!p.label) return null
+                      return (
+                        <button
+                          key={p.key}
+                          type="button"
+                          onClick={p.onClick}
+                          className={`text-sm italic transition-all ${
+                            p.isActive
+                              ? 'font-bold text-gray-800 dark:text-gray-100'
+                              : 'font-normal text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                          }`}
+                        >
+                          {p.label}
+                        </button>
+                      )
+                    })}
+                  </div>
                 )}
-                {showPhonetic && flashcard.phonetic && (
+                {showPhonetic && displayPhonetic && (
                   <span className="text-sm text-gray-400 dark:text-gray-500 italic">
-                    {flashcard.phonetic}
+                    {displayPhonetic}
                   </span>
                 )}
               </div>
@@ -584,20 +651,71 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
 
       {isWordCard && showHighlights && (
         <div className="mt-4 space-y-3">
-          {flashcard.highlights.slice(0, viewMode === 'grid' ? 1 : 2).map(h => (
-            <div key={h.id} className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
-              <div className="font-medium text-gray-800 dark:text-gray-200 text-sm mb-1">{h.meaning}</div>
-              {h.example && (
-                <div className="text-sm text-gray-600 dark:text-gray-300 italic flex items-start gap-2">
-                  {h.example}
+          {hasPosEntries && activePosEntry ? (
+            <>
+              {activePosEntry.meanings.slice(0, viewMode === 'grid' ? 1 : 2).map((m, mIdx) => (
+                <div key={m.id || mIdx} className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
+                  <div className="font-medium text-gray-800 dark:text-gray-200 text-sm mb-1">{m.meaning}</div>
+                  {m.examples && m.examples.length > 0 && (
+                    <div className="space-y-1.5 mt-1.5">
+                      {m.examples.slice(0, viewMode === 'grid' ? 1 : 2).map((ex, exIdx) => (
+                        <div key={ex.id || exIdx} className="text-sm">
+                          <div className="text-gray-600 dark:text-gray-300 italic">{ex.sentence}</div>
+                          {ex.translation && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400 not-italic mt-0.5">{ex.translation}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+              {activePosEntry.meanings.length > (viewMode === 'grid' ? 1 : 2) && (
+                <div className="text-xs text-gray-400 font-medium italic mt-2 ml-1">
+                  ... (and {activePosEntry.meanings.length - (viewMode === 'grid' ? 1 : 2)} more meanings)
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {(currentCard.highlights || []).slice(0, viewMode === 'grid' ? 1 : 2).map(h => (
+                <div key={h.id} className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
+                  <div className="font-medium text-gray-800 dark:text-gray-200 text-sm mb-1">{h.meaning}</div>
+                  {h.example && (
+                    <div className="text-sm text-gray-600 dark:text-gray-300 italic flex items-start gap-2">
+                      {h.example}
+                    </div>
+                  )}
+                </div>
+              ))}
+              {(currentCard.highlights || []).length > (viewMode === 'grid' ? 1 : 2) && (
+                <div className="text-xs text-gray-400 font-medium italic mt-2 ml-1">
+                  ... (and {(currentCard.highlights || []).length - (viewMode === 'grid' ? 1 : 2)} more meanings)
+                </div>
+              )}
+            </>
+          )}
+
+          {currentCard.phrasesAndIdioms && currentCard.phrasesAndIdioms.length > 0 && viewMode === 'list' && (
+            <div className="pt-1" onClick={e => e.stopPropagation()}>
+              <button
+                type="button"
+                onClick={() => setShowPhrases(!showPhrases)}
+                className="text-xs text-purple-600 dark:text-purple-400 hover:underline font-medium flex items-center gap-1"
+              >
+                {showPhrases ? 'Hide' : 'Show'} Phrases &amp; Idioms ({currentCard.phrasesAndIdioms.length})
+              </button>
+              {showPhrases && (
+                <div className="mt-2 space-y-1.5 pl-2.5 border-l-2 border-purple-200 dark:border-purple-800">
+                  {currentCard.phrasesAndIdioms.map((pi, piIdx) => (
+                    <div key={pi.id || piIdx} className="text-xs">
+                      <span className="font-semibold text-gray-800 dark:text-gray-200">{pi.phrase}</span>
+                      {pi.translation && <span className="text-gray-500 dark:text-gray-400 ml-1.5">→ {pi.translation}</span>}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-          ))}
-          {flashcard.highlights.length > (viewMode === 'grid' ? 1 : 2) && (
-             <div className="text-xs text-gray-400 font-medium italic mt-2 ml-1">
-                ... (and {flashcard.highlights.length - (viewMode === 'grid' ? 1 : 2)} more meanings)
-             </div>
           )}
         </div>
       )}
@@ -626,40 +744,154 @@ export function FlashcardItem({ flashcard, viewMode = 'list', showHighlights = t
         </div>
       </div>
 
-      {isPopupOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onPointerDown={() => setIsPopupOpen(false)}>
-           <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto" onPointerDown={e => e.stopPropagation()}>
-              <div className="flex justify-between items-center mb-4">
-                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white capitalize flex items-center flex-wrap gap-2">
-                   <span>{flashcard.sentence}</span>
-                   {flashcard.partOfSpeech && (
-                     <span className="text-lg text-gray-500 dark:text-gray-400 italic font-normal normal-case">
-                       {flashcard.partOfSpeech}
-                     </span>
+       {isPopupOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in" onPointerDown={() => setIsPopupOpen(false)}>
+           <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl" onPointerDown={e => e.stopPropagation()}>
+              <div className="flex justify-between items-start mb-4">
+                 <div className="flex flex-col gap-1 flex-1 pr-4">
+                   {/* Line 1: Word */}
+                   <div className="flex items-center gap-2">
+                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white capitalize break-words">
+                       {currentCard.sentence}
+                     </h2>
+                     <button
+                       onClick={() => speakEnglish(currentCard.sentence)}
+                       className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 p-1 rounded-full transition-colors"
+                       title="Listen"
+                     >
+                       <Volume2 size={20} />
+                     </button>
+                   </div>
+
+                   {/* Line 2: Parts of speech (clickable to switch) */}
+                   {posList.length > 0 && (
+                     <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                       {posList.map(p => {
+                         if (!p.label) return null
+                         return (
+                           <button
+                             key={p.key}
+                             type="button"
+                             onClick={p.onClick}
+                             className={`text-sm italic px-2 py-0.5 rounded transition-all ${
+                               p.isActive
+                                 ? 'font-bold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 ring-1 ring-gray-300 dark:ring-gray-600'
+                                 : 'font-normal text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                             }`}
+                           >
+                             {p.label}
+                           </button>
+                         )
+                       })}
+                     </div>
                    )}
-                   {flashcard.phonetic && (
-                     <span className="text-lg italic text-gray-400 font-normal normal-case">{flashcard.phonetic}</span>
+
+                   {/* Line 3: Phonetic */}
+                   {displayPhonetic && (
+                     <div className="text-base italic text-gray-400 dark:text-gray-500 font-normal">
+                       {displayPhonetic}
+                     </div>
                    )}
-                 </h2>
-                 <button onPointerDown={(e) => { e.stopPropagation(); setIsPopupOpen(false); }} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 cursor-pointer p-1">
-                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                 </div>
+
+                 <button 
+                   onClick={(e) => { e.stopPropagation(); setIsPopupOpen(false); }}
+                   onPointerDown={(e) => { e.stopPropagation(); setIsPopupOpen(false); }} 
+                   className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                   title="Close"
+                 >
+                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                  </button>
               </div>
+
+              {/* Meanings & Examples */}
               <div className="space-y-4">
-                {flashcard.highlights.map(h => (
-                  <div key={h.id} className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
-                    <div className="font-medium text-gray-800 dark:text-gray-200 text-base mb-1">{h.meaning}</div>
-                    {h.example && (
-                      <div className="text-sm text-gray-600 dark:text-gray-300 italic flex items-start gap-2">
-                        {h.example}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                {hasPosEntries && activePosEntry ? (
+                  activePosEntry.meanings.map((m, mIdx) => (
+                    <div key={m.id || mIdx} className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3.5 border border-gray-100 dark:border-gray-700">
+                      <div className="font-semibold text-gray-800 dark:text-gray-200 text-base mb-1.5">{m.meaning}</div>
+                      {m.examples && m.examples.length > 0 && (
+                        <div className="space-y-2 mt-2">
+                          {m.examples.map((ex, exIdx) => (
+                            <div key={ex.id || exIdx} className="bg-white/60 dark:bg-gray-800/40 p-2.5 rounded-lg border border-gray-100/80 dark:border-gray-600/40">
+                              <div className="text-sm text-gray-700 dark:text-gray-200 italic flex items-start justify-between gap-2">
+                                <span>"{ex.sentence}"</span>
+                                <button
+                                  onClick={() => speakEnglish(ex.sentence)}
+                                  className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 p-0.5 rounded transition-colors shrink-0"
+                                  title="Listen example"
+                                >
+                                  <Volume2 size={15} />
+                                </button>
+                              </div>
+                              {ex.translation && (
+                                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 pl-1">
+                                  {ex.translation}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  (currentCard.highlights || []).map(h => (
+                    <div key={h.id} className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
+                      <div className="font-medium text-gray-800 dark:text-gray-200 text-base mb-1">{h.meaning}</div>
+                      {h.example && (
+                        <div className="text-sm text-gray-600 dark:text-gray-300 italic flex items-start gap-2">
+                          {h.example}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
+
+              {/* Phrases & Idioms Section */}
+              {currentCard.phrasesAndIdioms && currentCard.phrasesAndIdioms.length > 0 && (
+                <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700">
+                  <div className="font-bold text-gray-800 dark:text-gray-200 text-base mb-2.5 flex items-center gap-2">
+                    <span>Phrases &amp; Idioms</span>
+                    <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full font-normal">
+                      {currentCard.phrasesAndIdioms.length}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {currentCard.phrasesAndIdioms.map((pi, piIdx) => (
+                      <div key={pi.id || piIdx} className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700 flex items-start justify-between gap-2">
+                        <div>
+                          <div className="font-semibold text-gray-800 dark:text-gray-200 text-sm">
+                            {pi.phrase}
+                          </div>
+                          {pi.translation && (
+                            <div className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">
+                              {pi.translation}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => speakEnglish(pi.phrase)}
+                          className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 p-1 rounded-full transition-colors shrink-0"
+                          title="Listen"
+                        >
+                          <Volume2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
            </div>
         </div>
       )}
+
+      <WordCardEditModal
+        card={currentCard}
+        isOpen={isWordEditModalOpen}
+        onClose={() => setIsWordEditModalOpen(false)}
+      />
     </div>
   )
 }

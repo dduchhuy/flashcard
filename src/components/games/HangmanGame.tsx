@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Lightbulb, Volume2 } from 'lucide-react'
-import { useNotes, EmptyState, ResultScreen, BackBar, BottomCounter, softBtn } from './shared'
+import { Lightbulb, Volume2, RefreshCcw } from 'lucide-react'
+import { useNotes, EmptyState, BackBar, softBtn, RootCardButton, GameStatsBar, CardDetailModal } from './shared'
+import { useFlashcardStore, Flashcard } from '../../store'
 import { speakEnglish } from '../../utils'
 
 const MAX_MISSES = 6
@@ -25,13 +26,17 @@ function Gallows({ misses }: { misses: number }) {
 }
 
 export function HangmanGame({ onExit }: { onExit: () => void }) {
+  const { flashcards } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
   const allNotes = useNotes(seed, true)
   const notes = useMemo(() => allNotes.filter(n => /[a-z]/i.test(n.word)), [allNotes])
   const [index, setIndex] = useState(0)
-  const [score, setScore] = useState(0)
+  const [correct, setCorrect] = useState(0)
+  const [wrong, setWrong] = useState(0)
+  const [skipped, setSkipped] = useState(0)
   const [guessed, setGuessed] = useState<string[]>([])
   const [hints, setHints] = useState(0)
+  const [showModalCard, setShowModalCard] = useState<Flashcard | null>(null)
 
   const note = notes[index]
   const target = note ? note.word.toLowerCase() : ''
@@ -48,13 +53,23 @@ export function HangmanGame({ onExit }: { onExit: () => void }) {
     setHints(0)
   }
 
+  const handleSkip = () => {
+    setSkipped(s => s + 1)
+    next()
+  }
+
   const guess = (letter: string) => {
     if (over || guessed.includes(letter)) return
     const nextGuessed = [...guessed, letter]
     setGuessed(nextGuessed)
     if (targetLetters.every(l => nextGuessed.includes(l))) {
-      setScore(s => s + 1)
+      setCorrect(c => c + 1)
       speakEnglish(note.word)
+    } else {
+      const nextWrongGuesses = nextGuessed.filter(g => !targetLetters.includes(g)).length
+      if (nextWrongGuesses + hints >= MAX_MISSES) {
+        setWrong(w => w + 1)
+      }
     }
   }
 
@@ -64,7 +79,12 @@ export function HangmanGame({ onExit }: { onExit: () => void }) {
     if (remaining.length <= 1) return
     const pick = remaining[Math.floor(Math.random() * remaining.length)]
     setHints(h => h + 1)
-    setGuessed(g => [...g, pick])
+    const nextGuessed = [...guessed, pick]
+    setGuessed(nextGuessed)
+    if (targetLetters.every(l => nextGuessed.includes(l))) {
+      setCorrect(c => c + 1)
+      speakEnglish(note.word)
+    }
   }
 
   useEffect(() => {
@@ -80,12 +100,33 @@ export function HangmanGame({ onExit }: { onExit: () => void }) {
 
   if (notes.length === 0) return <EmptyState onExit={onExit} />
   if (index >= notes.length) {
+    const total = notes.length
+    const percentage = total > 0 ? Math.round((correct / total) * 100) : 0
     return (
-      <ResultScreen
-        onExit={onExit}
-        onAgain={() => { setSeed(s => s + 1); setIndex(0); setScore(0); setGuessed([]); setHints(0) }}
-        lines={<>You saved <span className="font-bold text-purple-600">{score}</span> of {notes.length} words ({Math.round((score / notes.length) * 100)}%)</>}
-      />
+      <div className="text-center py-20 animate-in fade-in flex flex-col items-center">
+        <div className="text-6xl mb-6">🏆</div>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Practice Complete!</h2>
+        <div className="flex gap-4 my-6">
+          <div className="px-4 py-2 bg-green-50 dark:bg-green-900/30 rounded-xl text-green-600 dark:text-green-400 font-medium">
+            Correct: {correct}
+          </div>
+          <div className="px-4 py-2 bg-red-50 dark:bg-red-900/30 rounded-xl text-red-600 dark:text-red-400 font-medium">
+            Wrong: {wrong}
+          </div>
+          <div className="px-4 py-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-600 dark:text-orange-400 font-medium">
+            Skipped: {skipped}
+          </div>
+        </div>
+        <p className="text-lg text-gray-500 dark:text-gray-400 mb-6">
+          Score: <span className="font-bold text-purple-600">{percentage}%</span>
+        </p>
+        <div className="flex gap-4 mt-2">
+          <button onClick={onExit} className="bg-gray-200 dark:bg-gray-700 px-6 py-2 rounded-lg font-medium">Back</button>
+          <button onClick={() => { setSeed(s => s + 1); setIndex(0); setCorrect(0); setWrong(0); setSkipped(0); setGuessed([]); setHints(0) }} className="bg-purple-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium hover:bg-purple-700">
+            <RefreshCcw size={18} /> Play Again
+          </button>
+        </div>
+      </div>
     )
   }
 
@@ -94,6 +135,14 @@ export function HangmanGame({ onExit }: { onExit: () => void }) {
       <BackBar onExit={onExit} />
 
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 text-center max-w-xl mx-auto w-full relative">
+        <RootCardButton
+          onClick={() => {
+            const c = flashcards.find(f => f.id === note.cardId)
+            if (c) setShowModalCard(c)
+          }}
+          className="absolute top-4 left-4"
+        />
+
         <div className="flex justify-center mb-4"><Gallows misses={misses} /></div>
 
         <div className="bg-purple-50 dark:bg-gray-900 rounded-xl p-4 mb-6 border border-purple-100 dark:border-gray-700">
@@ -143,7 +192,7 @@ export function HangmanGame({ onExit }: { onExit: () => void }) {
           ) : (
             <>
               <button onClick={hint} disabled={misses >= MAX_MISSES - 1} title="Reveal a letter (costs a life)" className={softBtn}><Lightbulb size={20} /></button>
-              <button onClick={next} className={softBtn}>Skip</button>
+              <button onClick={handleSkip} className={softBtn}>Skip</button>
             </>
           )}
         </div>
@@ -153,7 +202,14 @@ export function HangmanGame({ onExit }: { onExit: () => void }) {
         </button>
       </div>
 
-      <BottomCounter>{index + 1} / {notes.length}</BottomCounter>
+      <div className="mt-4 flex flex-col items-center gap-2">
+        <p className="text-center text-sm font-medium text-gray-500 dark:text-gray-400">
+          {index + 1} / {notes.length}
+        </p>
+        <GameStatsBar correct={correct} wrong={wrong} skipped={skipped} />
+      </div>
+
+      <CardDetailModal card={showModalCard} onClose={() => setShowModalCard(null)} />
     </div>
   )
 }

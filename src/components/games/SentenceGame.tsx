@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react'
-import { RotateCcw, Volume2 } from 'lucide-react'
-import { useFlashcardStore, getCardTags, getCardsForMode } from '../../store'
+import { useState, useMemo, useRef } from 'react'
+import { RotateCcw, Volume2, RefreshCcw } from 'lucide-react'
+import { useFlashcardStore, getCardTags, getCardsForMode, Flashcard } from '../../store'
 import { extractWordsAndSpaces, speakEnglish } from '../../utils'
-import { shuffle, EmptyState, ResultScreen, BackBar, BottomCounter, softBtn } from './shared'
+import { shuffle, EmptyState, BackBar, softBtn, RootCardButton, GameStatsBar, CardDetailModal } from './shared'
 
 export function SentenceGame({ onExit }: { onExit: () => void }) {
   const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
@@ -14,8 +14,9 @@ export function SentenceGame({ onExit }: { onExit: () => void }) {
     let list: { card: any, sentence: string, tokens: string[] }[] = []
     
     filtered.forEach(card => {
-      if (gameInputMode === 'word' && card.highlights.length > 0) {
-        card.highlights.forEach(h => {
+      const highlights = card.highlights || []
+      if (gameInputMode === 'word' && highlights.length > 0) {
+        highlights.forEach(h => {
           const targetSentence = h.example || card.sentence
           list.push({
             card,
@@ -37,10 +38,14 @@ export function SentenceGame({ onExit }: { onExit: () => void }) {
   }, [flashcards, seed, activeTags, gameInputMode])
 
   const [index, setIndex] = useState(0)
-  const [score, setScore] = useState(0)
+  const [correct, setCorrect] = useState(0)
+  const [wrong, setWrong] = useState(0)
+  const [skipped, setSkipped] = useState(0)
   const [placed, setPlaced] = useState<number[]>([])
-  const [status, setStatus] = useState<'playing' | 'correct' | 'wrong'>('playing')
-  const [wrongOnce, setWrongOnce] = useState(false)
+  const [typedInput, setTypedInput] = useState('')
+  const [status, setStatus] = useState<'playing' | 'correct' | 'wrong' | 'skipped'>('playing')
+  const [showModalCard, setShowModalCard] = useState<Flashcard | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const item = items[index]
 
@@ -56,44 +61,102 @@ export function SentenceGame({ onExit }: { onExit: () => void }) {
   const next = () => {
     setIndex(i => i + 1)
     setPlaced([])
+    setTypedInput('')
     setStatus('playing')
-    setWrongOnce(false)
+  }
+
+  const handleSkip = () => {
+    if (status !== 'playing') return
+    setStatus('skipped')
+    setSkipped(s => s + 1)
+    setTimeout(next, 1500)
+  }
+
+  const checkGuess = (guessStr: string) => {
+    const cleanGuess = guessStr.trim().toLowerCase().replace(/[.,!?;:'"]/g, '')
+    const cleanTarget = item.sentence.trim().toLowerCase().replace(/[.,!?;:'"]/g, '')
+    if (cleanGuess === cleanTarget) {
+      setStatus('correct')
+      setCorrect(c => c + 1)
+      speakEnglish(item.sentence)
+      setTimeout(next, 2000)
+    } else {
+      setStatus('wrong')
+      setWrong(w => w + 1)
+      setTimeout(() => {
+        setPlaced([])
+        setTypedInput('')
+        setStatus('playing')
+      }, 1500)
+    }
   }
 
   const add = (id: number) => {
     if (status !== 'playing' || placed.includes(id)) return
     const nextPlaced = [...placed, id]
     setPlaced(nextPlaced)
+    const text = nextPlaced.map(i => item.tokens[i]).join(' ')
+    setTypedInput(text)
     if (nextPlaced.length === item.tokens.length) {
-      const guess = nextPlaced.map(i => item.tokens[i]).join(' ')
-      if (guess === item.tokens.join(' ')) {
-        setStatus('correct')
-        if (!wrongOnce) setScore(s => s + 1)
-        speakEnglish(item.sentence)
-        setTimeout(next, 2200)
-      } else {
-        setStatus('wrong')
-        setWrongOnce(true)
-        setTimeout(() => { setPlaced([]); setStatus('playing') }, 900)
-      }
+      checkGuess(text)
     }
   }
 
   const removeAt = (pos: number) => {
     if (status !== 'playing') return
-    setPlaced(p => p.filter((_, i) => i !== pos))
+    const nextPlaced = placed.filter((_, i) => i !== pos)
+    setPlaced(nextPlaced)
+    setTypedInput(nextPlaced.map(i => item.tokens[i]).join(' '))
+  }
+
+  const handleTypedInput = (val: string) => {
+    if (status !== 'playing') return
+    setTypedInput(val)
+    const words = val.trim().toLowerCase().split(/\s+/).filter(Boolean)
+    const newPlaced: number[] = []
+    const used = new Set<number>()
+    for (const w of words) {
+      const cleanW = w.replace(/[^\w]/g, '')
+      const match = pool.find(p => !used.has(p.id) && p.t.toLowerCase().replace(/[^\w]/g, '') === cleanW)
+      if (match) {
+        newPlaced.push(match.id)
+        used.add(match.id)
+      }
+    }
+    setPlaced(newPlaced)
   }
 
   if (flashcards.length === 0 || items.length === 0) {
     return <EmptyState onExit={onExit} text="No sentences with 3 or more words found." />
   }
   if (index >= items.length) {
+    const total = items.length
+    const percentage = total > 0 ? Math.round((correct / total) * 100) : 0
     return (
-      <ResultScreen
-        onExit={onExit}
-        onAgain={() => { setSeed(s => s + 1); setIndex(0); setScore(0); setPlaced([]); setStatus('playing'); setWrongOnce(false) }}
-        lines={<>You built <span className="font-bold text-purple-600">{score}</span> of {items.length} sentences on the first try ({Math.round((score / items.length) * 100)}%)</>}
-      />
+      <div className="text-center py-20 animate-in fade-in flex flex-col items-center">
+        <div className="text-6xl mb-6">🏆</div>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Practice Complete!</h2>
+        <div className="flex gap-4 my-6">
+          <div className="px-4 py-2 bg-green-50 dark:bg-green-900/30 rounded-xl text-green-600 dark:text-green-400 font-medium">
+            Correct: {correct}
+          </div>
+          <div className="px-4 py-2 bg-red-50 dark:bg-red-900/30 rounded-xl text-red-600 dark:text-red-400 font-medium">
+            Wrong: {wrong}
+          </div>
+          <div className="px-4 py-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-600 dark:text-orange-400 font-medium">
+            Skipped: {skipped}
+          </div>
+        </div>
+        <p className="text-lg text-gray-500 dark:text-gray-400 mb-6">
+          Score: <span className="font-bold text-purple-600">{percentage}%</span>
+        </p>
+        <div className="flex gap-4 mt-2">
+          <button onClick={onExit} className="bg-gray-200 dark:bg-gray-700 px-6 py-2 rounded-lg font-medium">Back</button>
+          <button onClick={() => { setSeed(s => s + 1); setIndex(0); setCorrect(0); setWrong(0); setSkipped(0); setPlaced([]); setTypedInput(''); setStatus('playing') }} className="bg-purple-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium hover:bg-purple-700">
+            <RefreshCcw size={18} /> Play Again
+          </button>
+        </div>
+      </div>
     )
   }
 
@@ -102,20 +165,49 @@ export function SentenceGame({ onExit }: { onExit: () => void }) {
       <BackBar onExit={onExit} />
 
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 text-center max-w-xl mx-auto w-full relative">
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Tap the words in the right order</p>
+        <RootCardButton
+          onClick={() => {
+            if (item?.card) setShowModalCard(item.card)
+          }}
+          className="absolute top-4 left-4"
+        />
 
-        <div className={`min-h-[5rem] rounded-xl border-2 border-dashed p-3 mb-6 flex flex-wrap gap-2 justify-center items-center transition-colors ${
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Tap words in order or type the sentence</p>
+
+        <div className={`min-h-[5rem] rounded-xl border-2 border-dashed p-3 mb-4 flex flex-wrap gap-2 justify-center items-center transition-colors ${
           status === 'correct' ? 'border-green-500 bg-green-50 dark:bg-green-900/20' :
           status === 'wrong' ? 'border-red-500 bg-red-50 dark:bg-red-900/20' :
+          status === 'skipped' ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20' :
           'border-gray-300 dark:border-gray-600'
         }`}>
-          {status === 'correct' ? (
-            <span className="text-lg text-green-700 dark:text-green-300 whitespace-pre-wrap">{item.sentence}</span>
+          {status === 'correct' || status === 'wrong' || status === 'skipped' ? (
+            <span className={`text-lg font-medium whitespace-pre-wrap ${
+              status === 'correct' ? 'text-green-700 dark:text-green-300' :
+              status === 'wrong' ? 'text-red-700 dark:text-red-300' :
+              'text-orange-700 dark:text-orange-300'
+            }`}>{item.sentence}</span>
           ) : placed.map((id, pos) => (
             <button key={pos} onClick={() => removeAt(pos)} className="px-3 py-1.5 rounded-lg bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-200 font-medium hover:bg-purple-200 dark:hover:bg-purple-900/60 transition-colors">
               {item.tokens[id]}
             </button>
           ))}
+        </div>
+
+        <div className="mb-6">
+          <input
+            ref={inputRef}
+            type="text"
+            value={typedInput}
+            onChange={e => handleTypedInput(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && typedInput.trim()) {
+                checkGuess(typedInput)
+              }
+            }}
+            disabled={status !== 'playing'}
+            placeholder="Type sentence here and press Enter..."
+            className="w-full px-4 py-2.5 text-center text-base rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 transition-all"
+          />
         </div>
 
         <div className="flex flex-wrap gap-2 justify-center mb-8 min-h-[3rem]">
@@ -134,9 +226,9 @@ export function SentenceGame({ onExit }: { onExit: () => void }) {
         </div>
 
         <div className="flex flex-wrap gap-3 justify-center">
-          <button onClick={() => setPlaced([])} disabled={status !== 'playing'} title="Reset" className={softBtn}><RotateCcw size={20} /></button>
+          <button onClick={() => { setPlaced([]); setTypedInput('') }} disabled={status !== 'playing'} title="Reset" className={softBtn}><RotateCcw size={20} /></button>
           <button onClick={() => speakEnglish(item.sentence)} title="Listen to sentence" className={softBtn}><Volume2 size={20} /></button>
-          <button onClick={next} disabled={status !== 'playing'} className={softBtn}>Skip</button>
+          <button onClick={handleSkip} disabled={status !== 'playing'} className={softBtn}>Skip</button>
         </div>
 
         {status === 'correct' && (
@@ -146,7 +238,14 @@ export function SentenceGame({ onExit }: { onExit: () => void }) {
         )}
       </div>
 
-      <BottomCounter>{index + 1} / {items.length}</BottomCounter>
+      <div className="mt-4 flex flex-col items-center gap-2">
+        <p className="text-center text-sm font-medium text-gray-500 dark:text-gray-400">
+          {index + 1} / {items.length}
+        </p>
+        <GameStatsBar correct={correct} wrong={wrong} skipped={skipped} />
+      </div>
+
+      <CardDetailModal card={showModalCard} onClose={() => setShowModalCard(null)} />
     </div>
   )
 }

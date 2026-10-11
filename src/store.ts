@@ -19,16 +19,97 @@ export interface Highlight {
   srs?: SRSData
 }
 
+export interface Example {
+  id?: string
+  sentence: string
+  translation: string
+}
+
+export interface Meaning {
+  id?: string
+  meaning: string
+  examples: Example[]
+}
+
+export interface PosEntry {
+  id?: string
+  partOfSpeech: string
+  phonetic?: string
+  meanings: Meaning[]
+}
+
+export interface PhraseIdiom {
+  id?: string
+  phrase: string
+  translation: string
+}
+
 export interface Flashcard {
   id: string
   sentence: string
   phonetic?: string
   partOfSpeech?: string
   highlights: Highlight[]
+  posEntries?: PosEntry[]
+  phrasesAndIdioms?: PhraseIdiom[]
   createdAt: number
   tag?: string
   tags?: string[]
   srs?: SRSData  // word-mode SRS
+}
+
+export function syncHighlightsFromPosEntries(posEntries?: PosEntry[]): Highlight[] {
+  if (!posEntries || posEntries.length === 0) return []
+  const highlights: Highlight[] = []
+  posEntries.forEach((pos) => {
+    pos.meanings.forEach((m) => {
+      highlights.push({
+        id: m.id || uuidv4(),
+        wordIndices: [0],
+        meaning: m.meaning,
+        example: m.examples?.[0]?.sentence || '',
+      })
+    })
+  })
+  return highlights
+}
+
+export function migrateFlashcard(card: Flashcard): Flashcard {
+  if (card.posEntries && card.posEntries.length > 0) {
+    if (!card.highlights || card.highlights.length === 0) {
+      return {
+        ...card,
+        highlights: syncHighlightsFromPosEntries(card.posEntries),
+        phrasesAndIdioms: card.phrasesAndIdioms || []
+      }
+    }
+    return {
+      ...card,
+      phrasesAndIdioms: card.phrasesAndIdioms || []
+    }
+  }
+
+  const isOldWord = card.highlights && card.highlights.some(h => h.example !== undefined)
+  if (isOldWord) {
+    const meanings: Meaning[] = card.highlights.map(h => ({
+      id: h.id || uuidv4(),
+      meaning: h.meaning,
+      examples: h.example ? [{ id: uuidv4(), sentence: h.example, translation: '' }] : []
+    }))
+    const posEntries: PosEntry[] = [{
+      id: uuidv4(),
+      partOfSpeech: card.partOfSpeech || '',
+      phonetic: card.phonetic,
+      meanings
+    }]
+    return {
+      ...card,
+      posEntries,
+      phrasesAndIdioms: card.phrasesAndIdioms || []
+    }
+  }
+
+  return card
 }
 
 export function getCardTags(card: Flashcard): string[] {
@@ -38,10 +119,8 @@ export function getCardTags(card: Flashcard): string[] {
 }
 
 export function isWordCard(card: Flashcard): boolean {
-  // 1. If any highlight has an example explicitly defined (even empty string), it was created as a Word Card
-  if (card.highlights.some(h => h.example !== undefined)) return true
-
-  // 2. Otherwise, it is a Sentence card.
+  if (card.posEntries && card.posEntries.length > 0) return true
+  if (card.highlights && card.highlights.some(h => h.example !== undefined)) return true
   return false
 }
 
@@ -91,8 +170,10 @@ interface FlashcardState {
   updateSettings: (newSettings: Partial<AppSettings>) => void
   resetSettings: () => void
   addFlashcard: (sentence: string, tags?: string[] | string, highlights?: Omit<Highlight, 'id'>[], phonetic?: string, partOfSpeech?: string) => void
+  addWordCard: (word: string, posEntries: PosEntry[], phrasesAndIdioms?: PhraseIdiom[], tags?: string[] | string, phonetic?: string) => void
   deleteFlashcard: (id: string) => void
   updateFlashcard: (id: string, newSentence: string, newPhonetic?: string, newPartOfSpeech?: string) => void
+  updateWordCard: (id: string, word: string, posEntries: PosEntry[], phrasesAndIdioms?: PhraseIdiom[], tags?: string[] | string, phonetic?: string) => void
   updateFlashcardTag: (id: string, tags?: string[] | string) => void
   saveHighlight: (flashcardId: string, highlightId: string | null, wordIndices: number[], meaning: string, example?: string) => string
   removeHighlight: (flashcardId: string, highlightId: string) => void
@@ -152,15 +233,71 @@ export const useFlashcardStore = create<FlashcardState>()(
             ],
           }
         }),
+      addWordCard: (word, posEntries, phrasesAndIdioms, tags, phonetic) =>
+        set((state) => {
+          const parsedTags = parseTagsInput(tags)
+          const highlights = syncHighlightsFromPosEntries(posEntries)
+          const newCard: Flashcard = {
+            id: uuidv4(),
+            sentence: word.trim(),
+            phonetic: phonetic?.trim() || posEntries[0]?.phonetic?.trim(),
+            partOfSpeech: posEntries[0]?.partOfSpeech?.trim(),
+            highlights,
+            posEntries,
+            phrasesAndIdioms: phrasesAndIdioms || [],
+            createdAt: Date.now(),
+            tags: parsedTags.length > 0 ? parsedTags : undefined,
+          }
+          return {
+            flashcards: [...state.flashcards, newCard],
+          }
+        }),
       deleteFlashcard: (id) =>
         set((state) => ({
           flashcards: state.flashcards.filter((f) => f.id !== id),
         })),
       updateFlashcard: (id, newSentence, newPhonetic, newPartOfSpeech) =>
         set((state) => ({
-          flashcards: state.flashcards.map((f) =>
-            f.id === id ? { ...f, sentence: newSentence, phonetic: newPhonetic !== undefined ? newPhonetic : f.phonetic, partOfSpeech: newPartOfSpeech !== undefined ? newPartOfSpeech : f.partOfSpeech } : f
-          ),
+          flashcards: state.flashcards.map((f) => {
+            if (f.id !== id) return f
+            const updated: Flashcard = {
+              ...f,
+              sentence: newSentence,
+              phonetic: newPhonetic !== undefined ? newPhonetic : f.phonetic,
+              partOfSpeech: newPartOfSpeech !== undefined ? newPartOfSpeech : f.partOfSpeech,
+            }
+            // If card has posEntries, update the primary POS or phonetic
+            if (updated.posEntries && updated.posEntries.length > 0) {
+              const updatedPosEntries = [...updated.posEntries]
+              if (newPartOfSpeech !== undefined) {
+                updatedPosEntries[0] = { ...updatedPosEntries[0], partOfSpeech: newPartOfSpeech }
+              }
+              if (newPhonetic !== undefined) {
+                updatedPosEntries[0] = { ...updatedPosEntries[0], phonetic: newPhonetic }
+              }
+              updated.posEntries = updatedPosEntries
+              updated.highlights = syncHighlightsFromPosEntries(updatedPosEntries)
+            }
+            return updated
+          }),
+        })),
+      updateWordCard: (id, word, posEntries, phrasesAndIdioms, tags, phonetic) =>
+        set((state) => ({
+          flashcards: state.flashcards.map((f) => {
+            if (f.id !== id) return f
+            const highlights = syncHighlightsFromPosEntries(posEntries)
+            const parsedTags = tags !== undefined ? parseTagsInput(tags) : f.tags
+            return {
+              ...f,
+              sentence: word.trim(),
+              phonetic: phonetic?.trim() !== undefined ? phonetic?.trim() : (posEntries[0]?.phonetic?.trim() || f.phonetic),
+              partOfSpeech: posEntries[0]?.partOfSpeech?.trim() || f.partOfSpeech,
+              highlights,
+              posEntries,
+              phrasesAndIdioms: phrasesAndIdioms || [],
+              tags: parsedTags && parsedTags.length > 0 ? parsedTags : undefined,
+            }
+          }),
         })),
       updateFlashcardTag: (id, tags) =>
         set((state) => {
@@ -246,7 +383,12 @@ export const useFlashcardStore = create<FlashcardState>()(
     }),
     {
       name: 'flashcard-storage',
-      storage: createJSONStorage(() => idbStorage)
+      storage: createJSONStorage(() => idbStorage),
+      onRehydrateStorage: () => (state) => {
+        if (state && Array.isArray(state.flashcards)) {
+          state.flashcards = state.flashcards.map(migrateFlashcard)
+        }
+      }
     }
   )
 )

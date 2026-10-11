@@ -38,14 +38,22 @@ export function extractWordsAndSpaces(sentence: string) {
   return { words, spaces, initialSpace }
 }
 
+export function escapeRegExp(string: string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 export function extractWordText(sentence: string, indices: number[]) {
+  if (!sentence) return ''
+  if (!indices || indices.length === 0) return sentence
   const { words, spaces } = extractWordsAndSpaces(sentence)
   let text = ''
   indices.forEach((idx, i) => {
-    text += words[idx]
-    if (i < indices.length - 1) text += spaces[idx]
+    if (words[idx] !== undefined) {
+      text += words[idx]
+      if (i < indices.length - 1 && spaces[idx] !== undefined) text += spaces[idx]
+    }
   })
-  return text
+  return text || sentence
 }
 
 export function getBlankedSentence(sentence: string, indices: number[]) {
