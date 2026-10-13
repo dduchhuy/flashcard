@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Check, X, Volume2 } from 'lucide-react'
-import { useNotes, EmptyState, RootCardButton, GameStatsBar, CardDetailModal, GameHeader, ResultScreen } from './shared'
+import { useNotes, EmptyState, RootCardButton, GameStatsBar, CardDetailModal, GameHeader, ResultScreen, useGameTimer } from './shared'
 import { useFlashcardStore, Flashcard } from '../../store'
 import { speakEnglish } from '../../utils'
 
@@ -31,12 +31,28 @@ export function TrueFalseGame({ onExit }: { onExit: () => void }) {
     return flashcards.find(f => f.id === q.note.cardId) || null
   }, [q, flashcards])
 
+  const handleTimeUp = () => {
+    if (answer || !q) return
+    handleSkip()
+  }
+
+  const timer = useGameTimer({
+    initialDuration: 10,
+    onTimeUp: handleTimeUp,
+    enabled: !answer && index < questions.length
+  })
+
+  useEffect(() => {
+    timer.reset()
+  }, [index, srcMode])
+
   const choose = (userSaysTrue: boolean) => {
     if (answer || !q) return
     const right = userSaysTrue === q.isTrue
     setAnswer({ right })
     if (right) {
       setCorrect(c => c + 1)
+      speakEnglish(q.note.word)
     } else {
       setWrong(w => w + 1)
     }
@@ -70,28 +86,29 @@ export function TrueFalseGame({ onExit }: { onExit: () => void }) {
         wrong={wrong}
         skipped={skipped}
         onExit={onExit}
-        onAgain={() => { setSeed(s => s + 1); setIndex(0); setCorrect(0); setWrong(0); setSkipped(0); setAnswer(null) }}
+        onAgain={() => { setSeed(s => s + 1); setIndex(0); setCorrect(0); setWrong(0); setSkipped(0); setAnswer(null); timer.reset() }}
       />
     )
   }
 
   return (
-    <div className="max-w-xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full">
+    <div className="max-w-4xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full items-center w-full">
       <GameHeader
         onExit={onExit}
+        timer={timer}
         current={index + 1}
         total={questions.length}
         center={
-          <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg border border-gray-200/60 dark:border-gray-700/60 text-xs font-semibold">
+          <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60 text-xs font-semibold">
             <button
               onClick={() => { setSrcMode('highlights'); setIndex(0); setCorrect(0); setWrong(0); setSkipped(0); setAnswer(null) }}
-              className={`px-2.5 py-1 rounded-md transition-colors ${srcMode === 'highlights' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+              className={`px-3 py-1 rounded-lg transition-colors ${srcMode === 'highlights' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300 font-bold' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
             >
               Words
             </button>
             <button
               onClick={() => { setSrcMode('phrases'); setIndex(0); setCorrect(0); setWrong(0); setSkipped(0); setAnswer(null) }}
-              className={`px-2.5 py-1 rounded-md transition-colors ${srcMode === 'phrases' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+              className={`px-3 py-1 rounded-lg transition-colors ${srcMode === 'phrases' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300 font-bold' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
             >
               Phrases
             </button>
@@ -99,57 +116,57 @@ export function TrueFalseGame({ onExit }: { onExit: () => void }) {
         }
       />
 
-      <div className={`rounded-2xl shadow-xs border-2 p-4 sm:p-5 mb-2.5 text-center relative transition-colors ${
-        answer === null ? 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700' :
-        answer.right ? 'bg-green-50 dark:bg-green-900/20 border-green-500' : 'bg-red-50 dark:bg-red-900/20 border-red-500'
+      <div className={`rounded-3xl shadow-md border-2 p-6 sm:p-8 mb-4 text-center max-w-2xl w-full relative transition-colors pb-16 ${
+        answer === null ? 'bg-white dark:bg-gray-800 border-gray-200/80 dark:border-gray-700/80' :
+        answer.right ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-500' : 'bg-rose-50 dark:bg-rose-950/20 border-rose-500'
       }`}>
         <RootCardButton
           onClick={() => {
             if (currentCard) setShowModalCard(currentCard)
           }}
-          className="absolute bottom-3 left-3"
+          className="absolute bottom-3 left-4"
         />
 
-        <div className="mb-2">
-          <h3 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 break-words whitespace-pre-wrap">{q.note.word}</h3>
+        <div className="mb-4">
+          <h3 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-gray-100 break-words whitespace-pre-wrap">{q.note.word}</h3>
           {(currentCard?.posEntries ? currentCard.posEntries.map(p => p.partOfSpeech).filter(Boolean).join(', ') : currentCard?.partOfSpeech) && (
-            <span className="text-xs font-normal text-gray-500 dark:text-gray-400 block mt-0.5 break-words">{currentCard?.posEntries ? currentCard.posEntries.map(p => p.partOfSpeech).filter(Boolean).join(', ') : currentCard?.partOfSpeech}</span>
+            <span className="text-xs font-normal text-gray-500 dark:text-gray-400 block mt-1 break-words">{currentCard?.posEntries ? currentCard.posEntries.map(p => p.partOfSpeech).filter(Boolean).join(', ') : currentCard?.partOfSpeech}</span>
           )}
           {currentCard?.phonetic && (
             <span className="text-xs font-normal text-gray-400 dark:text-gray-500 block font-mono mt-0.5 break-words">{currentCard.phonetic}</span>
           )}
         </div>
 
-        <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">means</p>
-        <p className="text-base sm:text-lg font-medium text-purple-700 dark:text-purple-300 break-words whitespace-pre-wrap">{q.shown}</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">means</p>
+        <p className="text-lg sm:text-xl font-medium text-purple-700 dark:text-purple-300 break-words whitespace-pre-wrap px-4">{q.shown}</p>
 
         {answer && !answer.right && (
-          <p className="mt-2 text-xs text-red-600 dark:text-red-400">
-            Correct meaning: <span className="font-semibold">{q.note.meaning}</span>
-          </p>
+          <div className="mt-3 p-2.5 rounded-xl bg-rose-100/70 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 max-w-md mx-auto animate-in fade-in">
+            Correct meaning: <span className="font-bold">{q.note.meaning}</span>
+          </div>
         )}
 
         <button
           onClick={() => speakEnglish(q.note.word)}
           title="Listen"
-          className="absolute bottom-3 right-3 p-1.5 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
+          className="absolute bottom-3 right-4 p-2 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors cursor-pointer"
         ><Volume2 size={20} /></button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 max-w-2xl w-full mb-3">
         <button
           onClick={() => choose(false)}
           disabled={!!answer}
-          className="py-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-2 border-rose-200 dark:border-rose-800 font-bold text-base flex items-center justify-center gap-2 hover:bg-rose-100 hover:scale-[1.02] disabled:opacity-60 transition-all shadow-xs cursor-pointer"
+          className="py-3.5 sm:py-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-2 border-rose-200 dark:border-rose-800 font-bold text-base sm:text-lg flex items-center justify-center gap-2 hover:bg-rose-100 dark:hover:bg-rose-900/50 hover:scale-[1.01] active:scale-95 disabled:opacity-60 transition-all shadow-xs cursor-pointer"
         >
-          <X size={20} /> False
+          <X size={22} strokeWidth={2.5} /> False
         </button>
         <button
           onClick={() => choose(true)}
           disabled={!!answer}
-          className="py-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-2 border-emerald-200 dark:border-emerald-800 font-bold text-base flex items-center justify-center gap-2 hover:bg-emerald-100 hover:scale-[1.02] disabled:opacity-60 transition-all shadow-xs cursor-pointer"
+          className="py-3.5 sm:py-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-2 border-emerald-200 dark:border-emerald-800 font-bold text-base sm:text-lg flex items-center justify-center gap-2 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 hover:scale-[1.01] active:scale-95 disabled:opacity-60 transition-all shadow-xs cursor-pointer"
         >
-          <Check size={20} /> True
+          <Check size={22} strokeWidth={2.5} /> True
         </button>
       </div>
 
@@ -157,7 +174,7 @@ export function TrueFalseGame({ onExit }: { onExit: () => void }) {
         <button
           onClick={handleSkip}
           disabled={!!answer}
-          className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-6 py-1.5 text-xs sm:text-sm rounded-lg font-medium transition-colors cursor-pointer"
+          className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-6 py-2 text-xs sm:text-sm rounded-xl font-medium transition-colors cursor-pointer"
         >
           Skip
         </button>

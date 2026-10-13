@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Lightbulb, Volume2 } from 'lucide-react'
-import { useNotes, EmptyState, softBtn, RootCardButton, GameStatsBar, CardDetailModal, GameHeader, ResultScreen } from './shared'
-import { useFlashcardStore, Flashcard } from '../../store'
-import { speakEnglish } from '../../utils'
+import { Lightbulb, Volume2, SkipForward } from 'lucide-react'
+import { EmptyState, softBtn, RootCardButton, GameStatsBar, CardDetailModal, GameHeader, ResultScreen, useGameTimer } from './shared'
+import { useFlashcardStore, getCardTags, getCardsForMode, Flashcard } from '../../store'
+import { speakEnglish, extractWordText } from '../../utils'
 
 const MAX_MISSES = 6
 const ALPHABET = 'abcdefghijklmnopqrstuvwxyz'.split('')
@@ -26,10 +26,37 @@ function Gallows({ misses }: { misses: number }) {
 }
 
 export function HangmanGame({ onExit }: { onExit: () => void }) {
-  const { flashcards } = useFlashcardStore()
+  const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
-  const allNotes = useNotes(seed, true)
-  const notes = useMemo(() => allNotes.filter(n => /[a-z]/i.test(n.word)), [allNotes])
+  const [meaningMode, setMeaningMode] = useState<'all' | 'first'>('all')
+
+  const notes = useMemo(() => {
+    let filtered = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
+    filtered = getCardsForMode(filtered, gameInputMode)
+
+    const list: { cardId: string; word: string; meaning: string }[] = []
+    filtered.forEach(card => {
+      const hls = card.highlights || []
+      if (hls.length === 0) return
+
+      if (meaningMode === 'first') {
+        const h = hls[0]
+        const w = gameInputMode === 'word' ? card.sentence.trim() : extractWordText(card.sentence, h.wordIndices)
+        if (/[a-z]/i.test(w)) {
+          list.push({ cardId: card.id, word: w, meaning: h.meaning })
+        }
+      } else {
+        hls.forEach(h => {
+          const w = gameInputMode === 'word' ? card.sentence.trim() : extractWordText(card.sentence, h.wordIndices)
+          if (/[a-z]/i.test(w)) {
+            list.push({ cardId: card.id, word: w, meaning: h.meaning })
+          }
+        })
+      }
+    })
+    return list.sort(() => Math.random() - 0.5)
+  }, [flashcards, activeTags, gameInputMode, meaningMode, seed])
+
   const [index, setIndex] = useState(0)
   const [correct, setCorrect] = useState(0)
   const [wrong, setWrong] = useState(0)
@@ -43,9 +70,33 @@ export function HangmanGame({ onExit }: { onExit: () => void }) {
   const targetLetters = useMemo(() => Array.from(new Set(target.split('').filter(c => /[a-z]/.test(c)))), [target])
   const wrongGuesses = guessed.filter(g => !targetLetters.includes(g)).length
   const misses = Math.min(MAX_MISSES, wrongGuesses + hints)
-  const won = !!note && targetLetters.every(l => guessed.includes(l))
+  const won = !!note && targetLetters.length > 0 && targetLetters.every(l => guessed.includes(l))
   const lost = !!note && !won && misses >= MAX_MISSES
   const over = won || lost
+
+  const handleTimeUp = () => {
+    if (over) return
+    setHints(h => {
+      const nextH = h + 1
+      if (wrongGuesses + nextH >= MAX_MISSES) {
+        setWrong(w => w + 1)
+      }
+      return nextH
+    })
+    timer.reset()
+  }
+
+  const timer = useGameTimer({
+    initialDuration: 25,
+    onTimeUp: handleTimeUp,
+    enabled: !over && index < notes.length
+  })
+
+  useEffect(() => {
+    setGuessed([])
+    setHints(0)
+    timer.reset()
+  }, [index, meaningMode])
 
   const next = () => {
     setIndex(i => i + 1)
@@ -115,58 +166,78 @@ export function HangmanGame({ onExit }: { onExit: () => void }) {
           setSkipped(0)
           setGuessed([])
           setHints(0)
+          timer.reset()
         }}
       />
     )
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full">
+    <div className="max-w-4xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full items-center w-full">
       <GameHeader
         onExit={onExit}
+        timer={timer}
         title="Hangman"
         current={index + 1}
         total={notes.length}
-        right={
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 text-xs font-semibold text-red-600 dark:text-red-400">
-            <span>Lives:</span>
-            <span>{MAX_MISSES - misses} / {MAX_MISSES}</span>
+        center={
+          <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60 text-xs font-semibold">
+            <button
+              onClick={() => { setMeaningMode('all'); setIndex(0); setCorrect(0); setWrong(0); setSkipped(0) }}
+              className={`px-3 py-1 rounded-lg transition-colors ${
+                meaningMode === 'all'
+                  ? 'bg-white dark:bg-gray-700 text-purple-700 dark:text-purple-300 shadow-xs font-bold'
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
+            >
+              All Meanings
+            </button>
+            <button
+              onClick={() => { setMeaningMode('first'); setIndex(0); setCorrect(0); setWrong(0); setSkipped(0) }}
+              className={`px-3 py-1 rounded-lg transition-colors ${
+                meaningMode === 'first'
+                  ? 'bg-white dark:bg-gray-700 text-purple-700 dark:text-purple-300 shadow-xs font-bold'
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
+            >
+              1st Meaning
+            </button>
           </div>
         }
       />
 
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700 p-3.5 sm:p-4 text-center max-w-xl mx-auto w-full relative mb-2">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-md border border-gray-200/80 dark:border-gray-700/80 p-6 sm:p-8 text-center max-w-2xl mx-auto w-full relative mb-3 pb-16">
         <RootCardButton
           onClick={() => {
             const c = flashcards.find(f => f.id === note.cardId)
             if (c) setShowModalCard(c)
           }}
-          className="absolute bottom-3 left-3"
+          className="absolute bottom-3 left-4"
         />
 
-        <div className="flex justify-center mb-2"><Gallows misses={misses} /></div>
+        <div className="flex justify-center mb-3"><Gallows misses={misses} /></div>
 
-        <div className="bg-purple-50 dark:bg-gray-900 rounded-xl p-2 sm:p-2.5 mb-2.5 border border-purple-100 dark:border-gray-700">
-          <span className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Meaning</span>
-          <span className="font-medium text-purple-700 dark:text-purple-300 text-xs sm:text-sm break-words whitespace-pre-wrap">{note.meaning}</span>
+        <div className="bg-purple-50/70 dark:bg-gray-900/50 rounded-2xl p-3 sm:p-4 mb-4 border border-purple-100/80 dark:border-gray-700">
+          <span className="text-xs uppercase tracking-wider font-semibold text-purple-600 dark:text-purple-400 block mb-1">Meaning</span>
+          <span className="font-semibold text-gray-800 dark:text-gray-100 text-base sm:text-lg break-words whitespace-pre-wrap">{note.meaning}</span>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-x-1.5 gap-y-1.5 mb-2.5">
+        <div className="flex flex-wrap justify-center gap-x-2 gap-y-2 mb-5 min-h-[2.5rem]">
           {note.word.split('').map((ch, i) => {
-            if (ch === ' ') return <span key={i} className="w-3" />
+            if (ch === ' ') return <span key={i} className="w-4" />
             const lower = ch.toLowerCase()
             const isLetter = /[a-z]/.test(lower)
             const show = !isLetter || guessed.includes(lower) || lost
             return (
-              <span key={i} className={`w-6 sm:w-7 h-7 sm:h-8 flex items-end justify-center text-lg sm:text-xl font-bold border-b-2 sm:border-b-4 ${
-                lost && isLetter && !guessed.includes(lower) ? 'text-red-500 border-red-400' :
-                won ? 'text-green-600 dark:text-green-400 border-green-500' : 'text-gray-800 dark:text-gray-100 border-gray-400 dark:border-gray-500'
+              <span key={i} className={`w-8 sm:w-10 h-10 sm:h-12 flex items-end justify-center text-xl sm:text-2xl font-black border-b-4 uppercase ${
+                lost && isLetter && !guessed.includes(lower) ? 'text-rose-500 border-rose-400' :
+                won ? 'text-emerald-600 dark:text-emerald-400 border-emerald-500' : 'text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-600'
               }`}>{show ? ch : ''}</span>
             )
           })}
         </div>
 
-        <div className="flex flex-wrap justify-center gap-1 mb-2.5">
+        <div className="flex flex-wrap justify-center gap-1.5 mb-5 max-w-xl mx-auto">
           {ALPHABET.map(l => {
             const used = guessed.includes(l)
             const hit = used && targetLetters.includes(l)
@@ -175,30 +246,40 @@ export function HangmanGame({ onExit }: { onExit: () => void }) {
                 key={l}
                 onClick={() => guess(l)}
                 disabled={used || over}
-                className={`w-7 sm:w-8 h-7 sm:h-8 rounded-lg font-bold uppercase text-xs transition-colors cursor-pointer ${
-                  hit ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' :
-                  used ? 'bg-red-100 dark:bg-red-900/30 text-red-400 dark:text-red-400/70 line-through cursor-default' :
-                  'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-purple-100 dark:hover:bg-purple-900/40'
+                className={`w-8 sm:w-9 h-8 sm:h-9 rounded-xl font-bold uppercase text-xs sm:text-sm transition-all cursor-pointer ${
+                  hit ? 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-black' :
+                  used ? 'bg-rose-50 dark:bg-rose-950/30 text-rose-400 line-through opacity-60 cursor-default' :
+                  'bg-gray-100 hover:bg-purple-100 dark:bg-gray-700 dark:hover:bg-purple-900/40 text-gray-800 dark:text-gray-200'
                 }`}
               >{l}</button>
             )
           })}
         </div>
 
-        <div className="flex flex-wrap gap-2 justify-center items-center">
+        <div className="flex flex-wrap gap-2.5 justify-center items-center">
           {over ? (
-            <button onClick={next} className="bg-purple-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors cursor-pointer">
+            <button onClick={next} className="bg-purple-600 text-white px-7 py-2.5 rounded-xl text-sm font-bold hover:bg-purple-700 transition-colors cursor-pointer shadow-sm">
               {won ? 'Nice! Next ↵' : 'Next ↵'}
             </button>
           ) : (
             <>
-              <button onClick={hint} disabled={misses >= MAX_MISSES - 1} title="Reveal a letter (costs a life)" className={softBtn}><Lightbulb size={16} /></button>
-              <button onClick={handleSkip} className={`${softBtn} text-xs sm:text-sm`}>Skip</button>
+              <button onClick={hint} disabled={misses >= MAX_MISSES - 1} title="Reveal a letter (costs 1 life)" className={softBtn}>
+                <Lightbulb size={16} />
+                <span>Hint</span>
+              </button>
+              <button onClick={handleSkip} className={`${softBtn} text-xs sm:text-sm`}>
+                <SkipForward size={16} />
+                <span>Skip</span>
+              </button>
             </>
           )}
         </div>
 
-        <button onClick={() => speakEnglish(note.word)} title="Listen" className="absolute bottom-3 right-3 p-1.5 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors cursor-pointer">
+        <button 
+          onClick={() => speakEnglish(note.word)} 
+          title="Listen" 
+          className="absolute bottom-3 right-4 p-2 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors cursor-pointer"
+        >
           <Volume2 size={20} />
         </button>
       </div>

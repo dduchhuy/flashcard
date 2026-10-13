@@ -7,6 +7,7 @@ import { Volume2, Shuffle, BookOpen, Sparkles, Tag, ArrowRight } from "lucide-re
 type FeaturedItem = 
   | { type: "word"; card: Flashcard }
   | { type: "phrase"; card: Flashcard; phrase: PhraseIdiom }
+  | { type: "sentence"; card: Flashcard }
 
 export function TabHome() {
   const { flashcards, settings } = useFlashcardStore()
@@ -27,14 +28,29 @@ export function TabHome() {
       return phrases.map(phrase => ({ type: "phrase", card, phrase }))
     })
 
+    const sentenceCandidates: FeaturedItem[] = flashcards
+      .filter(f => !isWordCard(f))
+      .map(card => ({ type: "sentence", card }))
+
     if (randomType === "words") {
       return wordCandidates.length > 0 ? wordCandidates : flashcards.map(card => ({ type: "word", card }))
     }
     if (randomType === "phrases") {
       return phraseCandidates.length > 0 ? phraseCandidates : []
     }
-    // "all": both words and phrases
-    const combined = [...wordCandidates, ...phraseCandidates]
+    if (randomType === "sentences") {
+      return sentenceCandidates.length > 0 ? sentenceCandidates : []
+    }
+    if (randomType === "words_phrases") {
+      const combined = [...wordCandidates, ...phraseCandidates]
+      return combined.length > 0 ? combined : flashcards.map(card => ({ type: "word", card }))
+    }
+    if (randomType === "words_sentences") {
+      const combined = [...wordCandidates, ...sentenceCandidates]
+      return combined.length > 0 ? combined : flashcards.map(card => ({ type: "word", card }))
+    }
+    // "all": both words, phrases and sentences
+    const combined = [...wordCandidates, ...phraseCandidates, ...sentenceCandidates]
     return combined.length > 0 ? combined : flashcards.map(card => ({ type: "word", card }))
   }, [flashcards, settings.homeRandomType])
 
@@ -68,40 +84,61 @@ export function TabHome() {
   }, [settings.homeUpdateTrigger, settings.homeTimerMinutes, pickRandom])
 
   if (flashcards.length === 0 || !featuredItem) {
+    const hasCards = flashcards.length > 0
     return (
       <div className="max-w-3xl mx-auto py-12 px-4 text-center animate-in fade-in">
         <div className="p-4 bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 rounded-3xl w-20 h-20 mx-auto flex items-center justify-center mb-5">
           <Sparkles size={36} />
         </div>
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Welcome to Flashcards!</h2>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+          {hasCards ? "No items match current filter" : "Welcome to Flashcards!"}
+        </h2>
         <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6 text-sm">
-          No flashcards found. Create your first flashcard to start exploring words and phrases on your Home screen.
+          {hasCards
+            ? `No cards found for the selected type "${settings.homeRandomType || 'all'}". You can change this in Settings or add more cards.`
+            : "No flashcards found. Create your first flashcard to start exploring words and phrases on your Home screen."}
         </p>
-        <a
-          href="#/add"
-          className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-2xl font-semibold text-sm transition-all shadow-md hover:shadow-lg"
-        >
-          Add Flashcard <ArrowRight size={16} />
-        </a>
+        <div className="flex items-center justify-center gap-3">
+          <a
+            href="#/add"
+            className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-2xl font-semibold text-sm transition-all shadow-md hover:shadow-lg"
+          >
+            Add Flashcard <ArrowRight size={16} />
+          </a>
+          {hasCards && (
+            <a
+              href="#/settings"
+              className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 px-6 py-3 rounded-2xl font-semibold text-sm transition-all border border-gray-200 dark:border-gray-700"
+            >
+              Settings
+            </a>
+          )}
+        </div>
       </div>
     )
   }
 
   const isWord = featuredItem.type === "word"
+  const isSentence = featuredItem.type === "sentence"
+  const isPhrase = featuredItem.type === "phrase"
   const card = featuredItem.card
   const tags = getCardTags(card)
 
   // Primary text to pronounce
-  const headwordText = isWord ? card.sentence : (featuredItem as { phrase: PhraseIdiom }).phrase.phrase
+  const headwordText = isWord || isSentence ? card.sentence : (featuredItem as { phrase: PhraseIdiom }).phrase.phrase
 
   // Part of speech
   const primaryPos = isWord 
     ? (card.partOfSpeech || card.posEntries?.[0]?.partOfSpeech || "")
+    : isSentence
+    ? (card.partOfSpeech || "sentence")
     : ((featuredItem as { phrase: PhraseIdiom }).phrase.type || "phrase")
 
   // Phonetic
   const primaryPhonetic = isWord 
     ? (card.phonetic || card.phonetics?.[0]?.ipa || card.posEntries?.[0]?.phonetic || "")
+    : isSentence
+    ? (card.phonetic || "")
     : ""
 
   // Meanings / Definitions
@@ -111,7 +148,7 @@ export function TabHome() {
         : (card.highlights || []).map(h => ({ pos: card.partOfSpeech, meaning: h.meaning, examples: h.example ? [{ sentence: h.example, translation: undefined as string | undefined }] : [] })))
     : []
 
-  const phraseTranslation = !isWord ? (featuredItem as { phrase: PhraseIdiom }).phrase.translation : ""
+  const phraseTranslation = isPhrase ? (featuredItem as { phrase: PhraseIdiom }).phrase.translation : ""
 
   return (
     <div className="max-w-4xl mx-auto py-4 px-2 sm:px-4 space-y-6 animate-in fade-in">
@@ -123,7 +160,7 @@ export function TabHome() {
           </div>
           <div>
             <h2 className="text-base sm:text-lg font-bold text-gray-800 dark:text-gray-100 leading-tight">
-              {isWord ? "Featured Vocabulary" : "Featured Phrase & Idiom"}
+              {isWord ? "Featured Vocabulary" : isSentence ? "Featured Sentence" : "Featured Phrase & Idiom"}
             </h2>
             <p className="text-xs text-gray-400">
               {settings.homeUpdateTrigger === "timer" 
@@ -156,9 +193,11 @@ export function TabHome() {
               <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
                 isWord 
                   ? "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300"
+                  : isSentence
+                  ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
                   : "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300"
               }`}>
-                {isWord ? "Word" : "Phrase & Idiom"}
+                {isWord ? "Word" : isSentence ? "Sentence" : "Phrase & Idiom"}
               </span>
 
               {primaryPos && (
@@ -175,7 +214,11 @@ export function TabHome() {
             </div>
 
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 dark:text-white capitalize break-words tracking-tight">
+              <h1 className={`font-black text-gray-900 dark:text-white break-words tracking-tight ${
+                isSentence
+                  ? "text-2xl sm:text-3xl md:text-4xl leading-relaxed normal-case font-bold"
+                  : "text-3xl sm:text-4xl md:text-5xl capitalize"
+              }`}>
                 {headwordText}
               </h1>
 
@@ -243,6 +286,56 @@ export function TabHome() {
                 {card.translation || "No definition available"}
               </div>
             )
+          ) : isSentence ? (
+            <div className="space-y-4">
+              {card.translation && (
+                <div className="space-y-2 bg-emerald-50/60 dark:bg-emerald-950/20 p-5 rounded-2xl border border-emerald-100 dark:border-emerald-900/40">
+                  <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider block">
+                    Translation / Meaning
+                  </span>
+                  <p className="text-lg sm:text-xl font-bold text-emerald-950 dark:text-emerald-100 break-words whitespace-pre-wrap">
+                    {card.translation}
+                  </p>
+                </div>
+              )}
+
+              {card.highlights && card.highlights.length > 0 && (
+                <div className="space-y-2.5">
+                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider block">
+                    Noted Words &amp; Highlights ({card.highlights.length})
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {card.highlights.map((h, hIdx) => {
+                      const words = card.sentence.trim().split(/\s+/)
+                      const notedText = (h.wordIndices || []).map(idx => words[idx]).filter(Boolean).join(' ')
+                      return (
+                        <div key={h.id || hIdx} className="bg-gray-50/80 dark:bg-gray-900/40 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+                              #{hIdx + 1}
+                            </span>
+                            {notedText && (
+                              <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                                {notedText}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-700 dark:text-gray-300 pl-4">
+                            {h.meaning}
+                          </p>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {!card.translation && (!card.highlights || card.highlights.length === 0) && (
+                <div className="p-4 bg-gray-50 dark:bg-gray-900/40 rounded-2xl text-sm text-gray-400 italic">
+                  No notes or translation available for this sentence.
+                </div>
+              )}
+            </div>
           ) : (
             <div className="space-y-3 bg-indigo-50/50 dark:bg-indigo-950/20 p-5 rounded-2xl border border-indigo-100 dark:border-indigo-900/40">
               <span className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider block">

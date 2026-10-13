@@ -1,7 +1,8 @@
 import { useRef, useState, useMemo } from 'react'
 import { useFlashcardStore, getCardTags, migrateFlashcard, Flashcard } from '../store'
+import { useGitDataSync } from '../useGitDataSync'
 import { SelectDropdown } from './SelectDropdown'
-import { Download, Upload, RotateCcw, Moon, Sun, Palette, CheckCircle2, Trash2, Home } from 'lucide-react'
+import { Download, Upload, RotateCcw, Moon, Sun, Palette, CheckCircle2, Trash2, Home, Sliders, FolderGit2, RefreshCw, FileText, BookOpen, Database, Sparkles as SparklesIcon } from 'lucide-react'
 
 // Convert hex to rgb
 function hexToRgb(hex: string) {
@@ -12,6 +13,7 @@ function hexToRgb(hex: string) {
 export function TabSettings() {
   const { settings, updateSettings, resetSettings, flashcards } = useFlashcardStore()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { isSyncing: isGitSyncing, manifest: gitManifest, lastResult: gitSyncResult, syncFromGit, exportToGit, refreshManifest } = useGitDataSync()
 
   const [exportTag, setExportTag] = useState<string>('all')
   const [deleteTag, setDeleteTag] = useState<string>('all')
@@ -421,6 +423,27 @@ export function TabSettings() {
               <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-sm ${settings.highlightMode === 'text' ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
           </div>
+
+          {/* Show Scrollbar */}
+          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                <Sliders size={20} className="text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <div className="font-medium text-gray-800 dark:text-gray-200">Show Scrollbar</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  You can reduce the visual noise by hiding the scrollbar.
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => updateSettings({ showScrollbar: settings.showScrollbar === false ? true : false })}
+              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${settings.showScrollbar !== false ? 'bg-purple-600' : 'bg-gray-300 dark:bg-gray-700'}`}
+            >
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-sm ${settings.showScrollbar !== false ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
         </div>
 
         <div className="space-y-5 pt-4 border-t border-gray-100 dark:border-gray-700">
@@ -648,13 +671,16 @@ export function TabSettings() {
             </div>
             <SelectDropdown
               value={settings.homeRandomType || 'all'}
-              onChange={(v) => updateSettings({ homeRandomType: v as 'all' | 'words' | 'phrases' })}
+              onChange={(v) => updateSettings({ homeRandomType: v as any })}
               options={[
-                { value: 'all', label: 'Words & Phrases (Both)' },
+                { value: 'all', label: 'All (Words, Phrases & Sentences)' },
                 { value: 'words', label: 'Words Only' },
-                { value: 'phrases', label: 'Phrases & Idioms Only' }
+                { value: 'phrases', label: 'Phrases & Idioms Only' },
+                { value: 'sentences', label: 'Sentences Only' },
+                { value: 'words_phrases', label: 'Words & Phrases' },
+                { value: 'words_sentences', label: 'Words & Sentences' }
               ]}
-              className="min-w-[180px]"
+              className="min-w-[190px]"
             />
           </div>
 
@@ -701,6 +727,115 @@ export function TabSettings() {
 
     {/* Column 2: Data Management & Danger Zone */}
     <div className="space-y-6">
+        {/* Git Data Storage Section */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 space-y-4 transition-colors border border-purple-100 dark:border-purple-900/40">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+              <FolderGit2 size={20} className="text-purple-600 dark:text-purple-400" />
+              Git Data Storage (Flashcard/data)
+            </h2>
+            <button
+              type="button"
+              onClick={() => refreshManifest()}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+              title="Làm mới danh sách tệp"
+            >
+              <RefreshCw size={15} className={isGitSyncing ? 'animate-spin' : ''} />
+            </button>
+          </div>
+
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Dữ liệu được lưu trữ trực tiếp dưới dạng tệp trong thư mục <code className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-xs font-mono text-purple-600 dark:text-purple-300">Flashcard/data</code> để bạn đưa thẳng lên Git mà không phụ thuộc vào Firebase.
+          </p>
+
+          {/* Folder Breakdown */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="p-3 bg-purple-50/60 dark:bg-purple-950/20 rounded-xl border border-purple-100 dark:border-purple-900/30">
+              <div className="text-xs font-semibold text-purple-700 dark:text-purple-300 flex items-center gap-1.5">
+                <BookOpen size={14} /> data/book
+              </div>
+              <div className="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1">
+                {gitManifest?.book.length ?? 0} <span className="text-xs font-normal text-gray-500">tệp sách (.json, .epub, .txt)</span>
+              </div>
+            </div>
+
+            <div className="p-3 bg-indigo-50/60 dark:bg-indigo-950/20 rounded-xl border border-indigo-100 dark:border-indigo-900/30">
+              <div className="text-xs font-semibold text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
+                <FileText size={14} /> data/vocab
+              </div>
+              <div className="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1">
+                {gitManifest?.vocab.length ?? 0} <span className="text-xs font-normal text-gray-500">tệp từ vựng (Word cards)</span>
+              </div>
+            </div>
+
+            <div className="p-3 bg-emerald-50/60 dark:bg-emerald-950/20 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
+              <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                <SparklesIcon size={14} /> data/sentence
+              </div>
+              <div className="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1">
+                {gitManifest?.sentence.length ?? 0} <span className="text-xs font-normal text-gray-500">tệp câu (Sentence cards)</span>
+              </div>
+            </div>
+
+            <div className="p-3 bg-amber-50/60 dark:bg-amber-950/20 rounded-xl border border-amber-100 dark:border-amber-900/30">
+              <div className="text-xs font-semibold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+                <Database size={14} /> data/save
+              </div>
+              <div className="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1">
+                {gitManifest?.save.length ?? 0} <span className="text-xs font-normal text-gray-500">tệp tiến trình (.save.json)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Auto load switch */}
+          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
+            <div>
+              <div className="text-sm font-medium text-gray-800 dark:text-gray-200">Tự động nạp khi khởi động</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Tự nạp sách, từ vựng, câu từ data/ khi mở web</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => updateSettings({ gitDataAutoLoad: settings.gitDataAutoLoad === false ? true : false })}
+              className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
+                settings.gitDataAutoLoad !== false ? 'bg-purple-600 justify-end' : 'bg-gray-300 dark:bg-gray-600 justify-start'
+              }`}
+            >
+              <div className="w-4 h-4 rounded-full bg-white shadow-md transform transition" />
+            </button>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-2.5">
+            <button
+              type="button"
+              onClick={() => syncFromGit(true)}
+              disabled={isGitSyncing}
+              className="flex-1 flex justify-center items-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white py-2.5 px-3 rounded-xl font-medium text-sm transition-colors shadow-xs cursor-pointer"
+            >
+              <Download size={16} className={isGitSyncing ? 'animate-bounce' : ''} />
+              {isGitSyncing ? 'Đang nạp dữ liệu...' : 'Nạp dữ liệu từ Git folder'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => exportToGit()}
+              disabled={isGitSyncing}
+              className="flex-1 flex justify-center items-center gap-2 bg-purple-50 text-purple-700 hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50 py-2.5 px-3 rounded-xl font-medium text-sm border border-purple-200/60 dark:border-purple-800/60 transition-colors cursor-pointer"
+            >
+              <Upload size={16} />
+              {isGitSyncing ? 'Đang xuất...' : 'Xuất toàn bộ ra Git folder'}
+            </button>
+          </div>
+
+          {/* Sync Result Alert */}
+          {gitSyncResult && (
+            <div className="p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800/50 rounded-xl text-xs text-purple-800 dark:text-purple-200 flex items-start gap-2">
+              <CheckCircle2 size={16} className="text-purple-600 shrink-0 mt-0.5" />
+              <span>{gitSyncResult}</span>
+            </div>
+          )}
+        </div>
+
         {/* Data Section */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 space-y-4 transition-colors">
           <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { Flashcard, useFlashcardStore, getCardTags, normalizePhraseItem } from '../store'
 import { Volume2, X, Pin } from 'lucide-react'
 import { speakEnglish } from '../utils'
@@ -179,6 +180,17 @@ export function CardDetailModal({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, onClose])
 
+  // Prevent background scrolling while modal is open
+  useEffect(() => {
+    if (isOpen) {
+      const prev = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = prev
+      }
+    }
+  }, [isOpen])
+
   const wordKey = effectiveBaseCard?.sentence ? effectiveBaseCard.sentence.trim().toLowerCase() : ''
   const siblings = useMemo(() => {
     if (!wordKey) return effectiveBaseCard ? [effectiveBaseCard] : []
@@ -300,10 +312,11 @@ export function CardDetailModal({
   }
 
   if (!isOpen || !card || !currentCard) return null
+  if (typeof document === 'undefined') return null
 
-  return (
+  return createPortal(
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 lg:p-8 bg-black/60 backdrop-blur-xs animate-in fade-in" 
+      className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 md:p-6 lg:p-8 bg-black/60 backdrop-blur-xs animate-in fade-in" 
       onPointerDown={onClose}
     >
       <div 
@@ -574,30 +587,44 @@ export function CardDetailModal({
                   </div>
                 ))
               )
-            ) : (currentCard.highlights || []).length === 0 ? (
-              <p className="text-sm text-gray-400 italic">No notes or meanings added.</p>
             ) : (
-              (currentCard.highlights || []).map((h, hIdx) => (
-                <div key={h.id || hIdx} className="bg-gray-50/80 dark:bg-gray-900/40 rounded-2xl p-4 sm:p-5 border border-gray-200/80 dark:border-gray-700/80">
-                  <div className="flex items-start justify-between gap-3 mb-1">
-                    <div className="font-semibold text-gray-900 dark:text-gray-100 text-base flex-1">{h.meaning}</div>
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-purple-100/80 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-800/60 shrink-0">
-                      #{hIdx + 1}
+              <div className="space-y-3">
+                {currentCard.translation && (
+                  <div className="bg-emerald-50/70 dark:bg-emerald-950/20 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-900/40">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 block mb-1">
+                      Translation / Meaning
                     </span>
+                    <p className="text-base font-semibold text-gray-900 dark:text-gray-100 break-words whitespace-pre-wrap">
+                      {currentCard.translation}
+                    </p>
                   </div>
-                  {h.example && (
-                    <div className="text-sm text-gray-600 dark:text-gray-300 flex items-start gap-2">
-                      <ClickableSentence
-                        sentence={h.example}
-                        enabled={effectiveClickWord}
-                        flashcardWordMap={flashcardWordMap}
-                        currentCardId={currentCard.id}
-                        onWordClick={navigateToCard}
-                      />
+                )}
+                {(currentCard.highlights || []).length === 0 && !currentCard.translation ? (
+                  <p className="text-sm text-gray-400 italic">No notes or meanings added.</p>
+                ) : (
+                  (currentCard.highlights || []).map((h, hIdx) => (
+                    <div key={h.id || hIdx} className="bg-gray-50/80 dark:bg-gray-900/40 rounded-2xl p-4 sm:p-5 border border-gray-200/80 dark:border-gray-700/80">
+                      <div className="flex items-start justify-between gap-3 mb-1">
+                        <div className="font-semibold text-gray-900 dark:text-gray-100 text-base flex-1">{h.meaning}</div>
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-purple-100/80 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-800/60 shrink-0">
+                          #{hIdx + 1}
+                        </span>
+                      </div>
+                      {h.example && (
+                        <div className="text-sm text-gray-600 dark:text-gray-300 flex items-start gap-2">
+                          <ClickableSentence
+                            sentence={h.example}
+                            enabled={effectiveClickWord}
+                            flashcardWordMap={flashcardWordMap}
+                            currentCardId={currentCard.id}
+                            onWordClick={navigateToCard}
+                          />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              ))
+                  ))
+                )}
+              </div>
             )}
           </div>
 
@@ -782,6 +809,7 @@ export function CardDetailModal({
           })()}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

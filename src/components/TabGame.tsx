@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useMemo, Component, ReactNode, ErrorInfo } from 'react'
 import { useFlashcardStore, Flashcard, getCardTags, getCardsForMode, normalizePhraseItem } from '../store'
-import { ThumbsDown, ThumbsUp, Lightbulb, LightbulbOff, Layers, MousePointerClick, Grid2X2, Type, BrainCircuit, Headphones, Volume2, Shuffle, Zap, ListOrdered, ToggleLeft, Skull, Sparkles, ChevronRight, Tag as TagIcon, ChevronDown, Check, Link2, Search, LayoutGrid, ArrowUpDown, PenLine } from 'lucide-react'
+import { ThumbsDown, ThumbsUp, Lightbulb, LightbulbOff, Layers, MousePointerClick, Grid2X2, Type, BrainCircuit, Headphones, Volume2, Shuffle, Zap, ListOrdered, ToggleLeft, Skull, Sparkles, ChevronRight, Tag as TagIcon, ChevronDown, Check, Link2, Search, LayoutGrid, PenLine } from 'lucide-react'
 import { MatchGame } from './games/MatchGame'
-import { EmptyState, CardDetailModal, RootCardButton, GameHeader, ResultScreen } from './games/shared'
+import { EmptyState, CardDetailModal, RootCardButton, GameHeader, ResultScreen, useGameTimer } from './games/shared'
 import { MemoryGame } from './games/MemoryGame'
 import { FillBlankGame } from './games/FillBlankGame'
 import { ListenGame } from './games/ListenGame'
@@ -15,7 +15,6 @@ import { TypingGame } from './games/TypingGame'
 import { MissingLettersGame } from './games/MissingLettersGame'
 import { WordSearchGame } from './games/WordSearchGame'
 import { CrosswordGame } from './games/CrosswordGame'
-import { WordLadderGame } from './games/WordLadderGame'
 import { WordChainGame } from './games/WordChainGame'
 import { SelectDropdown } from './SelectDropdown'
 
@@ -26,7 +25,7 @@ type Segment = {
   meaning?: string
 }
 
-type GameMode = 'menu' | 'swipe' | 'quiz' | 'match' | 'memory' | 'fill' | 'listen' | 'scramble' | 'speed' | 'sentence' | 'truefalse' | 'hangman' | 'typing' | 'missing' | 'wordsearch' | 'crossword' | 'ladder' | 'wordchain'
+type GameMode = 'menu' | 'swipe' | 'quiz' | 'match' | 'memory' | 'fill' | 'listen' | 'scramble' | 'speed' | 'sentence' | 'truefalse' | 'hangman' | 'typing' | 'missing' | 'wordsearch' | 'crossword' | 'wordchain'
 
 interface ErrorBoundaryProps {
   children: ReactNode
@@ -109,11 +108,57 @@ export function TabGame() {
           {gameMode === 'missing' && <MissingLettersGame onExit={() => setGameMode('menu')} />}
           {gameMode === 'wordsearch' && <WordSearchGame onExit={() => setGameMode('menu')} />}
           {gameMode === 'crossword' && <CrosswordGame onExit={() => setGameMode('menu')} />}
-          {gameMode === 'ladder' && <WordLadderGame onExit={() => setGameMode('menu')} />}
           {gameMode === 'wordchain' && <WordChainGame onExit={() => setGameMode('menu')} />}
         </GameErrorBoundary>
       )}
     </div>
+  )
+}
+
+function GameMenuCard({
+  id,
+  title,
+  desc,
+  icon,
+  colorBg,
+  colorText,
+  hoverBorder,
+  onSelect,
+}: {
+  id: GameMode
+  title: string
+  desc: string
+  icon: React.ReactNode
+  colorBg: string
+  colorText: string
+  hoverBorder: string
+  onSelect: (mode: GameMode) => void
+}) {
+  return (
+    <button
+      onClick={() => onSelect(id)}
+      className={`group relative w-full bg-white dark:bg-gray-800 p-3 rounded-2xl border border-gray-200/70 dark:border-gray-700/70 shadow-2xs hover:shadow-lg ${hoverBorder} hover:scale-[1.03] transition-all duration-300 flex flex-col justify-center text-left cursor-pointer overflow-hidden min-h-[58px]`}
+    >
+      <div className="flex items-center gap-3 w-full">
+        <div className={`w-9 h-9 rounded-xl ${colorBg} ${colorText} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
+          {icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h4 className={`font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:${colorText} transition-colors truncate`}>
+            {title}
+          </h4>
+        </div>
+        <ChevronRight size={16} className={`text-gray-400 group-hover:${colorText} group-hover:translate-x-0.5 transition-all shrink-0`} />
+      </div>
+
+      <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] opacity-0 group-hover:opacity-100 transition-all duration-300 ease-out overflow-hidden w-full">
+        <div className="overflow-hidden">
+          <p className="text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-700/60 mt-2 leading-relaxed">
+            {desc}
+          </p>
+        </div>
+      </div>
+    </button>
   )
 }
 
@@ -236,77 +281,46 @@ function GameMenu({ onSelect }: { onSelect: (mode: GameMode) => void }) {
             </h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
-            <button 
-              onClick={() => onSelect('swipe')}
-              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-purple-300 dark:hover:border-purple-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Layers size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                  Swipe Cards
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                  Review & swipe right if remembered
-                </p>
-              </div>
-              <ChevronRight size={16} className="text-gray-400 group-hover:text-purple-500 group-hover:translate-x-0.5 transition-all shrink-0" />
-            </button>
-
-            <button 
-              onClick={() => onSelect('quiz')}
-              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-blue-300 dark:hover:border-blue-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <MousePointerClick size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                  Multiple Choice
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                  Select meaning from 4-6 options
-                </p>
-              </div>
-              <ChevronRight size={16} className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all shrink-0" />
-            </button>
-
-            <button 
-              onClick={() => onSelect('truefalse')}
-              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-rose-300 dark:hover:border-rose-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-lg bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <ToggleLeft size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
-                  True or False
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                  Rapidly verify if meaning is correct
-                </p>
-              </div>
-              <ChevronRight size={16} className="text-gray-400 group-hover:text-rose-500 group-hover:translate-x-0.5 transition-all shrink-0" />
-            </button>
-
-            <button 
-              onClick={() => onSelect('speed')}
-              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-yellow-300 dark:hover:border-yellow-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-lg bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600 dark:text-yellow-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Zap size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-yellow-600 dark:group-hover:text-yellow-400 transition-colors">
-                  Speed Match
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                  Beat the clock with streak combos
-                </p>
-              </div>
-              <ChevronRight size={16} className="text-gray-400 group-hover:text-yellow-500 group-hover:translate-x-0.5 transition-all shrink-0" />
-            </button>
+            <GameMenuCard
+              id="swipe"
+              title="Swipe Cards"
+              desc="Review & swipe right if remembered"
+              icon={<Layers size={20} />}
+              colorBg="bg-purple-100 dark:bg-purple-900/40"
+              colorText="text-purple-600 dark:text-purple-400"
+              hoverBorder="hover:border-purple-300 dark:hover:border-purple-500"
+              onSelect={onSelect}
+            />
+            <GameMenuCard
+              id="quiz"
+              title="Multiple Choice"
+              desc="Select meaning from 4-6 options"
+              icon={<MousePointerClick size={20} />}
+              colorBg="bg-blue-100 dark:bg-blue-900/40"
+              colorText="text-blue-600 dark:text-blue-400"
+              hoverBorder="hover:border-blue-300 dark:hover:border-blue-500"
+              onSelect={onSelect}
+            />
+            <GameMenuCard
+              id="truefalse"
+              title="True or False"
+              desc="Rapidly verify if meaning is correct"
+              icon={<ToggleLeft size={20} />}
+              colorBg="bg-rose-100 dark:bg-rose-900/40"
+              colorText="text-rose-600 dark:text-rose-400"
+              hoverBorder="hover:border-rose-300 dark:hover:border-rose-500"
+              onSelect={onSelect}
+            />
+            <GameMenuCard
+              id="speed"
+              title="Speed Match"
+              desc="Beat the clock with streak combos"
+              icon={<Zap size={20} />}
+              colorBg="bg-yellow-100 dark:bg-yellow-900/40"
+              colorText="text-yellow-600 dark:text-yellow-400"
+              hoverBorder="hover:border-yellow-300 dark:hover:border-yellow-500"
+              onSelect={onSelect}
+            />
           </div>
         </div>
 
@@ -319,41 +333,26 @@ function GameMenu({ onSelect }: { onSelect: (mode: GameMode) => void }) {
             </h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
-            <button 
-              onClick={() => onSelect('match')}
-              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Grid2X2 size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                  Match Game
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                  Connect words & phrases with meanings
-                </p>
-              </div>
-              <ChevronRight size={16} className="text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all shrink-0" />
-            </button>
-
-            <button 
-              onClick={() => onSelect('memory')}
-              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-pink-300 dark:hover:border-pink-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-lg bg-pink-100 dark:bg-pink-900/40 text-pink-600 dark:text-pink-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <BrainCircuit size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors">
-                  Memory Flip
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                  Flip cards to find hidden pairs
-                </p>
-              </div>
-              <ChevronRight size={16} className="text-gray-400 group-hover:text-pink-500 group-hover:translate-x-0.5 transition-all shrink-0" />
-            </button>
+            <GameMenuCard
+              id="match"
+              title="Match Game"
+              desc="Connect words & phrases with meanings"
+              icon={<Grid2X2 size={20} />}
+              colorBg="bg-emerald-100 dark:bg-emerald-900/40"
+              colorText="text-emerald-600 dark:text-emerald-400"
+              hoverBorder="hover:border-emerald-300 dark:hover:border-emerald-500"
+              onSelect={onSelect}
+            />
+            <GameMenuCard
+              id="memory"
+              title="Memory Flip"
+              desc="Flip cards to find hidden pairs"
+              icon={<BrainCircuit size={20} />}
+              colorBg="bg-pink-100 dark:bg-pink-900/40"
+              colorText="text-pink-600 dark:text-pink-400"
+              hoverBorder="hover:border-pink-300 dark:hover:border-pink-500"
+              onSelect={onSelect}
+            />
           </div>
         </div>
 
@@ -366,131 +365,76 @@ function GameMenu({ onSelect }: { onSelect: (mode: GameMode) => void }) {
             </h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
-            <button 
-              onClick={() => onSelect('missing')}
-              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-amber-300 dark:hover:border-amber-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <PenLine size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-                  Điền chữ cái còn thiếu
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                  Missing Letters: a _ a n d o n
-                </p>
-              </div>
-              <ChevronRight size={16} className="text-gray-400 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all shrink-0" />
-            </button>
-
-            <button 
-              onClick={() => onSelect('scramble')}
-              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Shuffle size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                  Xáo trộn chữ cái
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                  Word Scramble: tca ➔ cat
-                </p>
-              </div>
-              <ChevronRight size={16} className="text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition-all shrink-0" />
-            </button>
-
-            <button 
-              onClick={() => onSelect('fill')}
-              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-orange-300 dark:hover:border-orange-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-lg bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Type size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
-                  Fill in the Blank
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                  Type or spell the exact missing word
-                </p>
-              </div>
-              <ChevronRight size={16} className="text-gray-400 group-hover:text-orange-500 group-hover:translate-x-0.5 transition-all shrink-0" />
-            </button>
-
-            <button 
-              onClick={() => onSelect('typing')}
-              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-fuchsia-300 dark:hover:border-fuchsia-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-lg bg-fuchsia-100 dark:bg-fuchsia-900/40 text-fuchsia-600 dark:text-fuchsia-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Type size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-fuchsia-600 dark:group-hover:text-fuchsia-400 transition-colors">
-                  Fill Blank (4 Choices)
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                  Choose the missing word in context
-                </p>
-              </div>
-              <ChevronRight size={16} className="text-gray-400 group-hover:text-fuchsia-500 group-hover:translate-x-0.5 transition-all shrink-0" />
-            </button>
-
-            <button 
-              onClick={() => onSelect('sentence')}
-              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-teal-300 dark:hover:border-teal-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-lg bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <ListOrdered size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
-                  Sentence Builder
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                  Put words into correct order
-                </p>
-              </div>
-              <ChevronRight size={16} className="text-gray-400 group-hover:text-teal-500 group-hover:translate-x-0.5 transition-all shrink-0" />
-            </button>
-
-            <button 
-              onClick={() => onSelect('listen')}
-              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-cyan-300 dark:hover:border-cyan-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-lg bg-cyan-100 dark:bg-cyan-900/40 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Headphones size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
-                  Dictation (Audio)
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                  Listen to native audio and write it
-                </p>
-              </div>
-              <ChevronRight size={16} className="text-gray-400 group-hover:text-cyan-500 group-hover:translate-x-0.5 transition-all shrink-0" />
-            </button>
-
-            <button 
-              onClick={() => onSelect('hangman')}
-              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Skull size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-slate-600 dark:group-hover:text-slate-400 transition-colors">
-                  Hangman
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                  Deduce the word letter by letter
-                </p>
-              </div>
-              <ChevronRight size={16} className="text-gray-400 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all shrink-0" />
-            </button>
+            <GameMenuCard
+              id="missing"
+              title="Missing Letters"
+              desc="Fill in missing letters: a _ a n d o n"
+              icon={<PenLine size={20} />}
+              colorBg="bg-amber-100 dark:bg-amber-900/40"
+              colorText="text-amber-600 dark:text-amber-400"
+              hoverBorder="hover:border-amber-300 dark:hover:border-amber-500"
+              onSelect={onSelect}
+            />
+            <GameMenuCard
+              id="scramble"
+              title="Word Scramble"
+              desc="Rearrange letter tiles: tca ➔ cat"
+              icon={<Shuffle size={20} />}
+              colorBg="bg-indigo-100 dark:bg-indigo-900/40"
+              colorText="text-indigo-600 dark:text-indigo-400"
+              hoverBorder="hover:border-indigo-300 dark:hover:border-indigo-500"
+              onSelect={onSelect}
+            />
+            <GameMenuCard
+              id="fill"
+              title="Fill in the Blank"
+              desc="Type or spell the exact missing word"
+              icon={<Type size={20} />}
+              colorBg="bg-orange-100 dark:bg-orange-900/40"
+              colorText="text-orange-600 dark:text-orange-400"
+              hoverBorder="hover:border-orange-300 dark:hover:border-orange-500"
+              onSelect={onSelect}
+            />
+            <GameMenuCard
+              id="typing"
+              title="Fill Blank (4 Choices)"
+              desc="Choose the missing word in context"
+              icon={<Type size={20} />}
+              colorBg="bg-fuchsia-100 dark:bg-fuchsia-900/40"
+              colorText="text-fuchsia-600 dark:text-fuchsia-400"
+              hoverBorder="hover:border-fuchsia-300 dark:hover:border-fuchsia-500"
+              onSelect={onSelect}
+            />
+            <GameMenuCard
+              id="sentence"
+              title="Sentence Builder"
+              desc="Put words into correct order"
+              icon={<ListOrdered size={20} />}
+              colorBg="bg-teal-100 dark:bg-teal-900/40"
+              colorText="text-teal-600 dark:text-teal-400"
+              hoverBorder="hover:border-teal-300 dark:hover:border-teal-500"
+              onSelect={onSelect}
+            />
+            <GameMenuCard
+              id="listen"
+              title="Dictation (Audio)"
+              desc="Listen to native audio and write it"
+              icon={<Headphones size={20} />}
+              colorBg="bg-cyan-100 dark:bg-cyan-900/40"
+              colorText="text-cyan-600 dark:text-cyan-400"
+              hoverBorder="hover:border-cyan-300 dark:hover:border-cyan-500"
+              onSelect={onSelect}
+            />
+            <GameMenuCard
+              id="hangman"
+              title="Hangman"
+              desc="Deduce the word letter by letter"
+              icon={<Skull size={20} />}
+              colorBg="bg-slate-100 dark:bg-slate-900/40"
+              colorText="text-slate-600 dark:text-slate-400"
+              hoverBorder="hover:border-slate-300 dark:hover:border-slate-500"
+              onSelect={onSelect}
+            />
           </div>
         </div>
 
@@ -499,81 +443,40 @@ function GameMenu({ onSelect }: { onSelect: (mode: GameMode) => void }) {
           <div className="flex items-center gap-2 mb-2">
             <span className="w-2 h-2 rounded-full bg-indigo-500" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              Word Games & Puzzles (Trò chơi từ vựng & Ô chữ)
+              Word Games & Puzzles
             </h3>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
-            <button 
-              onClick={() => onSelect('wordchain')}
-              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-purple-300 dark:hover:border-purple-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Link2 size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                  English Word Chain
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                  Nối từ tiếng Anh: apple ➔ elephant
-                </p>
-              </div>
-              <ChevronRight size={16} className="text-gray-400 group-hover:text-purple-500 group-hover:translate-x-0.5 transition-all shrink-0" />
-            </button>
-
-            <button 
-              onClick={() => onSelect('wordsearch')}
-              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Search size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                  Word Search
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                  Tìm từ trong bảng chữ (ngang, dọc, chéo)
-                </p>
-              </div>
-              <ChevronRight size={16} className="text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all shrink-0" />
-            </button>
-
-            <button 
-              onClick={() => onSelect('crossword')}
-              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-blue-300 dark:hover:border-blue-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <LayoutGrid size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                  Crossword (Ô chữ)
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                  Điền ô chữ đan xen theo gợi ý nghĩa
-                </p>
-              </div>
-              <ChevronRight size={16} className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all shrink-0" />
-            </button>
-
-            <button 
-              onClick={() => onSelect('ladder')}
-              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-violet-300 dark:hover:border-violet-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <ArrowUpDown size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
-                  Word Ladder
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                  Biến đổi từ: CAT ➔ COT ➔ DOG
-                </p>
-              </div>
-              <ChevronRight size={16} className="text-gray-400 group-hover:text-violet-500 group-hover:translate-x-0.5 transition-all shrink-0" />
-            </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3">
+            <GameMenuCard
+              id="wordchain"
+              title="English Word Chain"
+              desc="Chain words: apple ➔ elephant ➔ tiger"
+              icon={<Link2 size={20} />}
+              colorBg="bg-purple-100 dark:bg-purple-900/40"
+              colorText="text-purple-600 dark:text-purple-400"
+              hoverBorder="hover:border-purple-300 dark:hover:border-purple-500"
+              onSelect={onSelect}
+            />
+            <GameMenuCard
+              id="wordsearch"
+              title="Word Search"
+              desc="Find hidden words in the letter grid"
+              icon={<Search size={20} />}
+              colorBg="bg-emerald-100 dark:bg-emerald-900/40"
+              colorText="text-emerald-600 dark:text-emerald-400"
+              hoverBorder="hover:border-emerald-300 dark:hover:border-emerald-500"
+              onSelect={onSelect}
+            />
+            <GameMenuCard
+              id="crossword"
+              title="Crossword"
+              desc="Solve interlocking crossword clues"
+              icon={<LayoutGrid size={20} />}
+              colorBg="bg-blue-100 dark:bg-blue-900/40"
+              colorText="text-blue-600 dark:text-blue-400"
+              hoverBorder="hover:border-blue-300 dark:hover:border-blue-500"
+              onSelect={onSelect}
+            />
           </div>
         </div>
       </div>
@@ -705,6 +608,15 @@ function QuizGame({ onExit }: { onExit: () => void }) {
     setSkipped(0)
   }
 
+  const handleTimeUp = () => {
+    if (selectedOption) return
+    setWrong(w => w + 1)
+    setCurrentIndex(i => i + 1)
+    timer.resetTimer()
+  }
+
+  const timer = useGameTimer({ initialSeconds: 15, onTimeUp: handleTimeUp })
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (selectedOption) return
@@ -733,6 +645,7 @@ function QuizGame({ onExit }: { onExit: () => void }) {
   const handleSelect = (option: string) => {
     if (selectedOption) return // prevent double click
     setSelectedOption(option)
+    timer.resetTimer()
     if (option === correctOption) {
       setCorrect(c => c + 1)
     } else {
@@ -741,6 +654,7 @@ function QuizGame({ onExit }: { onExit: () => void }) {
     setTimeout(() => {
       setSelectedOption(null)
       setCurrentIndex(i => i + 1)
+      timer.resetTimer()
     }, 1200)
   }
 
@@ -748,28 +662,43 @@ function QuizGame({ onExit }: { onExit: () => void }) {
     if (selectedOption) return
     setSkipped(s => s + 1)
     setCurrentIndex(i => i + 1)
+    timer.resetTimer()
   }
 
   return (
-    <div className="max-w-xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full">
+    <div className="w-full max-w-4xl mx-auto py-2 px-3 sm:px-6 animate-in fade-in flex flex-col h-full">
       {/* Top Header */}
       <GameHeader
         onExit={onExit}
         current={currentIndex}
         total={allQuestions.length}
+        timer={timer}
         center={
           <div className="flex items-center gap-1.5 flex-wrap justify-center">
+            {/* 1 Mean toggle on the left */}
+            <button
+              onClick={() => { setUniqueWords(u => !u); setCurrentIndex(0); setCorrect(0); setWrong(0); setSkipped(0); timer.resetTimer() }}
+              title={uniqueWords ? 'Each word shown once (ON)' : 'Each word shown once (OFF)'}
+              className={`text-xs font-semibold px-2 py-1 rounded-lg border transition-colors cursor-pointer ${
+                uniqueWords
+                  ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700'
+                  : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              1 Mean
+            </button>
+
             {/* Quiz mode segmented control */}
             <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg border border-gray-200/60 dark:border-gray-700/60 text-xs font-semibold">
               <button 
-                onClick={() => setQuizMode('m2w')} 
-                className={`px-2 py-0.5 rounded-md transition-colors ${quizMode === 'm2w' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}
+                onClick={() => { setQuizMode('m2w'); timer.resetTimer() }} 
+                className={`px-2.5 py-0.5 rounded-md transition-colors cursor-pointer ${quizMode === 'm2w' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}
               >
                 Mean
               </button>
               <button 
-                onClick={() => setQuizMode('w2m')} 
-                className={`px-2 py-0.5 rounded-md transition-colors ${quizMode === 'w2m' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}
+                onClick={() => { setQuizMode('w2m'); timer.resetTimer() }} 
+                className={`px-2.5 py-0.5 rounded-md transition-colors cursor-pointer ${quizMode === 'w2m' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}
               >
                 Word
               </button>
@@ -778,14 +707,14 @@ function QuizGame({ onExit }: { onExit: () => void }) {
             {/* Source mode toggle */}
             <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg border border-gray-200/60 dark:border-gray-700/60 text-xs font-semibold">
               <button
-                onClick={() => { setQuizSourceMode('highlights'); setCurrentIndex(0); setCorrect(0); setWrong(0); setSkipped(0) }}
-                className={`px-2 py-0.5 rounded-md transition-colors ${quizSourceMode === 'highlights' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}
+                onClick={() => { setQuizSourceMode('highlights'); setCurrentIndex(0); setCorrect(0); setWrong(0); setSkipped(0); timer.resetTimer() }}
+                className={`px-2.5 py-0.5 rounded-md transition-colors cursor-pointer ${quizSourceMode === 'highlights' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}
               >
                 Words
               </button>
               <button
-                onClick={() => { setQuizSourceMode('phrases'); setCurrentIndex(0); setCorrect(0); setWrong(0); setSkipped(0) }}
-                className={`px-2 py-0.5 rounded-md transition-colors ${quizSourceMode === 'phrases' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}
+                onClick={() => { setQuizSourceMode('phrases'); setCurrentIndex(0); setCorrect(0); setWrong(0); setSkipped(0); timer.resetTimer() }}
+                className={`px-2.5 py-0.5 rounded-md transition-colors cursor-pointer ${quizSourceMode === 'phrases' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}
               >
                 Phrases
               </button>
@@ -801,23 +730,12 @@ function QuizGame({ onExit }: { onExit: () => void }) {
               className="w-24 flex-shrink-0"
               buttonClassName="!py-0.5 !text-xs !rounded-lg"
             />
-            <button
-              onClick={() => { setUniqueWords(u => !u); setCurrentIndex(0); setCorrect(0); setWrong(0); setSkipped(0) }}
-              title={uniqueWords ? 'Each word shown once (ON)' : 'Each word shown once (OFF)'}
-              className={`text-xs font-semibold px-2 py-0.5 rounded-lg border transition-colors ${
-                uniqueWords
-                  ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700'
-                  : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700'
-              }`}
-            >
-              1 Mean
-            </button>
           </div>
         }
       />
 
       {/* Question Card */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-200/80 dark:border-gray-700/80 p-4 sm:p-5 mb-2.5 text-center flex flex-col items-center justify-center relative min-h-[110px]">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xs border border-gray-200/80 dark:border-gray-700/80 p-6 sm:p-8 mb-4 text-center flex flex-col items-center justify-center relative min-h-[130px] w-full">
         {currentCardObj && (
           <RootCardButton 
             onClick={() => setShowModalCard(currentCardObj)}
@@ -835,19 +753,19 @@ function QuizGame({ onExit }: { onExit: () => void }) {
           </button>
         )}
 
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white break-words whitespace-pre-wrap tracking-tight">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white break-words whitespace-pre-wrap tracking-tight px-8">
           {questionText}
         </h2>
         
         {quizMode === 'w2m' && currentCardObj && (
-          <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2.5">
             {(currentCardObj.posEntries ? currentCardObj.posEntries.map(p => p.partOfSpeech).filter(Boolean).join(', ') : currentCardObj.partOfSpeech) && (
-              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-800/50">
+              <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-800/50">
                 {currentCardObj.posEntries ? currentCardObj.posEntries.map(p => p.partOfSpeech).filter(Boolean).join(', ') : currentCardObj.partOfSpeech}
               </span>
             )}
             {currentCardObj.phonetic && (
-              <span className="text-[11px] font-mono text-gray-400 dark:text-gray-500">
+              <span className="text-xs font-mono text-gray-400 dark:text-gray-500">
                 {currentCardObj.phonetic}
               </span>
             )}
@@ -863,8 +781,8 @@ function QuizGame({ onExit }: { onExit: () => void }) {
         </button>
       </div>
 
-      {/* Answer Options Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2 w-full">
+      {/* Answer Options Grid (without numbers) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 mb-3 w-full">
         {options.map((opt, i) => {
           let baseBtnClass = "bg-white dark:bg-gray-800 border-gray-200/80 dark:border-gray-700 text-gray-800 dark:text-gray-200 shadow-2xs"
           let hoverBtnClass = "hover:border-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-950/30 hover:shadow-xs"
@@ -887,12 +805,9 @@ function QuizGame({ onExit }: { onExit: () => void }) {
               key={i}
               onClick={() => handleSelect(opt)}
               disabled={!!selectedOption}
-              className={`w-full p-2.5 rounded-xl border text-center font-medium transition-all duration-200 ${baseBtnClass} ${hoverBtnClass} flex items-center justify-center min-h-[2.75rem] relative group cursor-pointer`}
+              className={`w-full p-3 sm:p-4 rounded-2xl border text-center font-medium transition-all duration-200 ${baseBtnClass} ${hoverBtnClass} flex items-center justify-center min-h-[3.25rem] relative cursor-pointer`}
             >
-              <span className="absolute top-1.5 left-2 text-[10px] font-bold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-1 py-0.2 rounded group-hover:text-purple-600 dark:group-hover:text-purple-400">
-                {i + 1}
-              </span>
-              <div className="text-xs sm:text-sm font-medium whitespace-pre-wrap break-words w-full px-4">
+              <div className="text-sm sm:text-base font-medium whitespace-pre-wrap break-words w-full px-3">
                 {opt}
               </div>
             </button>
@@ -927,24 +842,43 @@ function SwipeGame({ onExit }: { onExit: () => void }) {
   const [learningCards, setLearningCards] = useState<{ card: Flashcard, hid: string | null }[]>([])
   const [swipeCount, setSwipeCount] = useState(0)
   const [showHighlights, setShowHighlights] = useState(false)
-  const [displayMode, setDisplayMode] = useState<'sentence' | 'words' | 'meanings' | 'phrases'>('sentence')
+  const [displayMode, setDisplayMode] = useState<'sentence' | 'words' | 'meanings' | 'meaning-first' | 'phrases'>('sentence')
   const [knownCount, setKnownCount] = useState(0)
   const [unknownCount, setUnknownCount] = useState(0)
   const [showModalCard, setShowModalCard] = useState<Flashcard | null>(null)
-  
-  useEffect(() => {
+
+  const handleTimeUp = () => {
+    if (learningCards.length === 0) return
+    setLearningCards(prev => [...prev.slice(1), prev[0]])
+    setSwipeCount(c => c + 1)
+    setUnknownCount(c => c + 1)
+    timer.reset()
+  }
+
+  const timer = useGameTimer({
+    initialDuration: 15,
+    onTimeUp: handleTimeUp,
+    enabled: learningCards.length > 0
+  })
+
+  const getItems = (mode: 'sentence' | 'words' | 'meanings' | 'meaning-first' | 'phrases') => {
     let cardsToLearn = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
     cardsToLearn = getCardsForMode(cardsToLearn, gameInputMode)
 
     let items: { card: Flashcard, hid: string | null }[]
-    if (displayMode === 'phrases') {
+    if (mode === 'phrases') {
       items = cardsToLearn.flatMap(card => 
         (card.phrasesAndIdioms || []).map(normalizePhraseItem).filter(p => p.phrase).map((p, idx) => ({ card, hid: p.id || `${card.id}-pi-${idx}` }))
       )
+    } else if (mode === 'meaning-first') {
+      items = cardsToLearn.map(card => {
+        const firstH = (card.highlights || [])[0]
+        return firstH ? { card, hid: firstH.id } : null
+      }).filter((x): x is { card: Flashcard, hid: string } => !!x)
     } else if (gameInputMode === 'word') {
-      if (displayMode === 'words') {
+      if (mode === 'words') {
         items = cardsToLearn.map(card => ({ card, hid: null }))
-      } else if (displayMode === 'sentence') {
+      } else if (mode === 'sentence') {
         items = cardsToLearn.flatMap(card => {
           if (card.posEntries && card.posEntries.length > 0) {
             const exs: { card: Flashcard, hid: string }[] = []
@@ -969,16 +903,21 @@ function SwipeGame({ onExit }: { onExit: () => void }) {
         items = cardsToLearn.flatMap(card => (card.highlights || []).map(h => ({ card, hid: h.id })))
       }
     } else {
-      if (displayMode === 'sentence') {
+      if (mode === 'sentence') {
         items = cardsToLearn.map(card => ({ card, hid: null }))
       } else {
         items = cardsToLearn.flatMap(card => (card.highlights || []).map(h => ({ card, hid: h.id })))
       }
     }
-    setLearningCards(items.sort(() => Math.random() - 0.5))
+    return items.sort(() => Math.random() - 0.5)
+  }
+  
+  useEffect(() => {
+    setLearningCards(getItems(displayMode))
     setKnownCount(0)
     setUnknownCount(0)
     setSwipeCount(0)
+    timer.reset()
   }, [flashcards, displayMode, activeTags, gameInputMode])
 
   if (learningCards.length === 0) {
@@ -993,48 +932,8 @@ function SwipeGame({ onExit }: { onExit: () => void }) {
           setSwipeCount(0)
           setKnownCount(0)
           setUnknownCount(0)
-          let cardsToLearn = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
-          cardsToLearn = getCardsForMode(cardsToLearn, gameInputMode)
-          let items: { card: Flashcard, hid: string | null }[]
-          if (displayMode === 'phrases') {
-            items = cardsToLearn.flatMap(card => 
-              (card.phrasesAndIdioms || []).map(normalizePhraseItem).filter(p => p.phrase).map((p, idx) => ({ card, hid: p.id || `${card.id}-pi-${idx}` }))
-            )
-          } else if (gameInputMode === 'word') {
-            if (displayMode === 'words') {
-              items = cardsToLearn.map(card => ({ card, hid: null }))
-            } else if (displayMode === 'sentence') {
-              items = cardsToLearn.flatMap(card => {
-                if (card.posEntries && card.posEntries.length > 0) {
-                  const exs: { card: Flashcard, hid: string }[] = []
-                  card.posEntries.forEach((pos, pi) => {
-                    pos.meanings.forEach((m, mi) => {
-                      (m.examples || []).forEach((ex, ei) => {
-                        if (ex.sentence) {
-                          exs.push({ card, hid: ex.id || `${card.id}-ex-${pi}-${mi}-${ei}` })
-                        }
-                      })
-                    })
-                  })
-                  if (exs.length > 0) return exs
-                }
-                const hlExs = (card.highlights || []).filter(h => h.example)
-                if (hlExs.length > 0) {
-                  return hlExs.map(h => ({ card, hid: h.id }))
-                }
-                return (card.highlights || []).map(h => ({ card, hid: h.id }))
-              })
-            } else {
-              items = cardsToLearn.flatMap(card => (card.highlights || []).map(h => ({ card, hid: h.id })))
-            }
-          } else {
-            if (displayMode === 'sentence') {
-              items = cardsToLearn.map(card => ({ card, hid: null }))
-            } else {
-              items = cardsToLearn.flatMap(card => (card.highlights || []).map(h => ({ card, hid: h.id })))
-            }
-          }
-          setLearningCards(items.sort(() => Math.random() - 0.5))
+          setLearningCards(getItems(displayMode))
+          timer.reset()
         }}
       />
     )
@@ -1044,12 +943,13 @@ function SwipeGame({ onExit }: { onExit: () => void }) {
   const currentCard = currentItem.card
 
   return (
-    <div className="max-w-md mx-auto flex flex-col items-center justify-start relative animate-in fade-in py-2 px-4">
+    <div className="max-w-4xl mx-auto flex flex-col items-center justify-start relative animate-in fade-in py-2 px-4">
       {/* Header */}
       <GameHeader
         onExit={onExit}
+        timer={timer}
         center={
-          <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60 max-w-[340px] w-full text-xs font-semibold">
+          <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60 max-w-[360px] w-full text-xs font-semibold">
             <button 
               onClick={() => setDisplayMode('sentence')}
               className={`flex-1 py-1 rounded-lg transition-colors ${displayMode === 'sentence' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
@@ -1063,10 +963,14 @@ function SwipeGame({ onExit }: { onExit: () => void }) {
               Words
             </button>
             <button 
-              onClick={() => setDisplayMode('meanings')}
-              className={`flex-1 py-1 rounded-lg transition-colors ${displayMode === 'meanings' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+              onClick={() => {
+                if (displayMode === 'meanings') setDisplayMode('meaning-first')
+                else if (displayMode === 'meaning-first') setDisplayMode('meanings')
+                else setDisplayMode('meanings')
+              }}
+              className={`flex-1 py-1 rounded-lg transition-colors ${displayMode === 'meanings' || displayMode === 'meaning-first' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
             >
-              Meanings
+              {displayMode === 'meaning-first' ? 'Meaning¹' : 'Meanings*'}
             </button>
             <button 
               onClick={() => setDisplayMode('phrases')}
@@ -1091,7 +995,7 @@ function SwipeGame({ onExit }: { onExit: () => void }) {
         }
       />
       
-      <div className="relative w-full max-w-xs aspect-[4/3] sm:aspect-square flex items-center justify-center">
+      <div className="relative w-full max-w-sm sm:max-w-md aspect-[4/3] sm:aspect-square flex items-center justify-center mt-2">
         <SwipeableCard 
           key={`${currentCard.id}-${currentItem.hid}-${swipeCount}`} 
           card={currentCard}
@@ -1103,17 +1007,19 @@ function SwipeGame({ onExit }: { onExit: () => void }) {
             setLearningCards(prev => prev.slice(1))
             setSwipeCount(c => c + 1)
             setKnownCount(c => c + 1)
+            timer.reset()
           }}
           onSwipedLeft={() => {
             setLearningCards(prev => [...prev.slice(1), currentItem])
             setSwipeCount(c => c + 1)
             setUnknownCount(c => c + 1)
+            timer.reset()
           }}
         />
       </div>
 
       {/* Counters — clean, unboxed, minimal layout */}
-      <div className="mt-4 flex items-center justify-center gap-8 sm:gap-10 w-full max-w-xs px-2 select-none">
+      <div className="mt-4 flex items-center justify-center gap-8 sm:gap-10 w-full max-w-sm sm:max-w-md px-2 select-none">
         <div className="flex flex-col items-center">
           <span className="font-extrabold text-rose-500 text-lg sm:text-xl leading-none">{unknownCount}</span>
           <span className="text-xs font-semibold text-rose-400/80 mt-1">Unknown</span>
@@ -1149,7 +1055,7 @@ function SwipeableCard({
   card: Flashcard, 
   onlyHighlightId: string | null,
   showHighlights: boolean,
-  displayMode: 'sentence' | 'words' | 'meanings' | 'phrases',
+  displayMode: 'sentence' | 'words' | 'meanings' | 'meaning-first' | 'phrases',
   onShowDetail?: (card: Flashcard) => void,
   onSwipedRight: () => void, 
   onSwipedLeft: () => void 
@@ -1294,7 +1200,7 @@ function SwipeableCard({
         handleDragEnd()
       }}
       onPointerCancel={handleDragEnd}
-      className={`absolute w-full max-w-xs aspect-[4/3] sm:aspect-square bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex items-center justify-center p-5 select-none touch-none cursor-grab active:cursor-grabbing border-4 border-transparent ${
+      className={`absolute w-full max-w-sm sm:max-w-md aspect-[4/3] sm:aspect-square bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex items-center justify-center p-5 select-none touch-none cursor-grab active:cursor-grabbing border-4 border-transparent ${
         !isDragging ? 'transition-all duration-300 ease-out' : ''
       }`}
       style={{
@@ -1426,7 +1332,7 @@ function SwipeableCard({
                 </div>
               )
             }
-            if (displayMode === 'meanings') {
+            if (displayMode === 'meanings' || displayMode === 'meaning-first') {
               const h = (card.highlights || []).find(x => x.id === onlyHighlightId)
               if (!h) return null
               return (

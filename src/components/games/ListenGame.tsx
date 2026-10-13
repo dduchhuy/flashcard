@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useFlashcardStore, getCardTags, getCardsForMode, Flashcard } from '../../store'
-import { Volume2, Lightbulb } from 'lucide-react'
+import { Volume2, Lightbulb, SkipForward } from 'lucide-react'
 import { extractWordText, fuzzyMatch, speakEnglish } from '../../utils'
 import { LetterInput, letterIndices, buildGuess } from './LetterInput'
-import { CardDetailModal, RootCardButton, GameStatsBar, EmptyState, GameHeader, ResultScreen } from './shared'
+import { CardDetailModal, RootCardButton, GameStatsBar, EmptyState, GameHeader, ResultScreen, useGameTimer } from './shared'
 
 export function ListenGame({ onExit }: { onExit: () => void }) {
   const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
@@ -45,9 +45,18 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
   const [showModalCard, setShowModalCard] = useState<Flashcard | null>(null)
   
   const inputRef = useRef<HTMLInputElement>(null)
-
-  // Audio settings
   const [hideMeaning, setHideMeaning] = useState(true)
+
+  const handleTimeUp = () => {
+    if (status !== 'playing') return
+    handleSkip()
+  }
+
+  const timer = useGameTimer({
+    initialDuration: 20,
+    onTimeUp: handleTimeUp,
+    enabled: status === 'playing' && currentIndex < allQuestions.length
+  })
 
   useEffect(() => {
     if (status === 'playing') {
@@ -58,6 +67,7 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
   useEffect(() => {
     setHinted([])
     setHideMeaning(true)
+    timer.reset()
   }, [currentIndex])
 
   const currentQ = allQuestions[currentIndex]
@@ -75,7 +85,6 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
       return () => clearTimeout(timeout)
     }
   }, [currentQ, playAudio])
-
 
   if (allQuestions.length === 0) {
     return <EmptyState onExit={onExit} text="No notes found. Highlight words first!" />
@@ -96,12 +105,14 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
           setWrong(0)
           setSkipped(0)
           setStatus('playing')
+          timer.reset()
         }}
       />
     )
   }
 
   const checkAnswer = () => {
+    if (status !== 'playing') return
     if (fuzzyMatch(buildGuess(currentQ.word, inputValue, hinted), currentQ.word)) {
       setStatus('correct')
       setCorrect(c => c + 1)
@@ -122,6 +133,7 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
   }
 
   const handleSkip = () => {
+    if (status !== 'playing') return
     setStatus('skipped')
     setSkipped(s => s + 1)
     setTimeout(() => {
@@ -143,68 +155,61 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
   const showFullSentence = hinted.length >= letterIndices(currentQ.word).length || status === 'correct' || status === 'skipped' || status === 'wrong'
 
   return (
-    <div className="max-w-2xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full">
+    <div className="max-w-4xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full items-center w-full">
       <GameHeader
         onExit={onExit}
+        timer={timer}
         title="Dictation"
         current={currentIndex + 1}
         total={allQuestions.length}
-        right={
-          <button
-            onClick={() => playAudio()}
-            className="p-1.5 rounded-lg flex items-center justify-center border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
-            title="Replay Audio"
-          >
-            <Volume2 size={16} />
-          </button>
-        }
       />
 
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700 p-4 sm:p-5 mb-2 text-center max-w-xl mx-auto w-full relative">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-md border border-gray-200/80 dark:border-gray-700/80 p-6 sm:p-8 mb-3 text-center max-w-2xl mx-auto w-full relative pb-16">
         <RootCardButton
           onClick={() => {
             const c = flashcards.find(f => f.id === currentQ.cardId)
             if (c) setShowModalCard(c)
           }}
-          className="absolute bottom-3 left-3"
+          className="absolute bottom-3 left-4"
         />
         
         {showFullSentence ? (
-          <p className="text-base sm:text-lg text-gray-800 dark:text-gray-200 mb-3 leading-relaxed whitespace-pre-wrap px-2">
+          <p className="text-base sm:text-lg text-gray-800 dark:text-gray-200 mb-4 leading-relaxed whitespace-pre-wrap px-2">
             {currentQ.sentence}
           </p>
         ) : (
-          <div className="text-gray-400 dark:text-gray-500 mb-3 px-2 flex items-center justify-center gap-1.5">
+          <div className="text-gray-400 dark:text-gray-500 mb-4 px-2 flex items-center justify-center gap-1.5">
             <Volume2 size={16} className="animate-pulse" />
-            <span className="text-xs font-medium">Listen and type the word</span>
+            <span className="text-xs font-semibold uppercase tracking-wider">Listen and type the word</span>
           </div>
         )}
 
         <button
           onClick={() => playAudio()}
-          className="mx-auto w-14 sm:w-16 h-14 sm:h-16 bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 rounded-full flex items-center justify-center hover:scale-105 hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-all shadow-2xs mb-3 cursor-pointer"
+          title="Play Audio"
+          className="mx-auto w-16 sm:w-18 h-16 sm:h-18 bg-purple-100 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 rounded-2xl flex items-center justify-center hover:scale-105 hover:bg-purple-200 dark:hover:bg-purple-900/60 transition-all shadow-sm mb-4 cursor-pointer"
         >
-          <Volume2 size={28} />
+          <Volume2 size={32} />
         </button>
         
-        <div className="bg-blue-50 dark:bg-gray-900 rounded-xl p-2.5 sm:p-3 mb-3 border border-blue-100 dark:border-gray-700">
+        <div className="bg-purple-50/70 dark:bg-gray-900/50 rounded-2xl p-3 sm:p-4 mb-4 border border-purple-100/80 dark:border-gray-700 max-w-lg mx-auto">
           <div className="flex justify-between items-center">
-            <span className="text-xs text-gray-500 dark:text-gray-400">Meaning</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400">Meaning</span>
             <button 
               onClick={() => setHideMeaning(!hideMeaning)}
-              className="text-xs px-2 py-0.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-md shadow-2xs hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium flex items-center gap-1"
+              className="text-xs px-2.5 py-0.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-lg shadow-2xs hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium flex items-center gap-1 cursor-pointer"
             >
               {hideMeaning ? 'Show' : 'Hide'}
             </button>
           </div>
           {!hideMeaning && (
-            <div className="mt-1.5 font-medium text-blue-700 dark:text-blue-300 text-sm sm:text-base break-words whitespace-pre-wrap block">
+            <div className="mt-2 font-medium text-gray-800 dark:text-gray-100 text-sm sm:text-base break-words whitespace-pre-wrap block text-left">
               {currentQ.meaning}
             </div>
           )}
         </div>
 
-        <div className="max-w-sm mx-auto">
+        <div className="max-w-md mx-auto my-2">
           <LetterInput
             word={currentQ.word}
             typed={inputValue}
@@ -221,24 +226,25 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
               }
             }}
             inputRef={inputRef}
-            accent="blue"
+            accent="purple"
           />
         </div>
         
-        <div className="mt-3 flex flex-wrap gap-2 justify-center">
+        <div className="mt-5 flex flex-wrap gap-2.5 justify-center max-w-sm mx-auto">
           <button
             onClick={handleSkip}
             disabled={status !== 'playing'}
-            className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-4 py-2 text-xs sm:text-sm rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors cursor-pointer"
+            className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 text-xs sm:text-sm rounded-xl font-medium disabled:opacity-50 transition-colors cursor-pointer inline-flex items-center gap-1"
           >
-            Skip
+            <SkipForward size={15} />
+            <span>Skip</span>
           </button>
           
           <button
             onClick={handleHint}
             disabled={status !== 'playing' || hinted.length >= letterIndices(currentQ.word).length}
             title="Hint"
-            className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-3.5 py-2 text-xs sm:text-sm rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors flex items-center justify-center cursor-pointer"
+            className="bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800 px-3.5 py-2 text-xs sm:text-sm rounded-xl font-medium disabled:opacity-50 transition-colors flex items-center justify-center cursor-pointer"
           >
             <Lightbulb size={18} />
           </button>
@@ -246,7 +252,7 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
           <button
             onClick={checkAnswer}
             disabled={status !== 'playing' || !inputValue.trim()}
-            className="bg-blue-600 text-white px-5 py-2 text-xs sm:text-sm rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors flex-1 min-w-[120px] cursor-pointer"
+            className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 text-xs sm:text-sm rounded-xl font-bold disabled:opacity-50 transition-colors flex-1 min-w-[120px] shadow-sm cursor-pointer"
           >
             Submit Answer
           </button>

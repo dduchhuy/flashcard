@@ -1,5 +1,5 @@
-import { useMemo, ReactNode } from 'react'
-import { ArrowLeft, RefreshCcw, BookOpen } from 'lucide-react'
+import { useState, useEffect, useRef, useMemo, ReactNode } from 'react'
+import { ArrowLeft, RefreshCcw, BookOpen, Timer } from 'lucide-react'
 import { useFlashcardStore, getCardTags, getCardsForMode, normalizePhraseItem } from '../../store'
 import { extractWordText } from '../../utils'
 
@@ -163,11 +163,224 @@ export function ResultScreen({
   )
 }
 
+export interface UseGameTimerReturn {
+  timeLeft: number
+  duration: number
+  isUnlimited: boolean
+  isRunning: boolean
+  addTime: (seconds: number) => void
+  resetTimer: (newSeconds?: number) => void
+  reset: (newSeconds?: number) => void
+  setDuration: (seconds: number) => void
+  setIsUnlimited: (val: boolean) => void
+  toggleUnlimited: () => void
+  pause: () => void
+  resume: () => void
+}
+
+export function useGameTimer({
+  initialSeconds,
+  initialDuration,
+  onTimeUp,
+  autoStart = true,
+  enabled = true,
+}: {
+  initialSeconds?: number
+  initialDuration?: number
+  onTimeUp?: () => void
+  autoStart?: boolean
+  enabled?: boolean
+}): UseGameTimerReturn {
+  const init = initialDuration ?? initialSeconds ?? 15
+  const [duration, setDurationState] = useState(init)
+  const [isUnlimited, setIsUnlimitedState] = useState(false)
+  const [timeLeft, setTimeLeft] = useState(init)
+  const [isRunning, setIsRunning] = useState(autoStart)
+  const onTimeUpRef = useRef(onTimeUp)
+  onTimeUpRef.current = onTimeUp
+
+  useEffect(() => {
+    if (isUnlimited || !isRunning || !enabled) return
+    const interval = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(interval)
+          if (onTimeUpRef.current) {
+            onTimeUpRef.current()
+          }
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [isUnlimited, isRunning, enabled, duration])
+
+  const addTime = (secs: number) => {
+    if (isUnlimited) return
+    setTimeLeft(prev => Math.max(0, prev + secs))
+  }
+
+  const resetTimer = (newSeconds?: number) => {
+    const s = newSeconds !== undefined ? newSeconds : duration
+    setTimeLeft(s)
+    setIsRunning(true)
+  }
+
+  const setDuration = (secs: number) => {
+    const valid = Math.max(3, secs)
+    setDurationState(valid)
+    setTimeLeft(valid)
+    setIsUnlimitedState(false)
+  }
+
+  const toggleUnlimited = () => {
+    setIsUnlimitedState(prev => {
+      const next = !prev
+      if (!next) {
+        setTimeLeft(duration)
+      }
+      return next
+    })
+  }
+
+  const pause = () => setIsRunning(false)
+  const resume = () => setIsRunning(true)
+
+  return {
+    timeLeft,
+    duration,
+    isUnlimited,
+    isRunning,
+    addTime,
+    resetTimer,
+    reset: resetTimer,
+    setDuration,
+    setIsUnlimited: setIsUnlimitedState,
+    toggleUnlimited,
+    pause,
+    resume,
+  }
+}
+
+export function GameTimerBadge({
+  timer,
+  className = '',
+}: {
+  timer: UseGameTimerReturn
+  className?: string
+}) {
+  const [showSettings, setShowSettings] = useState(false)
+  const popoverRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showSettings) return
+    const handleClick = (e: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
+        setShowSettings(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [showSettings])
+
+  const isLow = !timer.isUnlimited && timer.timeLeft <= 5
+
+  return (
+    <div className={`relative inline-flex items-center ${className}`} ref={popoverRef}>
+      <button
+        type="button"
+        onClick={() => setShowSettings(prev => !prev)}
+        title="Timer Settings (Click to configure or set unlimited)"
+        className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border shadow-2xs cursor-pointer ${
+          timer.isUnlimited
+            ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+            : isLow
+            ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-700 animate-pulse'
+            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200/80 dark:border-gray-700 hover:border-purple-300'
+        }`}
+      >
+        <Timer size={14} className={isLow ? 'text-rose-600' : 'text-purple-600 dark:text-purple-400'} />
+        <span>{timer.isUnlimited ? '∞' : `${timer.timeLeft}s`}</span>
+      </button>
+
+      {showSettings && (
+        <div className="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200/80 dark:border-gray-700 p-3 z-50 animate-in fade-in slide-in-from-top-1 text-xs text-gray-800 dark:text-gray-200">
+          <div className="flex items-center justify-between font-bold mb-2 pb-1.5 border-b border-gray-100 dark:border-gray-700">
+            <span>Timer Settings</span>
+            <span className="text-[10px] text-gray-400">Limit</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              timer.toggleUnlimited()
+              setShowSettings(false)
+            }}
+            className={`w-full py-1.5 px-2.5 rounded-xl font-semibold flex items-center justify-between mb-2 transition-colors cursor-pointer ${
+              timer.isUnlimited
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            <span>Unlimited mode</span>
+            <span className="text-base font-bold">∞</span>
+          </button>
+
+          <div className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 mb-1">Presets:</div>
+          <div className="grid grid-cols-4 gap-1 mb-2">
+            {[10, 15, 20, 30, 60, 90, 120, 180].map(s => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => {
+                  timer.setDuration(s)
+                  setShowSettings(false)
+                }}
+                className={`py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                  !timer.isUnlimited && timer.duration === s
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                {s}s
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-700">
+            <span className="text-[11px] text-gray-400">Custom:</span>
+            <input
+              type="number"
+              min="3"
+              max="600"
+              placeholder="sec"
+              defaultValue={timer.duration}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  const val = Number((e.target as HTMLInputElement).value)
+                  if (val > 0) {
+                    timer.setDuration(val)
+                    setShowSettings(false)
+                  }
+                }
+              }}
+              className="w-16 px-2 py-1 rounded-lg text-xs bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-center font-bold focus:outline-none focus:ring-1 focus:ring-purple-500"
+            />
+            <span className="text-[11px] text-gray-400">sec</span>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export interface GameHeaderProps {
   onExit: () => void
   title?: string
   center?: ReactNode
   right?: ReactNode
+  timer?: UseGameTimerReturn
   current?: number
   total?: number
   progress?: number
@@ -179,6 +392,7 @@ export function GameHeader({
   title,
   center,
   right,
+  timer,
   current,
   total,
   progress,
@@ -194,7 +408,7 @@ export function GameHeader({
         <button
           onClick={onExit}
           title="Back to games menu"
-          className="p-1.5 sm:p-2 rounded-xl text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5 flex-shrink-0"
+          className="p-1.5 sm:p-2 rounded-xl text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5 flex-shrink-0 cursor-pointer"
         >
           <ArrowLeft size={18} />
           <span className="text-xs font-semibold hidden sm:inline">Exit</span>
@@ -208,7 +422,8 @@ export function GameHeader({
           ) : null}
         </div>
 
-        <div className="flex items-center gap-1.5 justify-end flex-shrink-0">
+        <div className="flex items-center gap-2 justify-end flex-shrink-0">
+          {timer && <GameTimerBadge timer={timer} />}
           {right}
         </div>
       </div>

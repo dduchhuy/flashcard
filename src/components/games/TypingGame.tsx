@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { Volume2, Eye, EyeOff } from 'lucide-react'
 import { useFlashcardStore, getCardTags, getCardsForMode, Flashcard, normalizePhraseItem } from '../../store'
 import { extractWordText, speakEnglish } from '../../utils'
-import { shuffle, EmptyState, RootCardButton, GameStatsBar, CardDetailModal, GameHeader, ResultScreen } from './shared'
+import { shuffle, EmptyState, RootCardButton, GameStatsBar, CardDetailModal, GameHeader, ResultScreen, useGameTimer } from './shared'
 
 export function TypingGame({ onExit }: { onExit: () => void }) {
   const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
@@ -17,6 +17,7 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
       highlightId: string
       targetWord: string
       meaning: string
+      translation: string
       sentenceWithBlank: string
       sentenceFull: string
     }[] = []
@@ -55,6 +56,7 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
             highlightId: pi.id || `${card.id}-pi-${idx}`,
             targetWord,
             meaning: pi.translation || pi.phrase,
+            translation: pi.translation || card.translation || pi.phrase,
             sentenceWithBlank,
             sentenceFull: pi.phrase,
           })
@@ -153,6 +155,7 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
           highlightId: h.id,
           targetWord,
           meaning: targetMeaning,
+          translation: card.translation || targetMeaning,
           sentenceWithBlank: sentenceWithBlank || '______',
           sentenceFull: targetSentence,
         })
@@ -173,6 +176,7 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
   const [skipped, setSkipped] = useState(0)
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [showModalCard, setShowModalCard] = useState<Flashcard | null>(null)
+  const [showHint, setShowHint] = useState(false)
 
   const currentQ = allQuestions[currentIndex]
 
@@ -183,6 +187,22 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
     const combined = [currentQ.targetWord, ...shuffledWrong]
     return shuffle(combined)
   }, [currentQ, allWordsPool])
+
+  const handleTimeUp = () => {
+    if (selectedOption !== null) return
+    handleSkip()
+  }
+
+  const timer = useGameTimer({
+    initialDuration: 15,
+    onTimeUp: handleTimeUp,
+    enabled: selectedOption === null && currentIndex < allQuestions.length
+  })
+
+  useEffect(() => {
+    timer.reset()
+    setShowHint(false)
+  }, [currentIndex, srcMode, quizTarget])
 
   if (allQuestions.length === 0) {
     return <EmptyState onExit={onExit} text="No highlighted words found. Create notes in your flashcards first!" />
@@ -203,6 +223,7 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
           setWrong(0)
           setSkipped(0)
           setSelectedOption(null)
+          timer.reset()
         }}
       />
     )
@@ -236,35 +257,21 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
     }, 1200)
   }
 
-  const [showHint, setShowHint] = useState(false)
-
-  // Keyboard shortcut listener 1-4
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (selectedOption !== null) return
-      const num = parseInt(e.key, 10)
-      if (num >= 1 && num <= options.length) {
-        handleSelect(options[num - 1])
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [options, selectedOption, currentQ])
-
   return (
-    <div className="max-w-xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full">
+    <div className="max-w-4xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full items-center w-full">
       <GameHeader
         onExit={onExit}
+        timer={timer}
         current={currentIndex + 1}
         total={allQuestions.length}
         center={
           <div className="flex items-center gap-1.5 flex-wrap justify-center">
-            <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg border border-gray-200/60 dark:border-gray-700/60 text-xs font-semibold">
+            <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60 text-xs font-semibold">
               <button
                 onClick={() => { setSrcMode('highlights'); setCurrentIndex(0); setCorrect(0); setWrong(0); setSkipped(0); setSelectedOption(null) }}
-                className={`px-2 py-0.5 rounded-md transition-colors ${
+                className={`px-2.5 py-1 rounded-lg transition-colors ${
                   srcMode === 'highlights'
-                    ? 'bg-white dark:bg-gray-700 text-purple-700 dark:text-purple-300 shadow-xs'
+                    ? 'bg-white dark:bg-gray-700 text-purple-700 dark:text-purple-300 shadow-xs font-bold'
                     : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
                 }`}
               >
@@ -272,9 +279,9 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
               </button>
               <button
                 onClick={() => { setSrcMode('phrases'); setCurrentIndex(0); setCorrect(0); setWrong(0); setSkipped(0); setSelectedOption(null) }}
-                className={`px-2 py-0.5 rounded-md transition-colors ${
+                className={`px-2.5 py-1 rounded-lg transition-colors ${
                   srcMode === 'phrases'
-                    ? 'bg-white dark:bg-gray-700 text-purple-700 dark:text-purple-300 shadow-xs'
+                    ? 'bg-white dark:bg-gray-700 text-purple-700 dark:text-purple-300 shadow-xs font-bold'
                     : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
                 }`}
               >
@@ -282,12 +289,12 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
               </button>
             </div>
 
-            <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg border border-gray-200/60 dark:border-gray-700/60 text-xs font-semibold">
+            <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60 text-xs font-semibold">
               <button
                 onClick={() => setQuizTarget('sentence')}
-                className={`px-2 py-0.5 rounded-md transition-colors ${
+                className={`px-2.5 py-1 rounded-lg transition-colors ${
                   quizTarget === 'sentence'
-                    ? 'bg-white dark:bg-gray-700 text-purple-700 dark:text-purple-300 shadow-xs'
+                    ? 'bg-white dark:bg-gray-700 text-purple-700 dark:text-purple-300 shadow-xs font-bold'
                     : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
                 }`}
               >
@@ -295,9 +302,9 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
               </button>
               <button
                 onClick={() => setQuizTarget('meaning')}
-                className={`px-2 py-0.5 rounded-md transition-colors ${
+                className={`px-2.5 py-1 rounded-lg transition-colors ${
                   quizTarget === 'meaning'
-                    ? 'bg-white dark:bg-gray-700 text-purple-700 dark:text-purple-300 shadow-xs'
+                    ? 'bg-white dark:bg-gray-700 text-purple-700 dark:text-purple-300 shadow-xs font-bold'
                     : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
                 }`}
               >
@@ -310,12 +317,12 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
           quizTarget === 'sentence' ? (
             <button
               onClick={() => setShowHint(!showHint)}
-              className={`p-1.5 rounded-lg flex items-center gap-1 text-xs font-medium transition-colors border ${
+              className={`p-1.5 rounded-xl flex items-center gap-1 text-xs font-medium transition-colors border cursor-pointer ${
                 showHint
                   ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800'
                   : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
-              title={showHint ? 'Hide hint' : 'Show hint'}
+              title={showHint ? 'Hide translation hint' : 'Show translation hint'}
             >
               {showHint ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -323,47 +330,47 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
         }
       />
 
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700 p-4 sm:p-5 text-center max-w-xl mx-auto w-full relative mb-2.5">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-md border border-gray-200/80 dark:border-gray-700/80 p-6 sm:p-8 text-center max-w-2xl mx-auto w-full relative mb-4 pb-16">
         <RootCardButton
           onClick={() => {
             const c = flashcards.find(f => f.id === currentQ.cardId)
             if (c) setShowModalCard(c)
           }}
-          className="absolute bottom-3 left-3"
+          className="absolute bottom-3 left-4"
         />
 
-        <p className="text-[11px] font-semibold tracking-wider text-purple-600 dark:text-purple-400 uppercase mb-2">
+        <p className="text-xs font-bold tracking-wider text-purple-600 dark:text-purple-400 uppercase mb-2">
           {quizTarget === 'sentence' ? 'Fill in the blank' : 'Match word to meaning'}
         </p>
 
         {quizTarget === 'sentence' ? (
           <>
-            <h2 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-100 mb-3 leading-relaxed whitespace-pre-wrap">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4 leading-relaxed whitespace-pre-wrap">
               {currentQ.sentenceWithBlank.split('______').map((part, i, arr) => (
                 <span key={i}>
                   {part}
                   {i < arr.length - 1 && (
                     selectedOption && selectedOption.toLowerCase() === currentQ.targetWord.toLowerCase()
-                      ? <span className="inline-block mx-1 px-2.5 py-0.5 rounded bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 font-bold">{currentQ.targetWord}</span>
-                      : <span className="inline-block mx-1 w-20 sm:w-24 h-6 rounded bg-gray-200 dark:bg-gray-700 align-middle" />
+                      ? <span className="inline-block mx-1 px-3 py-0.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-300 dark:border-emerald-700">{currentQ.targetWord}</span>
+                      : <span className="inline-block mx-1 w-20 sm:w-28 h-7 rounded-lg bg-gray-200 dark:bg-gray-700 align-middle" />
                   )}
                 </span>
               ))}
             </h2>
 
-            {showHint && currentQ.meaning && (
-              <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-2.5 inline-block border border-purple-100 dark:border-purple-800/50 mb-2 animate-in fade-in slide-in-from-top-2">
-                <span className="text-[11px] text-gray-500 dark:text-gray-400 block mb-0.5">Meaning hint</span>
-                <span className="font-medium text-purple-700 dark:text-purple-300 text-xs sm:text-sm break-words whitespace-pre-wrap">
-                  {currentQ.meaning}
+            {showHint && (
+              <div className="bg-purple-50/70 dark:bg-purple-950/30 rounded-2xl p-3 sm:p-4 inline-block border border-purple-100/80 dark:border-purple-800/50 mb-3 animate-in fade-in slide-in-from-top-2 text-center max-w-lg">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400 block mb-1">Sentence Translation</span>
+                <span className="font-semibold text-gray-800 dark:text-gray-100 text-sm sm:text-base break-words whitespace-pre-wrap">
+                  {currentQ.translation || currentQ.meaning}
                 </span>
               </div>
             )}
           </>
         ) : (
-          <div className="py-1">
-            <span className="text-[11px] text-gray-500 dark:text-gray-400 block mb-1 uppercase tracking-wider font-semibold">Meaning</span>
-            <h2 className="text-lg sm:text-xl font-bold text-purple-700 dark:text-purple-300 break-words whitespace-pre-wrap px-2">
+          <div className="py-2">
+            <span className="text-xs text-gray-500 dark:text-gray-400 block mb-1 uppercase tracking-wider font-semibold">Meaning</span>
+            <h2 className="text-xl sm:text-2xl font-bold text-purple-700 dark:text-purple-300 break-words whitespace-pre-wrap px-2">
               {currentQ.meaning || 'No definition available'}
             </h2>
           </div>
@@ -372,23 +379,23 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
         <button
           onClick={() => speakEnglish(currentQ.sentenceFull)}
           title="Listen full sentence"
-          className="absolute bottom-3 right-3 p-1.5 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
+          className="absolute bottom-3 right-4 p-2 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors cursor-pointer"
         >
           <Volume2 size={20} />
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-3 max-w-2xl w-full">
         {options.map((opt, i) => {
-          let baseBtnClass = "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
-          let hoverBtnClass = "hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30"
+          let baseBtnClass = "bg-white dark:bg-gray-800 border-gray-200/80 dark:border-gray-700 text-gray-800 dark:text-gray-100 shadow-xs"
+          let hoverBtnClass = "hover:border-purple-300 hover:bg-purple-50/50 dark:hover:bg-purple-950/30"
 
           if (selectedOption !== null) {
             if (opt.toLowerCase() === currentQ.targetWord.toLowerCase()) {
-              baseBtnClass = "bg-green-100 dark:bg-green-900/40 border-green-500 text-green-800 dark:text-green-200 font-bold"
+              baseBtnClass = "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-800 dark:text-emerald-200 font-bold ring-2 ring-emerald-400/30"
               hoverBtnClass = ""
             } else if (opt === selectedOption) {
-              baseBtnClass = "bg-red-100 dark:bg-red-900/40 border-red-500 text-red-800 dark:text-red-200 font-bold"
+              baseBtnClass = "bg-rose-50 dark:bg-rose-950/40 border-rose-500 text-rose-800 dark:text-rose-200 font-bold ring-2 ring-rose-400/30"
               hoverBtnClass = ""
             } else {
               baseBtnClass = "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-400 dark:text-gray-600 opacity-50"
@@ -401,12 +408,9 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
               key={`${currentIndex}-${i}`}
               onClick={() => handleSelect(opt)}
               disabled={selectedOption !== null}
-              className={`w-full min-h-[2.75rem] p-2.5 rounded-xl border text-center font-medium transition-all duration-200 relative group ${baseBtnClass} ${hoverBtnClass} flex items-center justify-center cursor-pointer`}
+              className={`w-full min-h-[3.25rem] p-3 rounded-2xl border text-center font-medium transition-all duration-200 relative ${baseBtnClass} ${hoverBtnClass} flex items-center justify-center cursor-pointer`}
             >
-              <span className="hidden sm:inline-flex absolute top-1.5 left-2 px-1 py-0.2 text-[10px] font-bold rounded bg-gray-100 dark:bg-gray-700/60 text-gray-500 dark:text-gray-400 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/50 group-hover:text-purple-600 transition-colors">
-                {i + 1}
-              </span>
-              <div className="line-clamp-2 text-xs sm:text-sm whitespace-pre-wrap break-words px-4">
+              <div className="text-sm sm:text-base font-medium whitespace-pre-wrap break-words px-3">
                 {opt}
               </div>
             </button>
@@ -418,7 +422,7 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
         <button
           onClick={handleSkip}
           disabled={selectedOption !== null}
-          className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-6 py-1.5 text-xs sm:text-sm rounded-lg font-medium transition-colors cursor-pointer"
+          className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-6 py-2 text-xs sm:text-sm rounded-xl font-medium transition-colors cursor-pointer"
         >
           Skip
         </button>

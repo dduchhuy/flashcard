@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Lightbulb, Volume2, SkipForward } from 'lucide-react'
-import { useNotes, EmptyState, RootCardButton, GameStatsBar, CardDetailModal, GameHeader, ResultScreen, shuffle } from './shared'
+import { Lightbulb, Volume2, SkipForward, Eye, EyeOff } from 'lucide-react'
+import { useNotes, EmptyState, RootCardButton, GameStatsBar, CardDetailModal, GameHeader, ResultScreen, shuffle, useGameTimer } from './shared'
 import { useFlashcardStore, Flashcard } from '../../store'
 import { speakEnglish } from '../../utils'
 
@@ -22,6 +22,7 @@ export function MissingLettersGame({ onExit }: { onExit: () => void }) {
   const [skipped, setSkipped] = useState(0)
   const [combo, setCombo] = useState(0)
   const [status, setStatus] = useState<'playing' | 'correct' | 'wrong' | 'skipped'>('playing')
+  const [showMeaning, setShowMeaning] = useState(true)
   const [showModalCard, setShowModalCard] = useState<Flashcard | null>(null)
 
   // Current note and clean target
@@ -50,11 +51,24 @@ export function MissingLettersGame({ onExit }: { onExit: () => void }) {
   const [filledLetters, setFilledLetters] = useState<Record<number, string>>({})
   const [activeBlankIdx, setActiveBlankIdx] = useState<number>(0)
 
+  // Timer configuration
+  const handleTimeUp = () => {
+    if (status !== 'playing') return
+    handleSkip()
+  }
+
+  const timer = useGameTimer({
+    initialDuration: 20,
+    onTimeUp: handleTimeUp,
+    enabled: status === 'playing' && index < notes.length
+  })
+
   // Reset state when cleanWord or hiddenIndices change
   useEffect(() => {
     setFilledLetters({})
     setActiveBlankIdx(hiddenIndices[0] ?? 0)
     setStatus('playing')
+    timer.reset()
   }, [cleanWord, hiddenIndices])
 
   // Distractor options + missing letters for tap bubbles
@@ -135,7 +149,7 @@ export function MissingLettersGame({ onExit }: { onExit: () => void }) {
         e.preventDefault()
         handleBackspace()
       } else if (e.key === 'Enter') {
-        // do nothing or check
+        // do nothing
       } else if (/^[a-zA-Z]$/.test(e.key)) {
         handleInputLetter(e.key)
       }
@@ -191,9 +205,10 @@ export function MissingLettersGame({ onExit }: { onExit: () => void }) {
   const currentCard = flashcards.find(f => f.id === note.cardId)
 
   return (
-    <div className="max-w-xl mx-auto flex flex-col items-center justify-start relative animate-in fade-in py-2 px-4 select-none">
+    <div className="max-w-4xl mx-auto flex flex-col items-center justify-start relative animate-in fade-in py-2 px-4 select-none w-full">
       <GameHeader
         onExit={onExit}
+        timer={timer}
         center={
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
@@ -208,6 +223,13 @@ export function MissingLettersGame({ onExit }: { onExit: () => void }) {
         }
         right={
           <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setShowMeaning(m => !m)}
+              title={showMeaning ? 'Hide Meaning' : 'Show Meaning'}
+              className="p-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer"
+            >
+              {showMeaning ? <Eye size={17} /> : <EyeOff size={17} />}
+            </button>
             <button
               onClick={handleHint}
               disabled={status !== 'playing'}
@@ -229,14 +251,24 @@ export function MissingLettersGame({ onExit }: { onExit: () => void }) {
       />
 
       {/* Main Game Card */}
-      <div className="w-full bg-white dark:bg-gray-800 rounded-3xl border border-gray-200/80 dark:border-gray-700/80 shadow-md p-6 sm:p-8 mt-2 relative flex flex-col items-center text-center">
+      <div className="w-full max-w-2xl bg-white dark:bg-gray-800 rounded-3xl border border-gray-200/80 dark:border-gray-700/80 shadow-md p-6 sm:p-8 mt-2 pb-14 relative flex flex-col items-center text-center">
         {/* Category / Meaning Header */}
         <div className="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-1">
-          Điền chữ cái còn thiếu
+          Missing Letters
         </div>
-        <p className="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-100 max-w-md break-words mb-6">
-          {note.meaning}
-        </p>
+        
+        {showMeaning ? (
+          <p className="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-100 max-w-lg break-words mb-6 min-h-[1.75rem]">
+            {note.meaning}
+          </p>
+        ) : (
+          <div 
+            onClick={() => setShowMeaning(true)}
+            className="text-sm font-medium text-gray-400 dark:text-gray-500 italic mb-6 min-h-[1.75rem] cursor-pointer hover:text-purple-500 transition-colors"
+          >
+            (Meaning hidden · click to show)
+          </div>
+        )}
 
         {/* Word Display with Missing Letter Slots */}
         <div className="flex items-center justify-center flex-wrap gap-1.5 sm:gap-2 mb-8 min-h-[4rem]">
@@ -278,22 +310,9 @@ export function MissingLettersGame({ onExit }: { onExit: () => void }) {
           })}
         </div>
 
-        {/* Audio speaker on correct */}
-        <button
-          type="button"
-          onClick={() => speakEnglish(note.word)}
-          className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors mb-4 cursor-pointer"
-        >
-          <Volume2 size={16} />
-          <span>Nghe phát âm</span>
-        </button>
-
         {/* Interactive Letter Bubble Choices */}
-        <div className="w-full max-w-md pt-2 border-t border-gray-100 dark:border-gray-700/60">
-          <div className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 mb-2">
-            Chọn chữ cái còn thiếu hoặc gõ bàn phím:
-          </div>
-          <div className="flex items-center justify-center flex-wrap gap-2">
+        <div className="w-full max-w-lg pt-2 border-t border-gray-100 dark:border-gray-700/60">
+          <div className="flex items-center justify-center flex-wrap gap-2 pt-2">
             {bubbleOptions.map((optChar, optIdx) => (
               <button
                 key={`${optChar}-${optIdx}`}
@@ -315,6 +334,16 @@ export function MissingLettersGame({ onExit }: { onExit: () => void }) {
             className="absolute bottom-3 left-3"
           />
         )}
+
+        {/* Audio speaker button at bottom-right corner */}
+        <button
+          type="button"
+          onClick={() => speakEnglish(note.word)}
+          title="Listen"
+          className="absolute bottom-3 right-3 p-2 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors cursor-pointer"
+        >
+          <Volume2 size={20} />
+        </button>
       </div>
 
       <GameStatsBar correct={correct} wrong={wrong} skipped={skipped} />

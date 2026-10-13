@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Lightbulb, Shuffle, Volume2 } from 'lucide-react'
-import { shuffle, useNotes, EmptyState, softBtn, RootCardButton, GameStatsBar, CardDetailModal, GameHeader, ResultScreen } from './shared'
+import { Lightbulb, Shuffle, Volume2, SkipForward } from 'lucide-react'
+import { shuffle, useNotes, EmptyState, softBtn, RootCardButton, GameStatsBar, CardDetailModal, GameHeader, ResultScreen, useGameTimer } from './shared'
 import { useFlashcardStore, Flashcard } from '../../store'
 import { speakEnglish } from '../../utils'
 
@@ -21,10 +21,22 @@ export function ScrambleGame({ onExit }: { onExit: () => void }) {
   const note = notes[index]
   const letters = useMemo(() => (note ? note.word.replace(/\s/g, '').split('') : []), [note])
 
+  const handleTimeUp = () => {
+    if (status !== 'playing') return
+    handleSkip()
+  }
+
+  const timer = useGameTimer({
+    initialDuration: 25,
+    onTimeUp: handleTimeUp,
+    enabled: status === 'playing' && index < notes.length
+  })
+
   useEffect(() => {
     setSlots(new Array(letters.length).fill(null))
     setHintedSlots([])
     setStatus('playing')
+    timer.reset()
   }, [letters])
 
   const tiles = useMemo(() => {
@@ -179,23 +191,24 @@ export function ScrambleGame({ onExit }: { onExit: () => void }) {
       <button
         key={i}
         onClick={() => tileId !== null && removeAt(pos)}
-        className={`w-8 sm:w-9 h-10 sm:h-11 rounded-lg border-2 text-base sm:text-lg font-bold flex items-center justify-center transition-colors cursor-pointer ${
-          status === 'correct' ? 'bg-green-100 border-green-500 text-green-700 dark:bg-green-900/40 dark:text-green-300' :
-          status === 'wrong' ? 'bg-red-100 border-red-500 text-red-700 dark:bg-red-900/40 dark:text-red-300' :
-          status === 'skipped' ? 'bg-orange-100 border-orange-500 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' :
+        className={`w-9 sm:w-11 h-11 sm:h-13 rounded-xl border-2 text-lg sm:text-xl font-black flex items-center justify-center transition-colors cursor-pointer uppercase ${
+          status === 'correct' ? 'bg-emerald-50 border-emerald-500 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' :
+          status === 'wrong' ? 'bg-rose-50 border-rose-500 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300' :
+          status === 'skipped' ? 'bg-amber-50 border-amber-500 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300' :
           isHinted ? 'bg-purple-100 border-purple-400 text-purple-700 dark:bg-purple-900/50 dark:border-purple-500 dark:text-purple-200' :
           filled ? 'bg-purple-50 border-purple-300 text-purple-700 dark:bg-purple-900/30 dark:border-purple-600 dark:text-purple-200' :
-          'bg-white border-gray-300 dark:bg-gray-700 dark:border-gray-600'
+          'bg-white border-dashed border-gray-300 dark:bg-gray-800 dark:border-gray-600'
         }`}
       >{filled}</button>
     )
   })
 
   return (
-    <div className="max-w-2xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full">
+    <div className="max-w-4xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full items-center w-full">
       <GameHeader
         onExit={onExit}
-        title="Xáo trộn chữ cái · Word Scramble"
+        timer={timer}
+        title="Word Scramble"
         current={index + 1}
         total={notes.length}
         right={
@@ -208,7 +221,7 @@ export function ScrambleGame({ onExit }: { onExit: () => void }) {
               }}
               disabled={status !== 'playing'}
               title="Shuffle letters"
-              className="p-1.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors disabled:opacity-40"
+              className="p-1.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors disabled:opacity-40 cursor-pointer"
             >
               <Shuffle size={16} />
             </button>
@@ -216,15 +229,23 @@ export function ScrambleGame({ onExit }: { onExit: () => void }) {
               onClick={hint}
               disabled={status !== 'playing'}
               title="Hint next letter"
-              className="p-1.5 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-600 hover:bg-amber-100 transition-colors disabled:opacity-40"
+              className="p-1.5 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-600 hover:bg-amber-100 transition-colors disabled:opacity-40 cursor-pointer"
             >
               <Lightbulb size={16} />
+            </button>
+            <button
+              onClick={handleSkip}
+              disabled={status !== 'playing'}
+              title="Skip"
+              className="p-1.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors disabled:opacity-40 cursor-pointer"
+            >
+              <SkipForward size={16} />
             </button>
           </div>
         }
       />
 
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700 p-4 sm:p-5 pt-8 sm:pt-10 text-center max-w-xl mx-auto w-full relative mb-2">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-md border border-gray-200/80 dark:border-gray-700/80 p-6 sm:p-8 text-center max-w-2xl mx-auto w-full relative mb-3 pb-16">
         <RootCardButton
           onClick={() => {
             const c = flashcards.find(f => f.id === note.cardId)
@@ -236,19 +257,19 @@ export function ScrambleGame({ onExit }: { onExit: () => void }) {
         <button
           onClick={() => speakEnglish(note.word)}
           title="Listen"
-          className="absolute bottom-3 right-3 p-1.5 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
+          className="absolute bottom-3 right-3 p-2 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors cursor-pointer"
         >
           <Volume2 size={20} />
         </button>
 
-        <div className="bg-purple-50 dark:bg-gray-900 rounded-xl p-2.5 sm:p-3 mb-3 mt-1 border border-purple-100 dark:border-gray-700">
-          <span className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Meaning</span>
-          <span className="font-medium text-purple-700 dark:text-purple-300 text-sm sm:text-base break-words whitespace-pre-wrap">{note.meaning}</span>
+        <div className="bg-purple-50/70 dark:bg-gray-900/50 rounded-2xl p-3 sm:p-4 mb-5 border border-purple-100/80 dark:border-gray-700">
+          <span className="text-xs uppercase tracking-wider font-semibold text-purple-600 dark:text-purple-400 block mb-1">Meaning</span>
+          <span className="font-semibold text-gray-800 dark:text-gray-100 text-base sm:text-lg break-words whitespace-pre-wrap">{note.meaning}</span>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 mb-3">{renderedSlots}</div>
+        <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 mb-6">{renderedSlots}</div>
 
-        <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 mb-3 min-h-[2.5rem]">
+        <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 mb-4 min-h-[3rem]">
           {tiles.map(t => {
             const isUsed = slots.includes(t.id)
             return (
@@ -256,10 +277,10 @@ export function ScrambleGame({ onExit }: { onExit: () => void }) {
                 key={t.id}
                 onClick={() => addTile(t.id)}
                 disabled={isUsed || status !== 'playing'}
-                className={`w-8 sm:w-9 h-10 sm:h-11 rounded-lg text-base sm:text-lg font-bold transition-all cursor-pointer ${
+                className={`w-9 sm:w-11 h-11 sm:h-13 rounded-xl text-lg sm:text-xl font-black uppercase transition-all cursor-pointer ${
                   isUsed
                     ? 'bg-transparent border-2 border-dashed border-gray-200 dark:border-gray-700 text-transparent cursor-default'
-                    : 'bg-purple-600 text-white hover:bg-purple-700 hover:-translate-y-0.5 shadow-2xs'
+                    : 'bg-purple-600 text-white hover:bg-purple-700 hover:-translate-y-0.5 shadow-sm active:scale-95'
                 }`}
               >{t.ch}</button>
             )
@@ -278,9 +299,16 @@ export function ScrambleGame({ onExit }: { onExit: () => void }) {
             className={softBtn}
           >
             <Shuffle size={16} />
+            <span>Shuffle</span>
           </button>
-          <button onClick={hint} disabled={status !== 'playing'} title="Hint" className={softBtn}><Lightbulb size={16} /></button>
-          <button onClick={handleSkip} disabled={status !== 'playing'} className={`${softBtn} text-xs sm:text-sm`}>Skip</button>
+          <button onClick={hint} disabled={status !== 'playing'} title="Hint" className={softBtn}>
+            <Lightbulb size={16} />
+            <span>Hint</span>
+          </button>
+          <button onClick={handleSkip} disabled={status !== 'playing'} className={`${softBtn} text-xs sm:text-sm`}>
+            <SkipForward size={16} />
+            <span>Skip</span>
+          </button>
         </div>
       </div>
 

@@ -34,3 +34,17 @@ body {
   background: rgba(156, 163, 175, 0.6);
 }
 
+/* Hide scrollbar utility */
+.hide-scrollbar,
+.hide-scrollbar * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.hide-scrollbar::-webkit-scrollbar,
+.hide-scrollbar *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+

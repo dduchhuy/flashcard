@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useFlashcardStore, getCardTags, getCardsForMode, normalizePhraseItem } from '../../store'
 import { Volume2, VolumeX } from 'lucide-react'
 import { extractWordText, speakEnglish } from '../../utils'
-import { GameHeader, ResultScreen } from './shared'
+import { GameHeader, ResultScreen, useGameTimer } from './shared'
 
 type CardItem = {
   uid: string
@@ -16,7 +16,9 @@ type CardItem = {
 export function MemoryGame({ onExit }: { onExit: () => void }) {
   const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
-  const [memMode, setMemMode] = useState<'highlights' | 'phrases'>('highlights')
+  const [memMode, setMemMode] = useState<'words' | 'word-first' | 'phrases'>('words')
+  const [isGameOver, setIsGameOver] = useState(false)
+  const [score, setScore] = useState(0)
 
   const allPairs = useMemo(() => {
     const pairs: { id: string, word: string, meaning: string }[] = []
@@ -38,23 +40,32 @@ export function MemoryGame({ onExit }: { onExit: () => void }) {
       return pairs.sort(() => Math.random() - 0.5)
     }
 
+    if (memMode === 'word-first') {
+      filtered.forEach(card => {
+        const h = (card.highlights || [])[0]
+        if (!h) return
+        pairs.push({
+          id: h.id,
+          word: extractWordText(card.sentence, h.wordIndices),
+          meaning: h.meaning
+        })
+      })
+      return pairs.sort(() => Math.random() - 0.5)
+    }
+
+    // Default: all words/highlights
     filtered.forEach(card => {
       const highlights = card.highlights || []
-      if (highlights.length === 0) return
-      let selectedHighlight = highlights[0]
-      if (highlights.length > 1) {
-        const randIndex = Math.floor(Math.abs(Math.sin(card.id.length + seed)) * highlights.length)
-        selectedHighlight = highlights[randIndex]
-      }
-      const h = selectedHighlight
-      pairs.push({
-        id: h.id,
-        word: extractWordText(card.sentence, h.wordIndices),
-        meaning: h.meaning
+      highlights.forEach(h => {
+        pairs.push({
+          id: h.id,
+          word: extractWordText(card.sentence, h.wordIndices),
+          meaning: h.meaning
+        })
       })
     })
     return pairs.sort(() => Math.random() - 0.5)
-  }, [flashcards, seed, memMode])
+  }, [flashcards, seed, activeTags, gameInputMode, memMode])
 
   const [currentRound, setCurrentRound] = useState(0)
   
@@ -67,6 +78,16 @@ export function MemoryGame({ onExit }: { onExit: () => void }) {
   const [flippedUids, setFlippedUids] = useState<string[]>([])
   const [isAnimating, setIsAnimating] = useState(false)
   const [autoSpeak, setAutoSpeak] = useState(true)
+
+  const handleTimeUp = () => {
+    setIsGameOver(true)
+  }
+
+  const timer = useGameTimer({
+    initialDuration: 60,
+    onTimeUp: handleTimeUp,
+    enabled: !isGameOver && currentRound * 6 < allPairs.length
+  })
 
   useEffect(() => {
     if (actualRoundPairs.length > 0) {
@@ -82,7 +103,7 @@ export function MemoryGame({ onExit }: { onExit: () => void }) {
   }, [actualRoundPairs])
 
   const handleFlip = (uid: string) => {
-    if (isAnimating) return
+    if (isAnimating || isGameOver) return
     const card = cards.find(c => c.uid === uid)
     if (!card || card.isMatched || card.isFlipped) return
 
@@ -99,14 +120,17 @@ export function MemoryGame({ onExit }: { onExit: () => void }) {
       const c2 = cards.find(c => c.uid === newFlipped[1])
       
       if (c1 && c2 && c1.pairId === c2.pairId) {
-        // match
+        // match: +1s bonus
+        timer.addTime(1)
+        setScore(s => s + 1)
         setTimeout(() => {
           setCards(prev => prev.map(c => newFlipped.includes(c.uid) ? { ...c, isMatched: true } : c))
           setFlippedUids([])
           setIsAnimating(false)
         }, 600)
       } else {
-        // mismatch
+        // mismatch: -1s penalty
+        timer.addTime(-1)
         setTimeout(() => {
           setCards(prev => prev.map(c => newFlipped.includes(c.uid) ? { ...c, isFlipped: false } : c))
           setFlippedUids([])
@@ -135,6 +159,24 @@ export function MemoryGame({ onExit }: { onExit: () => void }) {
     )
   }
 
+  if (isGameOver) {
+    return (
+      <ResultScreen
+        title="Time's Up!"
+        correct={score}
+        wrong={0}
+        onExit={onExit}
+        onAgain={() => {
+          setIsGameOver(false)
+          setScore(0)
+          setSeed(s => s + 1)
+          setCurrentRound(0)
+          timer.reset()
+        }}
+      />
+    )
+  }
+
   if (currentRound * 6 >= allPairs.length && allPairs.length > 0) {
     return (
       <ResultScreen
@@ -142,7 +184,13 @@ export function MemoryGame({ onExit }: { onExit: () => void }) {
         correct={allPairs.length}
         wrong={0}
         onExit={onExit}
-        onAgain={() => { setSeed(s => s + 1); setCurrentRound(0) }}
+        onAgain={() => { 
+          setSeed(s => s + 1)
+          setCurrentRound(0)
+          setScore(0)
+          setIsGameOver(false)
+          timer.reset()
+        }}
       />
     )
   }
@@ -151,21 +199,42 @@ export function MemoryGame({ onExit }: { onExit: () => void }) {
   const progressPercent = cards.length > 0 ? Math.round((matchedCount / cards.length) * 100) : 0
 
   return (
-    <div className="max-w-2xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full">
+    <div className="max-w-4xl sm:max-w-5xl mx-auto py-2 px-3 sm:px-6 animate-in fade-in flex flex-col h-full w-full">
       <GameHeader
         onExit={onExit}
         progress={progressPercent}
+        timer={timer}
         center={
           <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg border border-gray-200/60 dark:border-gray-700/60 text-xs font-semibold">
             <button
-              onClick={() => { setMemMode('highlights'); setCurrentRound(0); setSeed(s => s + 1) }}
-              className={`px-2.5 py-1 rounded-md transition-colors ${memMode === 'highlights' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+              onClick={() => {
+                if (memMode === 'words') setMemMode('word-first')
+                else if (memMode === 'word-first') setMemMode('words')
+                else setMemMode('words')
+                setCurrentRound(0)
+                setSeed(s => s + 1)
+                timer.reset()
+              }}
+              className={`px-3 py-1 rounded-md transition-colors ${
+                memMode === 'words' || memMode === 'word-first'
+                  ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300 font-bold'
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
             >
-              Words
+              {memMode === 'word-first' ? 'Word¹' : 'Words*'}
             </button>
             <button
-              onClick={() => { setMemMode('phrases'); setCurrentRound(0); setSeed(s => s + 1) }}
-              className={`px-2.5 py-1 rounded-md transition-colors ${memMode === 'phrases' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+              onClick={() => { 
+                setMemMode('phrases')
+                setCurrentRound(0)
+                setSeed(s => s + 1)
+                timer.reset()
+              }}
+              className={`px-3 py-1 rounded-md transition-colors ${
+                memMode === 'phrases' 
+                  ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300 font-bold' 
+                  : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
             >
               Phrases
             </button>
@@ -182,25 +251,25 @@ export function MemoryGame({ onExit }: { onExit: () => void }) {
         }
       />
 
-      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 flex-1 perspective-1000">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5 sm:gap-3 flex-1 perspective-1000 my-auto py-4">
         {cards.map(c => (
           <div 
             key={c.uid} 
-            className="relative w-full aspect-[3/2] cursor-pointer group"
+            className="relative w-full aspect-[4/3] sm:aspect-[3/2] cursor-pointer group select-none"
             onClick={() => handleFlip(c.uid)}
           >
             <div className={`w-full h-full transition-all duration-500 transform-style-3d ${c.isFlipped ? 'rotate-y-180' : ''}`}>
               {/* Front (Face down) */}
-              <div className={`absolute w-full h-full bg-purple-100 dark:bg-purple-900/30 rounded-xl border-2 border-purple-200 dark:border-purple-800 backface-hidden ${c.isFlipped ? 'opacity-0' : 'opacity-100'} group-hover:bg-purple-200 dark:group-hover:bg-purple-900/50 transition-colors flex items-center justify-center text-purple-300`}>
-                <span className="text-2xl sm:text-3xl opacity-50 font-bold">?</span>
+              <div className={`absolute inset-0 bg-purple-50 dark:bg-purple-950/40 rounded-xl border-2 border-purple-200 dark:border-purple-800/80 backface-hidden ${c.isFlipped ? 'opacity-0' : 'opacity-100'} group-hover:bg-purple-100 dark:group-hover:bg-purple-900/50 group-hover:border-purple-300 transition-colors flex items-center justify-center text-purple-300 dark:text-purple-500 shadow-xs`}>
+                <span className="text-2xl sm:text-3xl opacity-40 font-black">?</span>
               </div>
               
               {/* Back (Face up) */}
-              <div className={`absolute w-full h-full rounded-xl border-2 backface-hidden rotate-y-180 p-1.5 sm:p-2 flex items-center justify-center text-center text-xs sm:text-sm font-medium break-words shadow-sm ${
-                c.isMatched ? 'bg-green-100 border-green-500 text-green-700 dark:bg-green-900/40 dark:text-green-200' :
+              <div className={`absolute inset-0 rounded-xl border-2 backface-hidden rotate-y-180 p-2 sm:p-2.5 flex items-center justify-center text-center text-xs sm:text-sm font-medium break-words shadow-sm transition-all ${
+                c.isMatched ? 'bg-emerald-50 border-emerald-500 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200 font-semibold' :
                 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200'
               }`}>
-                <span className="line-clamp-2 sm:line-clamp-3 leading-tight">{c.text}</span>
+                <span className="line-clamp-3 leading-snug">{c.text}</span>
               </div>
             </div>
           </div>
@@ -213,8 +282,8 @@ export function MemoryGame({ onExit }: { onExit: () => void }) {
         .backface-hidden { backface-visibility: hidden; }
         .rotate-y-180 { transform: rotateY(180deg); }
       `}} />
-      <p className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 mt-2">
-        Round {currentRound + 1}
+      <p className="text-center text-xs font-medium text-gray-400 dark:text-gray-500 mt-2 mb-1">
+        Round {currentRound + 1} • Matches: {cards.filter(c => c.isMatched).length / 2} / 6
       </p>
     </div>
   )

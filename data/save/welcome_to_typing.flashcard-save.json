@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "bookId": "sample-welcome-book",
+  "bookTitle": "Welcome to Typing",
+  "exportedAt": 1791901530677,
+  "progress": {},
+  "lastPosition": {
+    "chapterId": "welcome-intro",
+    "pIdx": 0
+  },
+  "sentenceLinks": {},
+  "linkedFlashcards": []
+}

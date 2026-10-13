@@ -382,9 +382,12 @@ export interface AppSettings {
   voiceGender: 'Male' | 'Female' | 'Random'
   isSpecialAccent?: boolean
   specialAccent?: 'Indian' | 'Irish' | 'French'
-  homeRandomType?: 'all' | 'words' | 'phrases'
+  homeRandomType?: 'all' | 'words' | 'phrases' | 'sentences' | 'words_phrases' | 'words_sentences'
   homeUpdateTrigger?: 'reload' | 'timer'
   homeTimerMinutes?: number
+  showScrollbar?: boolean
+  gitDataAutoLoad?: boolean
+  lastGitSync?: number
 }
 
 export const defaultSettings: AppSettings = {
@@ -402,6 +405,8 @@ export const defaultSettings: AppSettings = {
   homeRandomType: 'all',
   homeUpdateTrigger: 'reload',
   homeTimerMinutes: 10,
+  showScrollbar: true,
+  gitDataAutoLoad: true,
 }
 
 interface FlashcardState {

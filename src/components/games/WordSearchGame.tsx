@@ -1,10 +1,18 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Check, Volume2, RefreshCw } from 'lucide-react'
-import { useNotes, EmptyState, RootCardButton, CardDetailModal, GameHeader, ResultScreen, Note } from './shared'
+import { useNotes, EmptyState, CardDetailModal, GameHeader, ResultScreen, useGameTimer, Note } from './shared'
 import { useFlashcardStore, Flashcard } from '../../store'
 import { speakEnglish } from '../../utils'
 
-const GRID_SIZE = 9 // 9x9 grid fits comfortably on mobile screens
+type Difficulty = 'easy' | 'normal' | 'hard' | 'evil'
+
+const DIFFICULTY_CONFIG: Record<Difficulty, { size: number; wordCount: number; maxWordLen: number }> = {
+  easy: { size: 7, wordCount: 3, maxWordLen: 6 },
+  normal: { size: 9, wordCount: 5, maxWordLen: 8 },
+  hard: { size: 11, wordCount: 7, maxWordLen: 10 },
+  evil: { size: 13, wordCount: 9, maxWordLen: 12 },
+}
+
 const PALETTE = [
   'bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 border-emerald-500',
   'bg-purple-500/20 text-purple-800 dark:text-purple-200 border-purple-500',
@@ -12,6 +20,10 @@ const PALETTE = [
   'bg-amber-500/20 text-amber-800 dark:text-amber-200 border-amber-500',
   'bg-rose-500/20 text-rose-800 dark:text-rose-200 border-rose-500',
   'bg-cyan-500/20 text-cyan-800 dark:text-cyan-200 border-cyan-500',
+  'bg-violet-500/20 text-violet-800 dark:text-violet-200 border-violet-500',
+  'bg-teal-500/20 text-teal-800 dark:text-teal-200 border-teal-500',
+  'bg-orange-500/20 text-orange-800 dark:text-orange-200 border-orange-500',
+  'bg-pink-500/20 text-pink-800 dark:text-pink-200 border-pink-500',
 ]
 
 interface PlacedWord {
@@ -25,32 +37,37 @@ interface PlacedWord {
 export function WordSearchGame({ onExit }: { onExit: () => void }) {
   const { flashcards } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
+  const [difficulty, setDifficulty] = useState<Difficulty>('normal')
+  const [isGameOver, setIsGameOver] = useState(false)
   const allNotes = useNotes(seed, true)
 
-  // Filter valid words: 3 to 7 letters, english letters only
+  const config = DIFFICULTY_CONFIG[difficulty]
+  const gridSize = config.size
+
+  // Filter valid words: 3 to maxWordLen letters, english letters only
   const eligibleNotes = useMemo(() => {
     return allNotes.filter(n => {
       const clean = n.word.trim().toLowerCase().replace(/[^a-z]/g, '')
-      return clean.length >= 3 && clean.length <= GRID_SIZE - 1
+      return clean.length >= 3 && clean.length <= config.maxWordLen
     })
-  }, [allNotes])
+  }, [allNotes, config.maxWordLen])
 
-  // Select 5 words for the current puzzle
+  // Select target words based on difficulty wordCount
   const selectedNotes = useMemo(() => {
     const uniqueMap = new Map<string, Note>()
     for (const n of eligibleNotes) {
       const clean = n.word.trim().toLowerCase().replace(/[^a-z]/g, '')
       if (!uniqueMap.has(clean)) uniqueMap.set(clean, n)
-      if (uniqueMap.size >= 5) break
+      if (uniqueMap.size >= config.wordCount) break
     }
     return Array.from(uniqueMap.values())
-  }, [eligibleNotes, seed])
+  }, [eligibleNotes, config.wordCount, seed])
 
   // Build grid & place words
   const { grid, placedWords: initialPlaced } = useMemo(() => {
     if (selectedNotes.length === 0) return { grid: [], placedWords: [] }
 
-    const g: string[][] = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(''))
+    const g: string[][] = Array.from({ length: gridSize }, () => Array(gridSize).fill(''))
     const placed: PlacedWord[] = []
 
     const directions = [
@@ -69,8 +86,8 @@ export function WordSearchGame({ onExit }: { onExit: () => void }) {
         attempts++
         const dir = directions[Math.floor(Math.random() * directions.length)]
         const minR = dir.dr < 0 ? w.length - 1 : 0
-        const maxR = dir.dr > 0 ? GRID_SIZE - w.length : GRID_SIZE - 1
-        const maxC = GRID_SIZE - w.length
+        const maxR = dir.dr > 0 ? gridSize - w.length : gridSize - 1
+        const maxC = gridSize - w.length
 
         if (maxR < minR || maxC < 0) continue
 
@@ -110,8 +127,8 @@ export function WordSearchGame({ onExit }: { onExit: () => void }) {
 
     // Fill remaining cells with random letters
     const alphabet = 'abcdefghijklmnopqrstuvwxyz'
-    for (let r = 0; r < GRID_SIZE; r++) {
-      for (let c = 0; c < GRID_SIZE; c++) {
+    for (let r = 0; r < gridSize; r++) {
+      for (let c = 0; c < gridSize; c++) {
         if (g[r][c] === '') {
           g[r][c] = alphabet[Math.floor(Math.random() * alphabet.length)]
         }
@@ -119,29 +136,31 @@ export function WordSearchGame({ onExit }: { onExit: () => void }) {
     }
 
     return { grid: g, placedWords: placed }
-  }, [selectedNotes])
+  }, [selectedNotes, gridSize])
 
   const [placedWords, setPlacedWords] = useState<PlacedWord[]>([])
   const [dragStart, setDragStart] = useState<{ r: number; c: number } | null>(null)
   const [dragEnd, setDragEnd] = useState<{ r: number; c: number } | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [showModalCard, setShowModalCard] = useState<Flashcard | null>(null)
-  const [elapsedTime, setElapsedTime] = useState(0)
 
   useEffect(() => {
     setPlacedWords(initialPlaced)
     setDragStart(null)
     setDragEnd(null)
-    setElapsedTime(0)
   }, [initialPlaced])
 
-  // Timer
   const allFound = placedWords.length > 0 && placedWords.every(p => p.found)
-  useEffect(() => {
-    if (allFound) return
-    const timer = setInterval(() => setElapsedTime(t => t + 1), 1000)
-    return () => clearInterval(timer)
-  }, [allFound])
+
+  const handleTimeUp = () => {
+    setIsGameOver(true)
+  }
+
+  const timer = useGameTimer({
+    initialDuration: 90,
+    onTimeUp: handleTimeUp,
+    enabled: !isGameOver && !allFound && placedWords.length > 0
+  })
 
   // Compute selected cells from dragStart to dragEnd in a straight line
   const selectedCells = useMemo(() => {
@@ -191,6 +210,7 @@ export function WordSearchGame({ onExit }: { onExit: () => void }) {
         const updated = [...placedWords]
         updated[matchIdx].found = true
         setPlacedWords(updated)
+        timer.addTime(10) // +10s bonus on found word!
         speakEnglish(updated[matchIdx].note.word)
       }
     }
@@ -200,7 +220,25 @@ export function WordSearchGame({ onExit }: { onExit: () => void }) {
   }
 
   if (selectedNotes.length === 0) {
-    return <EmptyState onExit={onExit} text="Not enough 3–8 letter vocabulary words for Word Search." />
+    return <EmptyState onExit={onExit} text="Not enough suitable vocabulary words for Word Search." />
+  }
+
+  const foundCount = placedWords.filter(p => p.found).length
+
+  if (isGameOver) {
+    return (
+      <ResultScreen
+        title="Time's Up!"
+        correct={foundCount}
+        wrong={placedWords.length - foundCount}
+        onExit={onExit}
+        onAgain={() => {
+          setIsGameOver(false)
+          setSeed(s => s + 1)
+          timer.reset()
+        }}
+      />
+    )
   }
 
   if (allFound) {
@@ -210,32 +248,66 @@ export function WordSearchGame({ onExit }: { onExit: () => void }) {
         correct={placedWords.length}
         wrong={0}
         onExit={onExit}
-        onAgain={() => setSeed(s => s + 1)}
+        onAgain={() => {
+          setIsGameOver(false)
+          setSeed(s => s + 1)
+          timer.reset()
+        }}
       />
     )
   }
 
-  const foundCount = placedWords.filter(p => p.found).length
+  const progressPercent = Math.round((foundCount / (placedWords.length || 1)) * 100)
+
+  const cellClass = gridSize >= 13
+    ? 'w-7 sm:w-8 md:w-9 h-7 sm:h-8 md:h-9 aspect-square text-xs sm:text-sm'
+    : gridSize >= 11
+    ? 'w-8 sm:w-9 md:w-10 h-8 sm:h-9 md:h-10 aspect-square text-xs sm:text-base'
+    : gridSize >= 9
+    ? 'w-9 sm:w-11 md:w-12 h-9 sm:h-11 md:h-12 aspect-square text-sm sm:text-lg'
+    : 'w-11 sm:w-13 md:w-14 h-11 sm:h-13 md:h-14 aspect-square text-base sm:text-xl'
 
   return (
     <div 
-      className="max-w-2xl mx-auto flex flex-col items-center justify-start relative animate-in fade-in py-2 px-3 select-none touch-none"
+      className="max-w-4xl sm:max-w-5xl mx-auto flex flex-col items-center justify-start relative animate-in fade-in py-2 px-3 sm:px-6 select-none touch-none w-full"
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
     >
       <GameHeader
+        title="Word Search"
         onExit={onExit}
+        progress={progressPercent}
+        timer={timer}
         center={
-          <div className="flex items-center gap-2 text-xs font-bold text-gray-600 dark:text-gray-300">
-            <span>Tìm được: {foundCount} / {placedWords.length}</span>
-            <span className="text-gray-400">·</span>
-            <span className="font-mono text-purple-600 dark:text-purple-400">{elapsedTime}s</span>
+          <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg border border-gray-200/60 dark:border-gray-700/60 text-xs font-semibold">
+            {(['easy', 'normal', 'hard', 'evil'] as Difficulty[]).map(d => (
+              <button
+                key={d}
+                onClick={() => {
+                  setDifficulty(d)
+                  setSeed(s => s + 1)
+                  setIsGameOver(false)
+                  timer.reset()
+                }}
+                className={`px-2.5 py-1 rounded-md capitalize transition-colors ${
+                  difficulty === d
+                    ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300 font-bold'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                }`}
+              >
+                {d}
+              </button>
+            ))}
           </div>
         }
         right={
           <button
-            onClick={() => setSeed(s => s + 1)}
-            title="Tạo bảng mới"
+            onClick={() => {
+              setSeed(s => s + 1)
+              setIsGameOver(false)
+              timer.reset()
+            }}
+            title="New Puzzle"
             className="p-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 hover:text-purple-600 transition-colors cursor-pointer"
           >
             <RefreshCw size={16} />
@@ -243,12 +315,12 @@ export function WordSearchGame({ onExit }: { onExit: () => void }) {
         }
       />
 
-      <div className="w-full flex flex-col md:flex-row items-center md:items-start justify-center gap-5 mt-2">
+      <div className="w-full flex flex-col lg:flex-row items-center lg:items-start justify-center gap-6 mt-3">
         {/* Letter Grid */}
-        <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-3xl border border-gray-200/80 dark:border-gray-700/80 shadow-md">
+        <div className="bg-white dark:bg-gray-800 p-3 sm:p-5 rounded-3xl border border-gray-200/80 dark:border-gray-700/80 shadow-md">
           <div 
             className="grid gap-1 sm:gap-1.5"
-            style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))` }}
+            style={{ gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))` }}
           >
             {grid.map((row, r) =>
               row.map((ch, c) => {
@@ -261,7 +333,7 @@ export function WordSearchGame({ onExit }: { onExit: () => void }) {
                     key={`${r}-${c}`}
                     onPointerDown={() => handlePointerDown(r, c)}
                     onPointerEnter={() => handlePointerEnter(r, c)}
-                    className={`w-7 sm:w-8 md:w-9 h-7 sm:h-8 md:h-9 rounded-lg flex items-center justify-center font-bold text-xs sm:text-sm uppercase transition-all cursor-pointer ${
+                    className={`${cellClass} rounded-lg flex items-center justify-center font-bold uppercase transition-all cursor-pointer ${
                       isSelected
                         ? 'bg-purple-600 text-white scale-105 shadow-sm ring-2 ring-purple-400'
                         : foundItem
@@ -278,11 +350,11 @@ export function WordSearchGame({ onExit }: { onExit: () => void }) {
         </div>
 
         {/* Target Words Checklist */}
-        <div className="w-full md:w-60 bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200/70 dark:border-gray-700/70 shadow-sm flex flex-col">
+        <div className="w-full lg:w-72 bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200/70 dark:border-gray-700/70 shadow-sm flex flex-col">
           <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2.5">
-            Từ cần tìm ({placedWords.length})
+            Target Words ({foundCount} / {placedWords.length})
           </h4>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
+          <div className="space-y-2 max-h-96 overflow-y-auto">
             {placedWords.map((item, idx) => {
               const card = flashcards.find(f => f.id === item.note.cardId)
               return (
@@ -292,7 +364,7 @@ export function WordSearchGame({ onExit }: { onExit: () => void }) {
                     speakEnglish(item.note.word)
                     if (card) setShowModalCard(card)
                   }}
-                  className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between gap-2 ${
                     item.found
                       ? 'border-emerald-300 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-200 line-through opacity-80'
                       : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600 bg-gray-50/50 dark:bg-gray-800 text-gray-800 dark:text-gray-100'
@@ -313,18 +385,6 @@ export function WordSearchGame({ onExit }: { onExit: () => void }) {
             })}
           </div>
         </div>
-      </div>
-
-      <div className="w-full flex justify-start mt-2 max-w-2xl px-2">
-        <RootCardButton
-          onClick={() => {
-            const first = placedWords[0]
-            if (first) {
-              const c = flashcards.find(f => f.id === first.note.cardId)
-              if (c) setShowModalCard(c)
-            }
-          }}
-        />
       </div>
 
       <CardDetailModal

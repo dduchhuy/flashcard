@@ -1,0 +1,186 @@
+[
+  {
+    "id": "a7f68cd9-67b6-41aa-9dfc-3d1aa7eeaac9",
+    "sentence": "z",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": []
+    },
+    "illustrations": [],
+    "wordForms": [],
+    "tags": [],
+    "createdAt": 1791825450508,
+    "highlights": []
+  },
+  {
+    "id": "cba7ae09-4645-4965-b138-dd396370325d",
+    "sentence": "zz",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": []
+    },
+    "illustrations": [],
+    "wordForms": [],
+    "tags": [],
+    "createdAt": 1791825447260,
+    "highlights": []
+  },
+  {
+    "id": "1aab53e5-da9d-4940-9ee0-c62645fe6633",
+    "sentence": "Test abc xyz",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": []
+    },
+    "illustrations": [],
+    "wordForms": [],
+    "tags": [],
+    "createdAt": 1791825740719,
+    "highlights": [
+      {
+        "id": "2695a253-9ae9-43fa-a820-4952b56a7c82",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "zxc"
+      },
+      {
+        "id": "175ac40e-9d1f-4a72-a3c2-b7877b9f6930",
+        "wordIndices": [
+          1,
+          2
+        ],
+        "meaning": "c"
+      }
+    ]
+  },
+  {
+    "id": "66accd3f-379c-431a-9f0a-958b3e4d645b",
+    "sentence": "ab c c",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": []
+    },
+    "illustrations": [],
+    "wordForms": [],
+    "tags": [],
+    "createdAt": 1791867711281,
+    "highlights": []
+  },
+  {
+    "id": "79667958-bbc7-4c36-94aa-625703a33fc0",
+    "sentence": "test",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": []
+    },
+    "illustrations": [],
+    "wordForms": [],
+    "tags": [],
+    "createdAt": 1791867748563,
+    "highlights": []
+  },
+  {
+    "id": "17c54ca8-1c6e-4490-8e95-ffa7ae3e403f",
+    "sentence": "test test",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": []
+    },
+    "illustrations": [],
+    "wordForms": [],
+    "tags": [],
+    "createdAt": 1791867759645,
+    "highlights": []
+  },
+  {
+    "id": "7b4d7f9c-dffc-46eb-95b8-10404769ba60",
+    "sentence": "Actually",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": []
+    },
+    "illustrations": [],
+    "wordForms": [],
+    "tags": [],
+    "createdAt": 1791890464361,
+    "highlights": []
+  },
+  {
+    "id": "71675794-8d67-4519-b91d-a5198c580017",
+    "sentence": "ab",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": []
+    },
+    "illustrations": [],
+    "wordForms": [],
+    "tags": [],
+    "createdAt": 1791890483832,
+    "highlights": []
+  }
+]

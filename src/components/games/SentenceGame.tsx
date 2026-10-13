@@ -1,8 +1,8 @@
-import { useState, useMemo, useRef } from 'react'
-import { RotateCcw, Volume2 } from 'lucide-react'
+import { useState, useMemo, useRef, useEffect } from 'react'
+import { RotateCcw, Volume2, SkipForward } from 'lucide-react'
 import { useFlashcardStore, getCardTags, getCardsForMode, Flashcard, normalizePhraseItem } from '../../store'
 import { extractWordsAndSpaces, speakEnglish } from '../../utils'
-import { shuffle, EmptyState, softBtn, RootCardButton, GameStatsBar, CardDetailModal, GameHeader, ResultScreen } from './shared'
+import { shuffle, EmptyState, softBtn, RootCardButton, GameStatsBar, CardDetailModal, GameHeader, ResultScreen, useGameTimer } from './shared'
 
 export function SentenceGame({ onExit }: { onExit: () => void }) {
   const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
@@ -64,6 +64,21 @@ export function SentenceGame({ onExit }: { onExit: () => void }) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const item = items[index]
+
+  const handleTimeUp = () => {
+    if (status !== 'playing') return
+    handleSkip()
+  }
+
+  const timer = useGameTimer({
+    initialDuration: 30,
+    onTimeUp: handleTimeUp,
+    enabled: status === 'playing' && index < items.length
+  })
+
+  useEffect(() => {
+    timer.reset()
+  }, [index, srcMode])
 
   const pool = useMemo(() => {
     if (!item) return []
@@ -153,28 +168,30 @@ export function SentenceGame({ onExit }: { onExit: () => void }) {
         wrong={wrong}
         skipped={skipped}
         onExit={onExit}
-        onAgain={() => { setSeed(s => s + 1); setIndex(0); setCorrect(0); setWrong(0); setSkipped(0); setPlaced([]); setTypedInput(''); setStatus('playing') }}
+        onAgain={() => { setSeed(s => s + 1); setIndex(0); setCorrect(0); setWrong(0); setSkipped(0); setPlaced([]); setTypedInput(''); setStatus('playing'); timer.reset() }}
       />
     )
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full">
+    <div className="max-w-4xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full items-center w-full">
       <GameHeader
         onExit={onExit}
+        timer={timer}
+        title="Sentence Builder"
         current={index + 1}
         total={items.length}
         center={
-          <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg border border-gray-200/60 dark:border-gray-700/60 text-xs font-semibold">
+          <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60 text-xs font-semibold">
             <button
               onClick={() => { setSrcMode('highlights'); setSeed(s => s + 1); setIndex(0); setCorrect(0); setWrong(0); setSkipped(0); setStatus('playing') }}
-              className={`px-3 py-1.5 rounded-md transition-colors ${srcMode === 'highlights' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+              className={`px-3 py-1 rounded-lg transition-colors ${srcMode === 'highlights' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300 font-bold' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
             >
               Words
             </button>
             <button
               onClick={() => { setSrcMode('phrases'); setSeed(s => s + 1); setIndex(0); setCorrect(0); setWrong(0); setSkipped(0); setStatus('playing') }}
-              className={`px-3 py-1.5 rounded-md transition-colors ${srcMode === 'phrases' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-400'}`}
+              className={`px-3 py-1 rounded-lg transition-colors ${srcMode === 'phrases' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300 font-bold' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
             >
               Phrases
             </button>
@@ -182,36 +199,38 @@ export function SentenceGame({ onExit }: { onExit: () => void }) {
         }
       />
 
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700 p-4 sm:p-5 text-center max-w-xl mx-auto w-full relative mb-2">
+      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-md border border-gray-200/80 dark:border-gray-700/80 p-6 sm:p-8 text-center max-w-2xl mx-auto w-full relative mb-3 pb-16">
         <RootCardButton
           onClick={() => {
             if (item?.card) setShowModalCard(item.card)
           }}
-          className="absolute bottom-3 left-3"
+          className="absolute bottom-3 left-4"
         />
 
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Tap words in order or type the sentence</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-3">
+          Tap words in order or type the sentence
+        </p>
 
-        <div className={`min-h-[3.75rem] rounded-xl border-2 border-dashed p-2.5 mb-2.5 flex flex-wrap gap-1.5 sm:gap-2 justify-center items-center transition-colors ${
-          status === 'correct' ? 'border-green-500 bg-green-50 dark:bg-green-900/20' :
-          status === 'wrong' ? 'border-red-500 bg-red-50 dark:bg-red-900/20' :
-          status === 'skipped' ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20' :
-          'border-gray-300 dark:border-gray-600'
+        <div className={`min-h-[4rem] rounded-2xl border-2 border-dashed p-3 sm:p-4 mb-4 flex flex-wrap gap-2 justify-center items-center transition-colors ${
+          status === 'correct' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20' :
+          status === 'wrong' ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/20' :
+          status === 'skipped' ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/20' :
+          'border-gray-300 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-900/30'
         }`}>
           {status === 'correct' || status === 'wrong' || status === 'skipped' ? (
-            <span className={`text-lg font-medium whitespace-pre-wrap ${
-              status === 'correct' ? 'text-green-700 dark:text-green-300' :
-              status === 'wrong' ? 'text-red-700 dark:text-red-300' :
-              'text-orange-700 dark:text-orange-300'
+            <span className={`text-xl font-bold whitespace-pre-wrap leading-relaxed ${
+              status === 'correct' ? 'text-emerald-700 dark:text-emerald-300' :
+              status === 'wrong' ? 'text-rose-700 dark:text-rose-300' :
+              'text-amber-700 dark:text-amber-300'
             }`}>{item.sentence}</span>
           ) : placed.map((id, pos) => (
-            <button key={pos} onClick={() => removeAt(pos)} className="px-2.5 py-1 rounded-lg bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-200 text-xs sm:text-sm font-medium hover:bg-purple-200 dark:hover:bg-purple-900/60 transition-colors cursor-pointer">
+            <button key={pos} onClick={() => removeAt(pos)} className="px-3 py-1.5 rounded-xl bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-200 text-sm sm:text-base font-semibold hover:bg-purple-200 dark:hover:bg-purple-900/60 transition-colors cursor-pointer shadow-xs">
               {item.tokens[id]}
             </button>
           ))}
         </div>
 
-        <div className="mb-3">
+        <div className="mb-4 max-w-lg mx-auto">
           <input
             ref={inputRef}
             type="text"
@@ -224,36 +243,47 @@ export function SentenceGame({ onExit }: { onExit: () => void }) {
             }}
             disabled={status !== 'playing'}
             placeholder="Type sentence here and press Enter..."
-            className="w-full px-3 py-1.5 text-center text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 transition-all"
+            className="w-full px-4 py-2 text-center text-sm sm:text-base rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:bg-white dark:focus:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 transition-all font-medium"
           />
         </div>
 
-        <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center mb-3 min-h-[2.5rem]">
+        <div className="flex flex-wrap gap-2 justify-center mb-5 min-h-[3rem] max-w-xl mx-auto">
           {pool.map(p => (
             <button
               key={p.id}
               onClick={() => add(p.id)}
               disabled={placed.includes(p.id) || status !== 'playing'}
-              className={`px-2.5 py-1 rounded-lg text-xs sm:text-sm font-medium transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-sm sm:text-base font-semibold transition-all cursor-pointer ${
                 placed.includes(p.id)
                   ? 'border-2 border-dashed border-gray-200 dark:border-gray-700 text-transparent select-none'
-                  : 'bg-purple-600 text-white hover:bg-purple-700 hover:-translate-y-0.5 shadow-2xs'
+                  : 'bg-purple-600 text-white hover:bg-purple-700 hover:-translate-y-0.5 shadow-xs active:scale-95'
               }`}
             >{p.t}</button>
           ))}
         </div>
 
-        <div className="flex flex-wrap gap-2 justify-center">
-          <button onClick={() => { setPlaced([]); setTypedInput('') }} disabled={status !== 'playing'} title="Reset" className={softBtn}><RotateCcw size={16} /></button>
-          <button onClick={() => speakEnglish(item.sentence)} title="Listen to sentence" className={softBtn}><Volume2 size={16} /></button>
-          <button onClick={handleSkip} disabled={status !== 'playing'} className={`${softBtn} text-xs sm:text-sm`}>Skip</button>
+        <div className="flex flex-wrap gap-2.5 justify-center">
+          <button onClick={() => { setPlaced([]); setTypedInput('') }} disabled={status !== 'playing'} title="Reset" className={softBtn}>
+            <RotateCcw size={16} />
+            <span>Reset</span>
+          </button>
+          <button onClick={() => speakEnglish(item.sentence)} title="Listen to sentence" className={softBtn}>
+            <Volume2 size={16} />
+            <span>Listen</span>
+          </button>
+          <button onClick={handleSkip} disabled={status !== 'playing'} className={`${softBtn} text-xs sm:text-sm`}>
+            <SkipForward size={16} />
+            <span>Skip</span>
+          </button>
         </div>
 
-        {status === 'correct' && (
-          <button onClick={() => speakEnglish(item.sentence)} title="Listen" className="absolute bottom-3 right-3 p-1.5 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors cursor-pointer">
-            <Volume2 size={20} />
-          </button>
-        )}
+        <button 
+          onClick={() => speakEnglish(item.sentence)} 
+          title="Listen" 
+          className="absolute bottom-3 right-4 p-2 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors cursor-pointer"
+        >
+          <Volume2 size={20} />
+        </button>
       </div>
 
       <div className="mt-1 flex flex-col items-center gap-1">

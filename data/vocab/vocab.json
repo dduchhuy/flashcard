@@ -1,0 +1,4155 @@
+[
+  {
+    "id": "0da250ea-bf15-4feb-ade0-87c31f41a047",
+    "sentence": "record",
+    "partOfSpeech": "noun / verb / adjective",
+    "phonetics": [
+      {
+        "ipa": "/ˈɹɛkɔːd/",
+        "dialect": "uk",
+        "pos": [
+          "adjective",
+          "noun"
+        ],
+        "context": "UK tính từ danh từ",
+        "assignment": "explicit"
+      },
+      {
+        "ipa": "/ˈɹɛkɚd/",
+        "dialect": "us",
+        "pos": [
+          "adjective",
+          "noun"
+        ],
+        "context": "US tính từ danh từ",
+        "assignment": "explicit"
+      },
+      {
+        "ipa": "/ɹɪˈkɔːd/",
+        "dialect": "uk",
+        "pos": [
+          "verb"
+        ],
+        "context": "UK động từ",
+        "assignment": "explicit"
+      },
+      {
+        "ipa": "/ɹɪˈkɔɹd/",
+        "dialect": "us",
+        "pos": [
+          "verb"
+        ],
+        "context": "US động từ",
+        "assignment": "explicit"
+      }
+    ],
+    "phonetic": "/ˈɹɛkɚd/",
+    "posEntries": [
+      {
+        "id": "32d9dab1-4fa9-405f-ab83-a5cd58102310",
+        "partOfSpeech": "noun",
+        "meanings": [
+          {
+            "id": "516c559a-f40c-43f8-bb16-f9e9b874cd77",
+            "meaning": "hồ sơ ; biên bản ; bản ghi chép ; sổ sách",
+            "notes": [
+              "Tài liệu hoặc thông tin được ghi lại để làm bằng chứng hoặc để tham khảo ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "8ae90aad-3fc6-41e2-b419-097d57acb880",
+                "sentence": "Please keep a record of all your expenses .",
+                "translation": "Hãy lưu giữ bản ghi chép về tất cả các chi phí của bạn ."
+              }
+            ]
+          },
+          {
+            "id": "99230cf1-d2c1-4799-9b7c-694956fcc4b9",
+            "meaning": "kỷ lục",
+            "notes": [
+              "Thành tích tốt nhất từng được ghi nhận , nhất là trong thể thao ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "597f6f91-ceba-4f34-b86d-2631c98a13d9",
+                "sentence": "She set a new world record in the 100- meter dash .",
+                "translation": "Cô ấy đã lập kỷ lục thế giới mới ở nội dung chạy 100 mét ."
+              }
+            ]
+          },
+          {
+            "id": "7d50be55-ab18-4b04-bc57-de3506f986c0",
+            "meaning": "đĩa hát ; đĩa ghi âm",
+            "notes": [
+              "Đĩa than hoặc vật mang âm thanh , nhạc đã được thu ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "833641b4-1572-46c4-8534-361823bed101",
+                "sentence": "I found my father's old vinyl records in the attic .",
+                "translation": "Tôi đã tìm thấy những chiếc đĩa than cũ của bố tôi trên gác mái ."
+              }
+            ]
+          },
+          {
+            "id": "b2ec13f8-fd16-4fa9-888d-5b2d34e49353",
+            "meaning": "lý lịch ; tiền sử ; thành tích",
+            "notes": [
+              "Quá khứ về hành vi , hoạt động của một người hoặc tổ chức ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "cd0194ca-c793-489d-a2ef-727df0b09a0d",
+                "sentence": "He has a clean criminal record .",
+                "translation": "Anh ấy có lý lịch tư pháp trong sạch ."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "bb25af68-c9f7-4f2e-b758-f79ac71e0ad9",
+        "partOfSpeech": "verb",
+        "meanings": [
+          {
+            "id": "207c519a-0508-43e7-9578-d45487c98563",
+            "meaning": "ghi lại ; ghi chép",
+            "notes": [
+              "Lưu giữ thông tin bằng chữ viết , hình ảnh hoặc tín hiệu ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "cecbc6e8-7126-4d57-b1c9-e6dfc1194424",
+                "sentence": "The secretary recorded the minutes of the meeting .",
+                "translation": "Thư ký đã ghi biên bản cuộc họp ."
+              }
+            ]
+          },
+          {
+            "id": "d46e6117-c10a-455b-a52e-b9cc84cf491b",
+            "meaning": "thu âm ; ghi âm ; ghi hình",
+            "notes": [
+              "Thu và lưu âm thanh hoặc hình ảnh để phát lại ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "473839c6-8aa2-4ad6-9737-d779bf893814",
+                "sentence": "They are recording a new album in the studio .",
+                "translation": "Họ đang thu âm một album mới trong phòng thu ."
+              }
+            ]
+          },
+          {
+            "id": "50d58074-f487-415a-8f56-00e023819c9a",
+            "meaning": "chỉ ; ghi nhận",
+            "notes": [
+              "Dùng cho dụng cụ đo : hiển thị một giá trị cụ thể ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "3b7812a5-b5d3-478d-93ec-0143911a89e8",
+                "sentence": "The thermometer recorded a temperature of 30°C.",
+                "translation": "Nhiệt kế chỉ nhiệt độ 30°C."
+              }
+            ]
+          },
+          {
+            "id": "a8c545f1-2573-42d3-a17b-b9c3ee5f6321",
+            "meaning": "bỏ phiếu ; bầu",
+            "notes": [
+              "Chính thức ghi nhận lá phiếu của mình ."
+            ],
+            "labels": [
+              "trang trọng"
+            ],
+            "examples": [
+              {
+                "id": "44af8099-c1d4-4ff2-b8d4-b78264096007",
+                "sentence": "They recorded their votes against the proposal .",
+                "translation": "Họ đã bỏ phiếu chống lại đề xuất ."
+              }
+            ]
+          },
+          {
+            "id": "ad6de551-57cf-4ac2-a77b-514c38c6d5f0",
+            "meaning": "hót",
+            "notes": [
+              "Chim hót khẽ , tập hót ."
+            ],
+            "labels": [
+              "cổ văn học",
+              "cổ",
+              "văn học"
+            ],
+            "examples": []
+          }
+        ]
+      },
+      {
+        "id": "4512c5a7-62c4-4406-a109-7bcbe04d2039",
+        "partOfSpeech": "adjective",
+        "meanings": [
+          {
+            "id": "8c77b524-f3ad-4596-abd8-bf102a692f5d",
+            "meaning": "kỷ lục ; cao nhất",
+            "notes": [
+              "Đạt mức cao nhất từ trước đến nay."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "8a99a1ad-15e1-48fd-be75-38b14332c4dc",
+                "sentence": "a record output",
+                "translation": "sản lượng kỷ lục"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "phrasesAndIdioms": [
+      {
+        "id": "8acf6aa9-8b67-46c8-85a5-e17b2a33f280",
+        "phrase": "off the record",
+        "translation": "Không chính thức , không để công bố",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "2ea555f3-9f78-4e07-9a9e-69f887021df0",
+        "phrase": "on record",
+        "translation": "Được ghi lại chính thức ; đã công khai tuyên bố",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "57d70689-91fc-467a-b08b-fad5b504b14b",
+        "phrase": "for the record",
+        "translation": "Để nói rõ cho mọi người biết một cách chính thức",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "d9ef751a-6bc3-4451-af85-f1cb9e947ecb",
+        "phrase": "set the record straight",
+        "translation": "Làm rõ sự thật , đính chính",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "17775f26-0740-4970-b442-097ec64394a2",
+        "phrase": "track record",
+        "translation": "Thành tích đã được chứng minh trong quá khứ",
+        "labels": [],
+        "type": "phrase"
+      }
+    ],
+    "usageNotes": [
+      "Danh từ đọc trọng âm ở âm đầu , động từ đọc trọng âm ở âm sau : danh từ /ˈrekɔːd/, động từ /rɪˈkɔːd/.",
+      "Tính từ record đứng trước danh từ với nghĩa kỷ lục : record sales , record speed ."
+    ],
+    "relatedWords": {
+      "synonyms": [
+        "criminal record",
+        "book",
+        "disk",
+        "disc",
+        "platter",
+        "commemorate",
+        "memorialize",
+        "memorialise",
+        "immortalize",
+        "immortalise",
+        "register",
+        "read",
+        "show",
+        "tape",
+        "enter"
+      ],
+      "antonyms": [
+        "erase",
+        "delete"
+      ],
+      "similarWords": [],
+      "similarSpellings": [
+        "regard"
+      ],
+      "wordsContaining": [
+        "case-record",
+        "record film",
+        "recorder",
+        "record-holder",
+        "recording",
+        "record-player",
+        "recordsman",
+        "self-recording",
+        "tape-recorder",
+        "tape-recording"
+      ],
+      "wordsMentioning": [
+        "chép",
+        "Chu Văn An",
+        "gain",
+        "ghi",
+        "ghi âm",
+        "hồ sơ",
+        "kỷ lục",
+        "lập kỷ lục",
+        "phá kỷ lục",
+        "quay phim"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/record--157184.webp?v=1775385361",
+        "alt": "record",
+        "exampleSentence": "The student sets a new school record in the long jump."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "test"
+    ],
+    "createdAt": 1791821863926,
+    "highlights": [
+      {
+        "id": "516c559a-f40c-43f8-bb16-f9e9b874cd77",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "hồ sơ ; biên bản ; bản ghi chép ; sổ sách",
+        "example": "Please keep a record of all your expenses ."
+      },
+      {
+        "id": "99230cf1-d2c1-4799-9b7c-694956fcc4b9",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "kỷ lục",
+        "example": "She set a new world record in the 100- meter dash ."
+      },
+      {
+        "id": "7d50be55-ab18-4b04-bc57-de3506f986c0",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "đĩa hát ; đĩa ghi âm",
+        "example": "I found my father's old vinyl records in the attic ."
+      },
+      {
+        "id": "b2ec13f8-fd16-4fa9-888d-5b2d34e49353",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "lý lịch ; tiền sử ; thành tích",
+        "example": "He has a clean criminal record ."
+      },
+      {
+        "id": "207c519a-0508-43e7-9578-d45487c98563",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "ghi lại ; ghi chép",
+        "example": "The secretary recorded the minutes of the meeting ."
+      },
+      {
+        "id": "d46e6117-c10a-455b-a52e-b9cc84cf491b",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "thu âm ; ghi âm ; ghi hình",
+        "example": "They are recording a new album in the studio ."
+      },
+      {
+        "id": "50d58074-f487-415a-8f56-00e023819c9a",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "chỉ ; ghi nhận",
+        "example": "The thermometer recorded a temperature of 30°C."
+      },
+      {
+        "id": "a8c545f1-2573-42d3-a17b-b9c3ee5f6321",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "bỏ phiếu ; bầu",
+        "example": "They recorded their votes against the proposal ."
+      },
+      {
+        "id": "ad6de551-57cf-4ac2-a77b-514c38c6d5f0",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "hót",
+        "example": ""
+      },
+      {
+        "id": "8c77b524-f3ad-4596-abd8-bf102a692f5d",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "kỷ lục ; cao nhất",
+        "example": "a record output"
+      }
+    ],
+    "srs": {
+      "due": 1791824916721,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "reps": 0,
+      "step": 0
+    }
+  },
+  {
+    "id": "4cd8e4c7-48d9-4527-8722-0ef41445fe4e",
+    "sentence": "yourself",
+    "partOfSpeech": "pronoun",
+    "phonetics": [
+      {
+        "ipa": "/jəˈsɛlf/",
+        "dialect": "",
+        "pos": [],
+        "assignment": "unlabelled"
+      }
+    ],
+    "phonetic": "/jəˈsɛlf/",
+    "posEntries": [
+      {
+        "id": "8315d8e7-2481-49a3-be9b-74c819b9c3bb",
+        "partOfSpeech": "pronoun",
+        "meanings": [
+          {
+            "id": "62be7a55-5671-4b3d-a0bd-03e9b7bffa95",
+            "meaning": "tự mình ; bản thân bạn",
+            "notes": [
+              "Đại từ phản thân ngôi thứ hai số ít , dùng khi người thực hiện và người chịu tác động của hành động là cùng một người ."
+            ],
+            "labels": [
+              "phản thân"
+            ],
+            "examples": [
+              {
+                "id": "74c2aeab-61f1-4e35-81c9-1f7e89a4ed73",
+                "sentence": "You should take care of yourself .",
+                "translation": "Bạn nên chăm sóc bản thân ."
+              },
+              {
+                "id": "0669d1fa-6c21-4193-81f7-4b470af0fa06",
+                "sentence": "Did you hurt yourself ?",
+                "translation": "Bạn có làm mình bị đau không ?"
+              }
+            ]
+          },
+          {
+            "id": "1b9f0fe2-baf6-4d4f-a0e0-c6ccee5172e2",
+            "meaning": "chính bạn ; chính anh / chị",
+            "notes": [
+              "Dùng để nhấn mạnh chủ ngữ hoặc tân ngữ ngôi thứ hai số ít ."
+            ],
+            "labels": [
+              "nhấn mạnh"
+            ],
+            "examples": [
+              {
+                "id": "c8b2d74c-cc9c-4815-9847-afab931b1cef",
+                "sentence": "You yourself told me the story .",
+                "translation": "Chính bạn đã kể cho tôi câu chuyện đó ."
+              },
+              {
+                "id": "5d84931b-2597-4d6f-93ff-a15ae65d90d3",
+                "sentence": "You yourself said so.",
+                "translation": "Chính anh đã nói thế ."
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "phrasesAndIdioms": [
+      {
+        "id": "e266bbc7-6e9d-4275-9848-743e63dac469",
+        "phrase": "( all ) by yourself",
+        "translation": "một mình , không có ai giúp đỡ",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "bea57b64-8a86-482c-ac1b-e0b15fae3988",
+        "phrase": "be yourself",
+        "translation": "hãy là chính mình , cứ tự nhiên",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "425bfd2e-678b-4052-a83b-22cd8dfaea06",
+        "phrase": "help yourself",
+        "translation": "cứ tự nhiên dùng đồ ăn , thức uống (khi mời )",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "2f6636f4-edc2-4e58-95d8-5f6f79c43f43",
+        "phrase": "( not quite ) yourself",
+        "translation": "không được bình thường , không khỏe như mọi khi",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "32d5adc2-cae1-4996-a5c9-b29095e34f81",
+        "phrase": "make yourself at home",
+        "translation": "cứ tự nhiên như ở nhà",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "0a689bd1-edba-4582-80f2-a8edfd6fc8d1",
+        "phrase": "pull yourself together",
+        "translation": "bình tĩnh lại , lấy lại tinh thần",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "296ee74a-5d37-489d-9bc6-6047fc0fe456",
+        "phrase": "how's yourself ?",
+        "translation": "bạn có khỏe không ?",
+        "labels": [
+          "thân mật",
+          "khẩu ngữ"
+        ],
+        "type": "phrase"
+      }
+    ],
+    "usageNotes": [
+      "Dạng số nhiều là yourselves : Did you all enjoy yourselves ?; You yourselves must decide ."
+    ],
+    "relatedWords": {
+      "synonyms": [],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [
+        "ourself"
+      ],
+      "wordsContaining": [
+        "do-it-yourself"
+      ],
+      "wordsMentioning": [
+        "coi",
+        "nhà"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/yourself--197570.webp?v=1775393167",
+        "alt": "yourself",
+        "exampleSentence": "You must wash yourself before dinner."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "test"
+    ],
+    "createdAt": 1791821864887,
+    "highlights": [
+      {
+        "id": "62be7a55-5671-4b3d-a0bd-03e9b7bffa95",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "tự mình ; bản thân bạn",
+        "example": "You should take care of yourself ."
+      },
+      {
+        "id": "1b9f0fe2-baf6-4d4f-a0e0-c6ccee5172e2",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "chính bạn ; chính anh / chị",
+        "example": "You yourself told me the story ."
+      }
+    ],
+    "srs": {
+      "due": 1792084057688,
+      "interval": 259200000,
+      "easeFactor": 2.65,
+      "reps": 1,
+      "step": 3
+    }
+  },
+  {
+    "id": "4a97e105-0004-48a5-ba6e-101b5bfcfea7",
+    "sentence": "book",
+    "partOfSpeech": "noun",
+    "phonetics": [
+      {
+        "ipa": "/bɵk/",
+        "dialect": "uk",
+        "pos": [],
+        "context": "UK",
+        "assignment": "explicit"
+      },
+      {
+        "ipa": "/buːk/",
+        "dialect": "",
+        "pos": [],
+        "assignment": "unlabelled"
+      }
+    ],
+    "phonetic": "/bɵk/",
+    "posEntries": [
+      {
+        "id": "62b198ed-080a-4619-92b9-4dd2c6134a91",
+        "partOfSpeech": "noun",
+        "meanings": [
+          {
+            "id": "6d71e03e-6829-4edf-9be1-0502bd235439",
+            "meaning": "sách ; cuốn sách",
+            "notes": [
+              "Tập hợp các trang giấy có chữ hoặc hình ảnh được đóng lại với nhau ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "fd811589-8ee4-4dec-ba4d-5a8f3cb06b26",
+                "sentence": "She is reading an interesting book about history .",
+                "translation": "Cô ấy đang đọc một cuốn sách thú vị về lịch sử ."
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "phrasesAndIdioms": [
+      {
+        "id": "668f0e94-9363-4595-a5ce-077c74bbee74",
+        "phrase": "to be in someone's good / bad books",
+        "translation": "được ai yêu mến / không được ai ưa",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "df31fdcb-2621-40bc-91c4-5eade1135be8",
+        "phrase": "to bring someone to book",
+        "translation": "hỏi tội và trừng phạt ai",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "c913f3eb-3d9a-46db-aef0-59d04b44f485",
+        "phrase": "by the book",
+        "translation": "theo đúng quy định , theo sách",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "96582613-26cb-46ef-a57c-2526e691a23e",
+        "phrase": "to know something like a book",
+        "translation": "hiểu rõ điều gì như lòng bàn tay",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "943fa9bf-d0ce-4b0d-ba93-5e89969753ff",
+        "phrase": "to suit one's book",
+        "translation": "hợp với ý muốn hoặc kế hoạch của mình",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "64707318-1f5b-4458-abbd-4591ffc1c93b",
+        "phrase": "to throw the book at someone",
+        "translation": "trừng phạt ai thật nặng theo đúng luật",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "673fe9b6-1c5d-47ef-8828-5dd24ee2a3e4",
+        "phrase": "to speak / talk like a book",
+        "translation": "nói năng như sách , nói rất sách vở",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "486b2d9d-42d8-49e8-bf67-fde535ec3c22",
+        "phrase": "to take a leaf out of someone's book",
+        "translation": "noi theo gương ai",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "54b1efae-9b56-404d-8c8f-252388ba15fe",
+        "phrase": "book in / book into",
+        "translation": "đăng ký vào khách sạn , bệnh viện",
+        "labels": [
+          "cụm động từ"
+        ],
+        "type": "phrase"
+      },
+      {
+        "id": "072ed919-f186-4f05-baed-3f9a209a3008",
+        "phrase": "book up",
+        "translation": "được đặt kín chỗ , hết chỗ trống",
+        "labels": [
+          "cụm động từ"
+        ],
+        "type": "phrase"
+      }
+    ],
+    "usageNotes": [
+      "Dạng số nhiều books thường dùng với nghĩa sổ sách kế toán ."
+    ],
+    "relatedWords": {
+      "synonyms": [
+        "Bible",
+        "Book",
+        "Scripture",
+        "Word",
+        "Koran",
+        "ledger",
+        "script",
+        "record",
+        "volume",
+        "reserve",
+        "hold"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [
+        "bock",
+        "boko",
+        "bog",
+        "back",
+        "beak",
+        "beck",
+        "bogy",
+        "buck",
+        "pock",
+        "pooka"
+      ],
+      "wordsContaining": [
+        "a b c - book",
+        "bank-book",
+        "black book",
+        "blue-book",
+        "book ends",
+        "book house",
+        "bookbinder",
+        "bookbinding",
+        "bookcase",
+        "book-club"
+      ],
+      "wordsMentioning": [
+        "a dua",
+        "bằng lòng",
+        "biên niên",
+        "biếu",
+        "binh pháp",
+        "binh thư",
+        "bọc",
+        "cấm",
+        "cầu nguyện",
+        "chủ biên"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/book--62424.webp?v=1775353582",
+        "alt": "book",
+        "exampleSentence": "A child reads a book in a cozy armchair."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "test"
+    ],
+    "createdAt": 1791821865679,
+    "highlights": [
+      {
+        "id": "6d71e03e-6829-4edf-9be1-0502bd235439",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "sách ; cuốn sách",
+        "example": "She is reading an interesting book about history ."
+      }
+    ],
+    "srs": {
+      "due": 1792084057959,
+      "interval": 259200000,
+      "easeFactor": 2.65,
+      "reps": 1,
+      "step": 3
+    }
+  },
+  {
+    "id": "e283023e-6994-41d1-abdf-ba696365a349",
+    "sentence": "run",
+    "partOfSpeech": "verb / noun",
+    "phonetics": [
+      {
+        "ipa": "/ɹʌn/",
+        "dialect": "uk",
+        "pos": [],
+        "context": "UK",
+        "assignment": "explicit"
+      }
+    ],
+    "phonetic": "/ɹʌn/",
+    "posEntries": [
+      {
+        "id": "04929c6a-28b5-4a92-bf84-b5c3f4dd8565",
+        "partOfSpeech": "verb",
+        "meanings": [
+          {
+            "id": "74434584-1d48-4faf-ae51-a483e143877f",
+            "meaning": "chạy",
+            "notes": [
+              "Di chuyển nhanh bằng chân , nhanh hơn đi bộ ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "e86c1ff1-df0d-4788-a405-2138f6242952",
+                "sentence": "She runs every morning to stay healthy .",
+                "translation": "Cô ấy chạy bộ mỗi sáng để giữ sức khỏe ."
+              }
+            ]
+          },
+          {
+            "id": "3b632276-ea64-4b13-8a0a-78aa0ac18fe3",
+            "meaning": "chạy , vận hành , hoạt động",
+            "notes": [
+              "Máy móc , động cơ , hệ thống hoặc chương trình ở trạng thái hoạt động ; làm cho máy chạy ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "89eefd76-d409-4c18-9f17-eb7b509fc19e",
+                "sentence": "The engine is running smoothly .",
+                "translation": "Động cơ đang chạy trơn tru ."
+              }
+            ]
+          },
+          {
+            "id": "b5dce56c-bb6f-457e-ad46-39c183ec5796",
+            "meaning": "chảy",
+            "notes": [
+              "Chất lỏng di chuyển , chảy theo một hướng ; làm cho chảy ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "b2643990-8b45-4251-903e-d0d5846272d3",
+                "sentence": "Tears ran down her cheeks .",
+                "translation": "Nước mắt chảy xuống má cô ấy ."
+              }
+            ]
+          },
+          {
+            "id": "9ffa3b8a-1f89-4e48-ba8d-f1c93641f833",
+            "meaning": "chạy dài , trải dài , kéo dài",
+            "notes": [
+              "Kéo dài liên tục trong không gian theo một hướng nhất định ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "8d895d75-d748-4bdf-a46c-13a6ab976d0e",
+                "sentence": "The road runs along the coast .",
+                "translation": "Con đường chạy dọc theo bờ biển ."
+              }
+            ]
+          },
+          {
+            "id": "720ffce3-bc9d-44f9-baa1-cfc2be188c06",
+            "meaning": "được diễn , được chiếu",
+            "notes": [
+              "Vở kịch , phim được trình diễn liên tục trong một thời gian ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "e7405ea1-1a80-44c3-b5e4-ce633ce2b07b",
+                "sentence": "The play ran for over a year .",
+                "translation": "Vở kịch được diễn trong hơn một năm ."
+              }
+            ]
+          },
+          {
+            "id": "fe1b1328-aa68-4322-ad25-af43088fc67a",
+            "meaning": "quản lý , điều hành",
+            "notes": [
+              "Chịu trách nhiệm tổ chức và vận hành một cơ sở , công việc ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "5ea9c3b7-8ee6-4a5a-8993-86d028e96fb0",
+                "sentence": "He runs a small café.",
+                "translation": "Anh ấy điều hành một quán cà phê nhỏ ."
+              }
+            ]
+          },
+          {
+            "id": "fbca0656-b866-4b0c-aa88-8a7a6b1f380f",
+            "meaning": "ứng cử",
+            "notes": [
+              "Tham gia bầu cử với tư cách ứng cử viên; giới thiệu người ứng cử ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "dffd61e6-b9c1-4717-9026-3df0d298c9e4",
+                "sentence": "She decided to run for mayor .",
+                "translation": "Cô ấy quyết định ứng cử chức thị trưởng ."
+              }
+            ]
+          },
+          {
+            "id": "2c36eb00-be15-47dd-873c-e0ca0a214ba4",
+            "meaning": "trở nên , trở thành",
+            "notes": [
+              "Chuyển sang một trạng thái , mức độ hoặc có xu hướng nào đó ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "e6f2c9d7-8154-4204-902b-4521220acbc8",
+                "sentence": "We're running low on coffee .",
+                "translation": "Chúng tôi sắp hết cà phê ."
+              }
+            ]
+          },
+          {
+            "id": "8f1b16b2-2a86-4de2-bc66-4a1f85669944",
+            "meaning": "chạy trốn , bỏ chạy ; chạy đua ; đuổi theo",
+            "notes": [
+              "Chạy nhanh để trốn thoát, để đua , hoặc để đuổi theo người , thú ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "5051a865-b61a-41db-9373-b914f5b3d2dd",
+                "sentence": "The thief ran away from the scene .",
+                "translation": "Tên trộm bỏ chạy khỏi hiện trường ."
+              }
+            ]
+          },
+          {
+            "id": "15397907-d11f-4487-b97f-61b32f26b377",
+            "meaning": "buôn lậu ; vượt qua , phá vòng vây",
+            "notes": [
+              "Vận chuyển trái phép ; vượt qua chướng ngại , vòng vây ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "0bfe3381-aaa8-430e-b1e9-9fb03af0f169",
+                "sentence": "They ran arms across the border .",
+                "translation": "Họ buôn lậu vũ khí qua biên giới ."
+              }
+            ]
+          },
+          {
+            "id": "c995865a-40e4-4718-8cc5-e4ad49436042",
+            "meaning": "bị tuột sợi",
+            "notes": [
+              "Vải , bít tất bị rút sợi thành đường dài ."
+            ],
+            "labels": [
+              "tiếng Mỹ"
+            ],
+            "examples": [
+              {
+                "id": "c343e47e-bca8-46a0-872d-7cd89d767a06",
+                "sentence": "Silk stockings sometimes run.",
+                "translation": "Bít tất lụa đôi khi bị tuột sợi ."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "d7c3c0bc-b7aa-4fd6-bd4c-835d69bf4f9d",
+        "partOfSpeech": "noun",
+        "meanings": [
+          {
+            "id": "ed69434d-6658-4eab-b8e1-063f727df76d",
+            "meaning": "cuộc chạy , sự chạy",
+            "notes": [
+              "Hành động chạy bộ ; một lần chạy ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "ba21e97d-aeb4-465c-ae6f-446f77826662",
+                "sentence": "He went for a run in the park .",
+                "translation": "Anh ấy đi chạy trong công viên."
+              }
+            ]
+          },
+          {
+            "id": "c9c1dd04-8772-4bf8-901c-26e2661c629c",
+            "meaning": "chuyến đi ngắn , quãng đường ngắn",
+            "notes": [
+              "Hành trình ngắn bằng phương tiện giao thông ; quãng đường đi ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "ec107461-f7bd-485a-b037-9a532e253838",
+                "sentence": "Let's take a run to the supermarket .",
+                "translation": "Chúng ta đi một chuyến ngắn đến siêu thị nhé ."
+              }
+            ]
+          },
+          {
+            "id": "4564f542-8c50-4d61-bda3-1735a76e3ab8",
+            "meaning": "chuỗi , đợt , loạt",
+            "notes": [
+              "Chuỗi sự kiện hoặc khoảng thời gian liên tục ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "07ec4184-e850-4a78-b3fc-7339a8930350",
+                "sentence": "The team had a run of ten consecutive wins .",
+                "translation": "Đội đã có một chuỗi mười trận thắng liên tiếp ."
+              }
+            ]
+          },
+          {
+            "id": "eac7f592-674b-4515-a907-a0ff313226cb",
+            "meaning": "sự đổ xô , nhu cầu lớn",
+            "notes": [
+              "Tình trạng nhiều người cùng muốn mua hàng hoặc rút tiền cùng lúc ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "f2abde53-c5c3-488e-9cea-aa63c2e36881",
+                "sentence": "There was a run on bottled water before the storm .",
+                "translation": "Đã có cơn đổ xô mua nước đóng chai trước cơn bão ."
+              }
+            ]
+          },
+          {
+            "id": "4276e28a-9d5f-464b-8779-e17ce440ee4a",
+            "meaning": "quyền tự do sử dụng",
+            "notes": [
+              "Sự cho phép được tự do sử dụng cái gì ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "d571476c-125d-48a8-b13e-90925ec0a42f",
+                "sentence": "He has the run of the library .",
+                "translation": "Anh ấy được tự do sử dụng thư viện ."
+              }
+            ]
+          },
+          {
+            "id": "d72854e8-c350-4e6d-9280-c41814ac4a99",
+            "meaning": "loại thông thường , hạng bình thường",
+            "notes": [
+              "Nhóm hoặc loại tiêu chuẩn , phổ biến , không đặc biệt ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "6d4b7a1f-2812-4f41-bd44-ab19e63aa6b1",
+                "sentence": "It is nothing out of the common run.",
+                "translation": "Nó không có gì khác với loại thông thường ."
+              }
+            ]
+          },
+          {
+            "id": "cedd1343-a950-49af-b9bf-54979896225c",
+            "meaning": "sự vận hành , thời gian chạy máy",
+            "notes": [
+              "Sự hoạt động của máy móc ; thời gian máy hoạt động liên tục ."
+            ],
+            "labels": [
+              "kỹ thuật"
+            ],
+            "examples": [
+              {
+                "id": "43bbe26d-06a2-4e12-b489-ad16c96966fb",
+                "sentence": "The machine has a long run.",
+                "translation": "Máy có thời gian vận hành dài ."
+              }
+            ]
+          },
+          {
+            "id": "f736f0da-bbd2-4009-ac6c-7858458bdf33",
+            "meaning": "đàn cá , đường mòn của thú ; sân nuôi , bãi chăn thả",
+            "notes": [
+              "Đàn cá khi di cư ; đường thú rừng thường qua lại ; khu vực rào để nuôi gia cầm , gia súc ."
+            ],
+            "labels": [],
+            "examples": []
+          },
+          {
+            "id": "17caee44-f441-40b1-883f-30efc81e6c6f",
+            "meaning": "dòng suối nhỏ ; mạch , dải , dòng chảy",
+            "notes": [
+              "Dòng suối nhỏ ; máng dẫn nước ; dải hoặc dòng liên tục như mạch vàng , dòng thủy triều ."
+            ],
+            "labels": [
+              "tiếng Mỹ"
+            ],
+            "examples": [
+              {
+                "id": "093eb91f-6b93-42d4-968c-d3c19dd2894c",
+                "sentence": "A run of gold was found here .",
+                "translation": "Một mạch vàng chạy dài đã được tìm thấy ở đây ."
+              }
+            ]
+          },
+          {
+            "id": "a6e5c0db-3b5d-4cc5-b606-75aeef531a7e",
+            "meaning": "đường trượt ; chuyến bay ném bom ; câu chạy nhanh",
+            "notes": [
+              "Đường trượt tuyết ; đường bay thẳng cố định trước khi ném bom ; phần đuôi tàu ; đoạn âm nhanh liên tục trong âm nhạc ."
+            ],
+            "labels": [
+              "chuyên ngành"
+            ],
+            "examples": []
+          }
+        ]
+      }
+    ],
+    "phrasesAndIdioms": [
+      {
+        "id": "2f59ffb9-b0f0-475c-9fc6-29580e7e37d0",
+        "phrase": "in the long run",
+        "translation": "về lâu dài",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "8b3e53ab-e50e-4917-9d6c-07d765d2cfaa",
+        "phrase": "run in the family",
+        "translation": "có tính di truyền , phổ biến trong gia đình",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "e60dfda4-1653-46c9-ab16-d40ae4ba3667",
+        "phrase": "run a fever / run a temperature",
+        "translation": "bị sốt",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "4585a05c-08a2-4b93-80dc-427e37d6e16d",
+        "phrase": "run a risk",
+        "translation": "chấp nhận rủi ro , có nguy cơ",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "520489f5-a554-4fc9-b3ab-a921bb523def",
+        "phrase": "run into",
+        "translation": "tình cờ gặp ; đâm vào , va phải",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "9daf9427-424c-4acf-8a39-8fd49897c67f",
+        "phrase": "run out of",
+        "translation": "hết , cạn kiệt",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "15dd1954-ba2c-436d-9dff-b66d67ef2386",
+        "phrase": "run away",
+        "translation": "bỏ chạy , chạy trốn",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "b006e362-2f77-4d4a-bc52-62a94cb4e687",
+        "phrase": "run over",
+        "translation": "cán qua bằng xe; xem lại nhanh",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "b8f44bba-e710-48e3-bfe4-7235ac19c219",
+        "phrase": "run of the mill",
+        "translation": "bình thường , tầm thường , không có gì đặc biệt",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "83fafd8a-7aa0-4029-bee7-584617e99b33",
+        "phrase": "run its course",
+        "translation": "tự diễn biến đến hết , tự kết thúc",
+        "labels": [],
+        "type": "phrase"
+      }
+    ],
+    "usageNotes": [
+      "Động từ run là động từ bất quy tắc : run – ran – run.",
+      "Run vừa là nội động từ vừa là ngoại động từ với rất nhiều nghĩa ; cần dựa vào ngữ cảnh để chọn nghĩa chạy , vận hành , chảy , điều hành hay ứng cử .",
+      "Danh từ run thường gặp với nghĩa cuộc chạy , chuyến đi ngắn , chuỗi liên tục , sự đổ xô và quyền tự do sử dụng ."
+    ],
+    "relatedWords": {
+      "synonyms": [
+        "unravel",
+        "ladder",
+        "melt",
+        "move",
+        "go",
+        "race",
+        "hunt",
+        "ply",
+        "consort",
+        "bleed",
+        "black market",
+        "lead",
+        "guide",
+        "draw",
+        "pass",
+        "carry",
+        "execute",
+        "prevail",
+        "persist",
+        "endure",
+        "tend",
+        "lean",
+        "incline",
+        "play",
+        "campaign",
+        "range",
+        "function",
+        "work",
+        "operate",
+        "flow",
+        "feed",
+        "c"
+      ],
+      "antonyms": [
+        "idle"
+      ],
+      "similarWords": [],
+      "similarSpellings": [
+        "ran",
+        "ruin",
+        "rune",
+        "rain",
+        "rani",
+        "rein",
+        "roan",
+        "wren",
+        "runny"
+      ],
+      "wordsContaining": [
+        "air-unit",
+        "averruncator",
+        "bathing-trunks",
+        "brunch",
+        "brunette",
+        "brunt",
+        "cab-runner",
+        "carborundum",
+        "caruncle",
+        "corundum"
+      ],
+      "wordsMentioning": [
+        "bài bác",
+        "bắt gặp",
+        "bần bật",
+        "bất hạnh",
+        "bất kể",
+        "bây bẩy",
+        "bỏ chạy",
+        "bỏ trốn",
+        "bon",
+        "bon bon"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/run--161532.webp?v=1775386457",
+        "alt": "run",
+        "exampleSentence": "A child runs to catch a butterfly in the garden."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "test"
+    ],
+    "createdAt": 1791821866711,
+    "highlights": [
+      {
+        "id": "74434584-1d48-4faf-ae51-a483e143877f",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "chạy",
+        "example": "She runs every morning to stay healthy ."
+      },
+      {
+        "id": "3b632276-ea64-4b13-8a0a-78aa0ac18fe3",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "chạy , vận hành , hoạt động",
+        "example": "The engine is running smoothly ."
+      },
+      {
+        "id": "b5dce56c-bb6f-457e-ad46-39c183ec5796",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "chảy",
+        "example": "Tears ran down her cheeks ."
+      },
+      {
+        "id": "9ffa3b8a-1f89-4e48-ba8d-f1c93641f833",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "chạy dài , trải dài , kéo dài",
+        "example": "The road runs along the coast ."
+      },
+      {
+        "id": "720ffce3-bc9d-44f9-baa1-cfc2be188c06",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "được diễn , được chiếu",
+        "example": "The play ran for over a year ."
+      },
+      {
+        "id": "fe1b1328-aa68-4322-ad25-af43088fc67a",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "quản lý , điều hành",
+        "example": "He runs a small café."
+      },
+      {
+        "id": "fbca0656-b866-4b0c-aa88-8a7a6b1f380f",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "ứng cử",
+        "example": "She decided to run for mayor ."
+      },
+      {
+        "id": "2c36eb00-be15-47dd-873c-e0ca0a214ba4",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "trở nên , trở thành",
+        "example": "We're running low on coffee ."
+      },
+      {
+        "id": "8f1b16b2-2a86-4de2-bc66-4a1f85669944",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "chạy trốn , bỏ chạy ; chạy đua ; đuổi theo",
+        "example": "The thief ran away from the scene ."
+      },
+      {
+        "id": "15397907-d11f-4487-b97f-61b32f26b377",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "buôn lậu ; vượt qua , phá vòng vây",
+        "example": "They ran arms across the border ."
+      },
+      {
+        "id": "c995865a-40e4-4718-8cc5-e4ad49436042",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "bị tuột sợi",
+        "example": "Silk stockings sometimes run."
+      },
+      {
+        "id": "ed69434d-6658-4eab-b8e1-063f727df76d",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "cuộc chạy , sự chạy",
+        "example": "He went for a run in the park ."
+      },
+      {
+        "id": "c9c1dd04-8772-4bf8-901c-26e2661c629c",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "chuyến đi ngắn , quãng đường ngắn",
+        "example": "Let's take a run to the supermarket ."
+      },
+      {
+        "id": "4564f542-8c50-4d61-bda3-1735a76e3ab8",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "chuỗi , đợt , loạt",
+        "example": "The team had a run of ten consecutive wins ."
+      },
+      {
+        "id": "eac7f592-674b-4515-a907-a0ff313226cb",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "sự đổ xô , nhu cầu lớn",
+        "example": "There was a run on bottled water before the storm ."
+      },
+      {
+        "id": "4276e28a-9d5f-464b-8779-e17ce440ee4a",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "quyền tự do sử dụng",
+        "example": "He has the run of the library ."
+      },
+      {
+        "id": "d72854e8-c350-4e6d-9280-c41814ac4a99",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "loại thông thường , hạng bình thường",
+        "example": "It is nothing out of the common run."
+      },
+      {
+        "id": "cedd1343-a950-49af-b9bf-54979896225c",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "sự vận hành , thời gian chạy máy",
+        "example": "The machine has a long run."
+      },
+      {
+        "id": "f736f0da-bbd2-4009-ac6c-7858458bdf33",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "đàn cá , đường mòn của thú ; sân nuôi , bãi chăn thả",
+        "example": ""
+      },
+      {
+        "id": "17caee44-f441-40b1-883f-30efc81e6c6f",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "dòng suối nhỏ ; mạch , dải , dòng chảy",
+        "example": "A run of gold was found here ."
+      },
+      {
+        "id": "a6e5c0db-3b5d-4cc5-b606-75aeef531a7e",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "đường trượt ; chuyến bay ném bom ; câu chạy nhanh",
+        "example": ""
+      }
+    ],
+    "srs": {
+      "due": 1792084058220,
+      "interval": 259200000,
+      "easeFactor": 2.65,
+      "reps": 1,
+      "step": 3
+    }
+  },
+  {
+    "id": "7d529f72-913d-45c1-a8a6-9c4a8e2856f0",
+    "sentence": "light",
+    "partOfSpeech": "noun / adjective / verb / adverb",
+    "phonetics": [
+      {
+        "ipa": "/laɪt/",
+        "dialect": "uk",
+        "pos": [],
+        "context": "UK",
+        "assignment": "explicit"
+      },
+      {
+        "ipa": "/ɫɐɪt/",
+        "dialect": "us",
+        "pos": [],
+        "context": "US",
+        "assignment": "explicit"
+      }
+    ],
+    "phonetic": "/ɫɐɪt/",
+    "posEntries": [
+      {
+        "id": "cd1fc509-13a3-4021-a25e-07d068e70ad6",
+        "partOfSpeech": "noun",
+        "meanings": [
+          {
+            "id": "3df3ec22-f89c-4759-887a-cf386e0865b5",
+            "meaning": "ánh sáng",
+            "notes": [
+              "Năng lượng làm cho mọi vật có thể nhìn thấy được , như ánh sáng mặt trời hay ánh sáng ban ngày ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "5db50de7-fd80-4363-ae7a-0694ab29c8e8",
+                "sentence": "The light from the window was bright .",
+                "translation": "Ánh sáng từ cửa sổ rất sáng ."
+              }
+            ]
+          },
+          {
+            "id": "24a2990d-4b80-47d2-8c18-2404a9cd5c65",
+            "meaning": "đèn ; nguồn sáng",
+            "notes": [
+              "Vật phát ra ánh sáng để chiếu sáng ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "2ceb3688-9001-4052-b0a7-d2bb816d68f4",
+                "sentence": "Please turn off the light when you leave .",
+                "translation": "Làm ơn tắt đèn khi bạn rời đi ."
+              }
+            ]
+          },
+          {
+            "id": "cd7dc530-2aab-465f-bcd0-1a30451d1efc",
+            "meaning": "lửa để châm",
+            "notes": [
+              "Ngọn lửa nhỏ , diêm hoặc bật lửa dùng để đốt thuốc lá hay nhóm lửa ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "d7ae741e-1344-4a8a-aa16-abc2b0c11ab5",
+                "sentence": "Do you have a light for my cigarette ?",
+                "translation": "Bạn có lửa để châm điếu thuốc của tôi không ?"
+              }
+            ]
+          },
+          {
+            "id": "6f7e8cbe-9ead-4df3-b9d8-3affaf93ea06",
+            "meaning": "quan điểm ; cách nhìn ; phương diện",
+            "notes": [
+              "Góc độ hay cách thức một sự việc được nhìn nhận , đánh giá ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "c428905a-f153-403d-9a6e-98c4d9799c39",
+                "sentence": "We need to see the problem in a different light .",
+                "translation": "Chúng ta cần nhìn vấn đề dưới một góc độ khác ."
+              }
+            ]
+          },
+          {
+            "id": "bbb2234b-f791-4e6e-a3e4-552f25a157af",
+            "meaning": "sự soi sáng ; sự hiểu biết",
+            "notes": [
+              "Kiến thức hay thông tin làm sáng tỏ một vấn đề ; chân lý ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "51ca2449-e04f-4748-ad5a-29ff02dd5665",
+                "sentence": "His research shed new light on the ancient text .",
+                "translation": "Nghiên cứu của anh ấy đã làm sáng tỏ thêm văn bản cổ ."
+              }
+            ]
+          },
+          {
+            "id": "23393d51-d539-452b-ba4f-1e05feb0789a",
+            "meaning": "chỗ sáng ; ô cửa lấy sáng",
+            "notes": [
+              "Vùng sáng trong bức tranh ; ô cửa hay lỗ để lấy ánh sáng ."
+            ],
+            "labels": [
+              "nghệ thuật",
+              "kiến trúc"
+            ],
+            "examples": [
+              {
+                "id": "5151723c-fb39-4461-b10e-2d54146e805d",
+                "sentence": "The artist used light and shadow skillfully.",
+                "translation": "Họa sĩ đã sử dụng chỗ sáng và bóng tối một cách khéo léo ."
+              }
+            ]
+          },
+          {
+            "id": "982a1a0f-2a59-4f71-8543-d427281cd0da",
+            "meaning": "ánh mắt ; sinh khí",
+            "notes": [
+              "Vẻ tinh anh trong mắt ; cách nhìn , nhất là trong văn thơ và tôn giáo ."
+            ],
+            "labels": [
+              "văn học",
+              "tôn giáo"
+            ],
+            "examples": []
+          }
+        ]
+      },
+      {
+        "id": "cbcd7e45-31a6-44a9-89f0-87a346a40aec",
+        "partOfSpeech": "adjective",
+        "meanings": [
+          {
+            "id": "0552d7b2-5d52-455f-9316-131f55aa6f0c",
+            "meaning": "nhẹ",
+            "notes": [
+              "Có trọng lượng ít , không nặng ; cũng dùng cho đồ ăn dễ tiêu , hình phạt hay công việc không nặng nề ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "4d87982c-ccc6-41bb-8028-479dc218fd08",
+                "sentence": "This suitcase is very light .",
+                "translation": "Chiếc vali này rất nhẹ ."
+              }
+            ]
+          },
+          {
+            "id": "2ddb7eea-f234-4450-bc2b-deec9249f81d",
+            "meaning": "sáng sủa ; sáng",
+            "notes": [
+              "Có nhiều ánh sáng , không tối ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "f4a88b4c-5612-45b2-b742-5161707ec1d6",
+                "sentence": "It's still light outside at 7 PM.",
+                "translation": "Bên ngoài vẫn còn sáng lúc 7 giờ tối ."
+              }
+            ]
+          },
+          {
+            "id": "73716e48-897c-42e2-a8b9-d6bc46f37226",
+            "meaning": "nhạt",
+            "notes": [
+              "Chỉ màu sắc có tông nhẹ , không đậm ."
+            ],
+            "labels": [
+              "màu sắc"
+            ],
+            "examples": [
+              {
+                "id": "f672e6b2-9da4-4ca0-84bf-8902dfacbe2b",
+                "sentence": "She wore a light blue dress .",
+                "translation": "Cô ấy mặc một chiếc váy màu xanh nhạt ."
+              }
+            ]
+          },
+          {
+            "id": "bd7731f0-beeb-4702-9d15-2c0ead197094",
+            "meaning": "nhẹ nhàng ; thanh thoát",
+            "notes": [
+              "Dễ chịu , không căng thẳng hay nặng nề ; nhanh nhẹn , dịu dàng ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "9ff4f986-d030-4dc5-9103-2332351cb753",
+                "sentence": "The conversation was light and enjoyable .",
+                "translation": "Cuộc trò chuyện nhẹ nhàng và thú vị ."
+              }
+            ]
+          },
+          {
+            "id": "b0674ad5-82b6-4b1a-8c2f-b1dbc94a4751",
+            "meaning": "khinh suất ; nông nổi ; lẳng lơ",
+            "notes": [
+              "Thiếu nghiêm túc , suy nghĩ thấu đáo ; chỉ người lăng nhăng , lẳng lơ ."
+            ],
+            "labels": [
+              "tiêu cực cổ",
+              "tiêu cực",
+              "cổ"
+            ],
+            "examples": [
+              {
+                "id": "e6982763-2740-4396-8ac3-a87ada3c64cc",
+                "sentence": "He made a light remark about the serious situation .",
+                "translation": "Anh ta có một nhận xét khinh suất về tình hình nghiêm trọng ."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ce01d3fa-6963-410b-bac6-75f095503e57",
+        "partOfSpeech": "verb",
+        "meanings": [
+          {
+            "id": "3d6c645c-ad81-4d6d-a3a2-52e94371da6e",
+            "meaning": "thắp ; đốt ; chiếu sáng ; làm rạng rỡ",
+            "notes": [
+              "Làm cho thứ gì bắt đầu cháy hoặc phát sáng ; soi sáng ; làm cho mặt hay mắt tươi lên ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "5ea9e766-2906-4a50-b667-2d1b2aeb996d",
+                "sentence": "He lit a candle in the dark room .",
+                "translation": "Anh ấy thắp một ngọn nến trong căn phòng tối ."
+              }
+            ]
+          },
+          {
+            "id": "5ef4fa03-9aa5-4a72-a33b-5553d51b8448",
+            "meaning": "đậu xuống ; tình cờ gặp ; tình cờ nghĩ ra",
+            "notes": [
+              "Chim hay côn trùng hạ xuống và đứng yên ở đâu ; tình cờ rơi vào hay tìm ra điều gì ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "34f389a8-ecab-42cf-8ea8-6203f938d58d",
+                "sentence": "The butterfly lit on a flower .",
+                "translation": "Con bướm đậu xuống một bông hoa ."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ceb518ac-b62f-45fb-b5f4-2b860a7d1753",
+        "partOfSpeech": "adverb",
+        "meanings": [
+          {
+            "id": "dacf4319-6b8a-4cfc-a25b-4bcf951cdec6",
+            "meaning": "nhẹ nhàng",
+            "notes": [
+              "Một cách nhẹ , không mạnh ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "9d13bc64-4e14-465d-9448-6c3626313856",
+                "sentence": "She touched his shoulder lightly .",
+                "translation": "Cô ấy chạm nhẹ vào vai anh ấy ."
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "phrasesAndIdioms": [
+      {
+        "id": "d3a5d964-492b-469b-b962-f69d01c800c7",
+        "phrase": "in the light of",
+        "translation": "Xét theo , dựa trên thông tin hay sự kiện mới",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "346a494d-796c-4b2f-a0e9-1d468d090929",
+        "phrase": "bring to light / come to light",
+        "translation": "Đưa ra ánh sáng , khám phá ; được phát hiện , lộ ra",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "fa34ad5f-06f3-4ca9-8a35-1bb3bc43a2a6",
+        "phrase": "see the light",
+        "translation": "Hiểu ra, nhận thức được lẽ phải",
+        "labels": [
+          "nghĩa bóng"
+        ],
+        "type": "phrase"
+      },
+      {
+        "id": "8a96a0fd-2654-4ad9-a3ca-99020e4d9dab",
+        "phrase": "make light of something",
+        "translation": "Coi thường , xem nhẹ điều quan trọng",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "1901d72d-7eaf-4de1-ab07-36fb7635393e",
+        "phrase": "light up",
+        "translation": "Bật sáng lên ; trở nên rạng rỡ , tươi vui",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "58754ad0-2e2e-42d7-84f6-5a930c4356e9",
+        "phrase": "light on / upon",
+        "translation": "Tình cờ tìm thấy hay nghĩ ra điều gì",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "b187b1b4-2480-4ddc-906f-d4bba0db043f",
+        "phrase": "light into somebody",
+        "translation": "Tấn công ; mắng mỏ ai thậm tệ",
+        "labels": [
+          "tiếng Anh Mỹ",
+          "khẩu ngữ"
+        ],
+        "type": "phrase"
+      },
+      {
+        "id": "0761e49d-f9c2-4480-9b6a-d66013adca37",
+        "phrase": "light out",
+        "translation": "Thình lình bỏ đi , chuồn đi",
+        "labels": [
+          "tiếng Anh Mỹ",
+          "khẩu ngữ"
+        ],
+        "type": "phrase"
+      },
+      {
+        "id": "8e3fc397-c99b-40df-ab16-e59a07017d22",
+        "phrase": "a light at the end of the tunnel",
+        "translation": "Tia hy vọng sau thời gian khó khăn",
+        "labels": [
+          "thành ngữ"
+        ],
+        "type": "phrase"
+      },
+      {
+        "id": "507c4cac-4579-4200-92c6-69d9eb288447",
+        "phrase": "light as a feather",
+        "translation": "Cực kỳ nhẹ",
+        "labels": [
+          "thành ngữ"
+        ],
+        "type": "phrase"
+      },
+      {
+        "id": "48e5ff73-df85-4c9c-bc4e-dc10ff9b670b",
+        "phrase": "have light fingers",
+        "translation": "Có tật ăn cắp vặt",
+        "labels": [
+          "khẩu ngữ"
+        ],
+        "type": "phrase"
+      },
+      {
+        "id": "3cafaca1-c964-41e1-9690-da2227965aa1",
+        "phrase": "Nhiều người cùng làm thì việc trở nên nhẹ nhàng",
+        "translation": "many hands make light work ngữ",
+        "labels": [
+          "tục"
+        ],
+        "type": "phrase"
+      }
+    ],
+    "usageNotes": [
+      "Light có hai nhóm nghĩa khác nhau : một nhóm liên quan đến ánh sáng và một nhóm liên quan đến trọng lượng nhẹ .",
+      "Dạng quá khứ và phân từ quá khứ của động từ light là lit hoặc lighted .",
+      "Danh từ lights ở số nhiều có thể chỉ đèn giao thông hay kiến thức , quan điểm của một người ."
+    ],
+    "relatedWords": {
+      "synonyms": [
+        "easy",
+        "loose",
+        "promiscuous",
+        "sluttish",
+        "wanton",
+        "wakeful",
+        "lite",
+        "calorie-free",
+        "idle",
+        "scant",
+        "short",
+        "abstemious",
+        "light",
+        "faint",
+        "light-headed",
+        "lightsome",
+        "tripping",
+        "clean",
+        "clear",
+        "unclouded",
+        "unaccented",
+        "weak",
+        "light-colored",
+        "lighter",
+        "igniter"
+      ],
+      "antonyms": [
+        "heavy",
+        "dark",
+        "darkness",
+        "extinguish",
+        "quench"
+      ],
+      "similarWords": [
+        "unchaste",
+        "shallow",
+        "fat-free",
+        "fatless",
+        "light-duty",
+        "frivolous",
+        "insignificant",
+        "unimportant",
+        "insufficient",
+        "deficient",
+        "temperate",
+        "thin",
+        "ill",
+        "sick",
+        "easy",
+        "gentle",
+        "soft",
+        "light-footed",
+        "pure",
+        "loose",
+        "digestible",
+        "unstressed",
+        "ablaze",
+        "inflamed",
+        "autofluorescent",
+        "b"
+      ],
+      "similarSpellings": [
+        "lit",
+        "lithe"
+      ],
+      "wordsContaining": [
+        "afterlight",
+        "alight",
+        "ancient lights",
+        "beacon light",
+        "bengal light",
+        "blight",
+        "blighter",
+        "blighty",
+        "candlelight",
+        "cross-light"
+      ],
+      "wordsMentioning": [
+        "ánh",
+        "ánh sáng",
+        "âm thanh",
+        "bại lộ",
+        "báo hiệu",
+        "bấc",
+        "bẫy",
+        "bỏ rọ",
+        "bố già",
+        "cà phê"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/light--124760.webp?v=1775379047",
+        "alt": "light",
+        "exampleSentence": "A light breeze gently rustles the leaves of the tall oak tree."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "test"
+    ],
+    "createdAt": 1791821867779,
+    "highlights": [
+      {
+        "id": "3df3ec22-f89c-4759-887a-cf386e0865b5",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "ánh sáng",
+        "example": "The light from the window was bright ."
+      },
+      {
+        "id": "24a2990d-4b80-47d2-8c18-2404a9cd5c65",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "đèn ; nguồn sáng",
+        "example": "Please turn off the light when you leave ."
+      },
+      {
+        "id": "cd7dc530-2aab-465f-bcd0-1a30451d1efc",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "lửa để châm",
+        "example": "Do you have a light for my cigarette ?"
+      },
+      {
+        "id": "6f7e8cbe-9ead-4df3-b9d8-3affaf93ea06",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "quan điểm ; cách nhìn ; phương diện",
+        "example": "We need to see the problem in a different light ."
+      },
+      {
+        "id": "bbb2234b-f791-4e6e-a3e4-552f25a157af",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "sự soi sáng ; sự hiểu biết",
+        "example": "His research shed new light on the ancient text ."
+      },
+      {
+        "id": "23393d51-d539-452b-ba4f-1e05feb0789a",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "chỗ sáng ; ô cửa lấy sáng",
+        "example": "The artist used light and shadow skillfully."
+      },
+      {
+        "id": "982a1a0f-2a59-4f71-8543-d427281cd0da",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "ánh mắt ; sinh khí",
+        "example": ""
+      },
+      {
+        "id": "0552d7b2-5d52-455f-9316-131f55aa6f0c",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "nhẹ",
+        "example": "This suitcase is very light ."
+      },
+      {
+        "id": "2ddb7eea-f234-4450-bc2b-deec9249f81d",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "sáng sủa ; sáng",
+        "example": "It's still light outside at 7 PM."
+      },
+      {
+        "id": "73716e48-897c-42e2-a8b9-d6bc46f37226",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "nhạt",
+        "example": "She wore a light blue dress ."
+      },
+      {
+        "id": "bd7731f0-beeb-4702-9d15-2c0ead197094",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "nhẹ nhàng ; thanh thoát",
+        "example": "The conversation was light and enjoyable ."
+      },
+      {
+        "id": "b0674ad5-82b6-4b1a-8c2f-b1dbc94a4751",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "khinh suất ; nông nổi ; lẳng lơ",
+        "example": "He made a light remark about the serious situation ."
+      },
+      {
+        "id": "3d6c645c-ad81-4d6d-a3a2-52e94371da6e",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "thắp ; đốt ; chiếu sáng ; làm rạng rỡ",
+        "example": "He lit a candle in the dark room ."
+      },
+      {
+        "id": "5ef4fa03-9aa5-4a72-a33b-5553d51b8448",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "đậu xuống ; tình cờ gặp ; tình cờ nghĩ ra",
+        "example": "The butterfly lit on a flower ."
+      },
+      {
+        "id": "dacf4319-6b8a-4cfc-a25b-4bcf951cdec6",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "nhẹ nhàng",
+        "example": "She touched his shoulder lightly ."
+      }
+    ],
+    "srs": {
+      "due": 1792084058430,
+      "interval": 259200000,
+      "easeFactor": 2.65,
+      "reps": 1,
+      "step": 3
+    }
+  },
+  {
+    "id": "1a74b3bc-594d-4433-83f1-22f75f9974f5",
+    "sentence": "bank",
+    "partOfSpeech": "noun / verb",
+    "phonetics": [
+      {
+        "ipa": "/ˈbeɪ̯ŋk/",
+        "dialect": "us",
+        "pos": [],
+        "context": "US",
+        "assignment": "explicit"
+      }
+    ],
+    "phonetic": "/ˈbeɪ̯ŋk/",
+    "posEntries": [
+      {
+        "id": "a1d54191-26a3-4a2f-9a27-19a28006d084",
+        "partOfSpeech": "noun",
+        "meanings": [
+          {
+            "id": "0b490dac-352c-4d78-ba24-1f7d70a05d14",
+            "meaning": "ngân hàng",
+            "notes": [
+              "Tổ chức tài chính nhận tiền gửi , cho vay và cung cấp các dịch vụ tài chính khác ."
+            ],
+            "labels": [
+              "tài chính"
+            ],
+            "examples": [
+              {
+                "id": "11e88166-971d-4f5b-866c-388cd0e63da6",
+                "sentence": "I need to go to the bank to withdraw some cash .",
+                "translation": "Tôi cần đến ngân hàng để rút một ít tiền mặt ."
+              }
+            ]
+          },
+          {
+            "id": "12e86e9d-3a80-4b01-9004-81bfe94acfed",
+            "meaning": "bờ ; bờ sông",
+            "notes": [
+              "Phần đất dốc dọc theo mép sông , hồ , kênh hoặc lạch ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "b5ec3b52-ea94-4193-bc59-8da8224b5daa",
+                "sentence": "We had a picnic on the bank of the river .",
+                "translation": "Chúng tôi đã dã ngoại trên bờ sông ."
+              }
+            ]
+          },
+          {
+            "id": "0a503486-f3f5-4a93-862d-7e627dab8d66",
+            "meaning": "đống ; ụ; dải ; gờ",
+            "notes": [
+              "Khối đất , đá , cát , tuyết hoặc mây / sương mù tích tụ thành gờ , ụ hoặc dải dài ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "e4a2526f-5ca0-40e5-9da6-e62c65ef30bc",
+                "sentence": "A bank of fog rolled in from the sea .",
+                "translation": "Một dải sương mù cuộn vào từ biển ."
+              }
+            ]
+          },
+          {
+            "id": "4ac1923c-db9b-4d72-a999-909f433acc6d",
+            "meaning": "dãy ; hàng",
+            "notes": [
+              "Nhóm các vật cùng loại xếp thành hàng hoặc tầng , như công tắc , đèn hay màn hình ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "8daad40b-6d3b-40f8-a43b-75afa91cdb56",
+                "sentence": "A bank of lights lit up the stage .",
+                "translation": "Một dãy đèn chiếu sáng sân khấu ."
+              }
+            ]
+          },
+          {
+            "id": "b60fb789-9f8f-4368-b775-426ff5fa3572",
+            "meaning": "kho lưu trữ ; ngân hàng",
+            "notes": [
+              "Nơi dự trữ thứ gì đó để dùng sau ; thường gặp trong từ ghép như blood bank , data bank , food bank ."
+            ],
+            "labels": [
+              "thường trong từ ghép"
+            ],
+            "examples": [
+              {
+                "id": "c9a3a848-8176-4623-ab01-572024ab4659",
+                "sentence": "Many people donate to a food bank .",
+                "translation": "Nhiều người quyên góp cho ngân hàng thực phẩm ."
+              }
+            ]
+          },
+          {
+            "id": "73cd5211-9021-4d0b-b3fe-4bb5cbdb5ff9",
+            "meaning": "sự nghiêng cánh ; góc nghiêng",
+            "notes": [
+              "Độ nghiêng sang một bên của máy bay hoặc xe khi vào cua ."
+            ],
+            "labels": [
+              "hàng không"
+            ],
+            "examples": []
+          },
+          {
+            "id": "b31627b0-2f73-434e-b97d-b15b184ebd4b",
+            "meaning": "bãi ngầm ; bãi cát ngầm",
+            "notes": [
+              "Vùng đất hoặc cát nổi lên dưới nước ở sông hoặc biển ."
+            ],
+            "labels": [
+              "địa lý"
+            ],
+            "examples": [
+              {
+                "id": "115ea207-7660-4d3f-9507-f28614c9df31",
+                "sentence": "The boat got stuck on a bank in the river .",
+                "translation": "Thuyền bị mắc trên một bãi ngầm giữa sông ."
+              }
+            ]
+          },
+          {
+            "id": "2563ba96-20c2-4ca6-b9b7-ca7be1914f5d",
+            "meaning": "vốn nhà cái ; quỹ nhà cái",
+            "notes": [
+              "Số tiền của nhà cái trong trò đánh bạc ."
+            ],
+            "labels": [
+              "cờ bạc"
+            ],
+            "examples": []
+          },
+          {
+            "id": "20239db8-6538-4817-b899-20cdd2673085",
+            "meaning": "miệng giếng mỏ ; bờ miệng hầm",
+            "notes": [
+              "Phần miệng giếng hoặc lối vào hầm trong khai thác mỏ ."
+            ],
+            "labels": [
+              "ngành mỏ"
+            ],
+            "examples": []
+          },
+          {
+            "id": "c85bedf0-dd37-4f2e-b2a3-dd2962353d5b",
+            "meaning": "ghế chèo ; chỗ ngồi chèo",
+            "notes": [
+              "Ghế ngồi cho người chèo trên thuyền chiến cổ ."
+            ],
+            "labels": [
+              "lịch sử",
+              "hàng hải"
+            ],
+            "examples": []
+          },
+          {
+            "id": "3e260c75-f549-4643-9103-5e461ccc7282",
+            "meaning": "dãy mái chèo",
+            "notes": [
+              "Một hàng mái chèo trên thuyền chiến cổ ."
+            ],
+            "labels": [
+              "lịch sử",
+              "hàng hải"
+            ],
+            "examples": []
+          },
+          {
+            "id": "aadc49ba-b221-4f25-96e4-287e8701a924",
+            "meaning": "dãy phím ; bàn phím organ",
+            "notes": [
+              "Một dãy phím hoặc một manual trên nhạc cụ , đặc biệt đàn organ ."
+            ],
+            "labels": [
+              "âm nhạc"
+            ],
+            "examples": []
+          },
+          {
+            "id": "c4eb5e1b-aa9f-4ab5-87f9-d3784af2400c",
+            "meaning": "bàn thợ",
+            "notes": [
+              "Bàn hoặc bệ để làm việc trong một số nghề thủ công ."
+            ],
+            "labels": [
+              "cũ kỹ thuật",
+              "cũ",
+              "kỹ thuật"
+            ],
+            "examples": []
+          }
+        ]
+      },
+      {
+        "id": "205ef4e7-b596-41ed-b441-182c659ac7d8",
+        "partOfSpeech": "verb",
+        "meanings": [
+          {
+            "id": "7ede29e4-7be7-4cfc-8e75-68a6d74d4ac2",
+            "meaning": "gửi tiền ; gửi vào ngân hàng",
+            "notes": [
+              "Đưa tiền vào tài khoản ngân hàng , hoặc có tài khoản tại một ngân hàng ."
+            ],
+            "labels": [
+              "tài chính"
+            ],
+            "examples": [
+              {
+                "id": "0fbefbbe-b5c4-4f21-81ef-dd98dd60399e",
+                "sentence": "She banks half of her salary every month .",
+                "translation": "Cô ấy gửi một nửa tiền lương mỗi tháng vào ngân hàng ."
+              }
+            ]
+          },
+          {
+            "id": "6a769f6b-cb40-47d4-bfab-8a62429d58b5",
+            "meaning": "nghiêng ; nghiêng cánh",
+            "notes": [
+              "Nghiêng sang một bên khi quay vòng , nói về máy bay hoặc xe."
+            ],
+            "labels": [
+              "hàng không"
+            ],
+            "examples": [
+              {
+                "id": "c2cfcaf9-df92-40ea-8ffd-457847191f40",
+                "sentence": "The plane had to bank sharply to avoid the mountain .",
+                "translation": "Máy bay phải nghiêng gắt để tránh ngọn núi ."
+              }
+            ]
+          },
+          {
+            "id": "314022d3-2a24-4666-8720-c9d6480fca14",
+            "meaning": "đắp bờ ; chất đống ; dồn thành đống",
+            "notes": [
+              "Tạo thành bờ , gờ hoặc đống bằng cách chất đất , tuyết , cát , v.v."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "ee94fa56-7647-4ff6-bdd3-7e891bd6c309",
+                "sentence": "Workers banked earth to hold back the floodwater.",
+                "translation": "Công nhân đắp đất thành bờ để ngăn lũ ."
+              }
+            ]
+          },
+          {
+            "id": "0c4c5ef6-a93d-45c6-82ef-b7f08bd16fb6",
+            "meaning": "làm cái ; làm nhà cái",
+            "notes": [
+              "Đảm nhiệm vai trò nhà cái trong trò đánh bạc ."
+            ],
+            "labels": [
+              "cờ bạc"
+            ],
+            "examples": [
+              {
+                "id": "ec8dc843-0b8d-4dbd-b01e-098a3d86c06c",
+                "sentence": "I'll bank this game .",
+                "translation": "Tôi sẽ làm cái ván này ."
+              }
+            ]
+          },
+          {
+            "id": "196846f9-8137-4ac0-b9eb-2be111aab25e",
+            "meaning": "làm nghề ngân hàng",
+            "notes": [
+              "Kinh doanh hoặc làm chủ ngân hàng ( nghĩa hiếm , cũ )."
+            ],
+            "labels": [
+              "cũ hiếm",
+              "cũ",
+              "hiếm"
+            ],
+            "examples": []
+          }
+        ]
+      }
+    ],
+    "phrasesAndIdioms": [
+      {
+        "id": "1ff09c0a-4e88-4a13-ab73-23fbf4d49dd9",
+        "phrase": "bank on ( upon ) somebody / something",
+        "translation": "Trông cậy , tin tưởng hoặc dựa vào ai/ điều gì",
+        "labels": [
+          "cụm động từ"
+        ],
+        "type": "phrase"
+      },
+      {
+        "id": "e8742041-c98f-4bd8-ba89-2c1031d8919e",
+        "phrase": "break the bank",
+        "translation": "Tốn một khoản tiền rất lớn ; hoặc ( cờ bạc ) thắng hết vốn của nhà cái",
+        "labels": [
+          "thành ngữ"
+        ],
+        "type": "phrase"
+      },
+      {
+        "id": "d0ab57e1-4511-434f-9173-9ab64ac9c1dd",
+        "phrase": "bank up",
+        "translation": "Đắp cao hoặc chất thành đống , thường để ngăn , che hoặc giữ nhiệt",
+        "labels": [
+          "cụm động từ"
+        ],
+        "type": "phrase"
+      },
+      {
+        "id": "aca398d0-91f6-4154-9229-d85e9e1f9b95",
+        "phrase": "laugh all the way to the bank",
+        "translation": "Kiếm được rất nhiều tiền một cách dễ dàng , nhất là khi người khác nghĩ bạn sẽ thất bại",
+        "labels": [
+          "thành ngữ"
+        ],
+        "type": "phrase"
+      },
+      {
+        "id": "dcad3c6d-6ddd-4786-b775-38aa1163a50c",
+        "phrase": "blood bank",
+        "translation": "Ngân hàng máu ; nơi lưu trữ máu để truyền",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "644421b1-1ef6-4a47-b193-9adca24169e0",
+        "phrase": "sandbank / mudbank",
+        "translation": "Bãi cát ngầm hoặc bãi bùn ngầm dưới nước",
+        "labels": [],
+        "type": "phrase"
+      }
+    ],
+    "usageNotes": [
+      "Cụm bank on/ upon mới có nghĩa trông cậy vào ; không dùng bank một mình với nghĩa này .",
+      "Từ cùng họ : banker ( chủ / nhân viên ngân hàng ), banking ( ngành ngân hàng ), bankable ( có giá trị thế chấp ; bảo đảm ăn khách ), bankroll ( vốn ; tài trợ).",
+      "Bank có vài nhóm nghĩa khác nhau ( ngân hàng ; bờ / đống ; dãy / hàng ); phải dựa vào ngữ cảnh ."
+    ],
+    "relatedWords": {
+      "synonyms": [
+        "coin bank",
+        "cant",
+        "camber",
+        "depository financial institution",
+        "trust",
+        "swear",
+        "rely",
+        "deposit"
+      ],
+      "antonyms": [
+        "distrust",
+        "mistrust",
+        "suspect",
+        "withdraw",
+        "draw"
+      ],
+      "similarWords": [],
+      "similarSpellings": [
+        "bang",
+        "bunk",
+        "bung",
+        "pang",
+        "pink",
+        "punk",
+        "bangy",
+        "bhang",
+        "bunky"
+      ],
+      "wordsContaining": [
+        "bank holiday",
+        "bankable",
+        "bank-bill",
+        "bank-book",
+        "banker",
+        "banking",
+        "bank-note",
+        "bankrupt",
+        "bankruptcy",
+        "banksman"
+      ],
+      "wordsMentioning": [
+        "bạ",
+        "bãi",
+        "bỏ ống",
+        "bờ",
+        "bờ sông",
+        "chi điếm",
+        "dòi",
+        "dốc ống",
+        "đắp",
+        "Huế"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/bank--57775.webp?v=1775350569",
+        "alt": "bank",
+        "exampleSentence": "The pilot had to bank the aircraft during the turn."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "test"
+    ],
+    "createdAt": 1791821868858,
+    "highlights": [
+      {
+        "id": "0b490dac-352c-4d78-ba24-1f7d70a05d14",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "ngân hàng",
+        "example": "I need to go to the bank to withdraw some cash ."
+      },
+      {
+        "id": "12e86e9d-3a80-4b01-9004-81bfe94acfed",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "bờ ; bờ sông",
+        "example": "We had a picnic on the bank of the river ."
+      },
+      {
+        "id": "0a503486-f3f5-4a93-862d-7e627dab8d66",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "đống ; ụ; dải ; gờ",
+        "example": "A bank of fog rolled in from the sea ."
+      },
+      {
+        "id": "4ac1923c-db9b-4d72-a999-909f433acc6d",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "dãy ; hàng",
+        "example": "A bank of lights lit up the stage ."
+      },
+      {
+        "id": "b60fb789-9f8f-4368-b775-426ff5fa3572",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "kho lưu trữ ; ngân hàng",
+        "example": "Many people donate to a food bank ."
+      },
+      {
+        "id": "73cd5211-9021-4d0b-b3fe-4bb5cbdb5ff9",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "sự nghiêng cánh ; góc nghiêng",
+        "example": ""
+      },
+      {
+        "id": "b31627b0-2f73-434e-b97d-b15b184ebd4b",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "bãi ngầm ; bãi cát ngầm",
+        "example": "The boat got stuck on a bank in the river ."
+      },
+      {
+        "id": "2563ba96-20c2-4ca6-b9b7-ca7be1914f5d",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "vốn nhà cái ; quỹ nhà cái",
+        "example": ""
+      },
+      {
+        "id": "20239db8-6538-4817-b899-20cdd2673085",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "miệng giếng mỏ ; bờ miệng hầm",
+        "example": ""
+      },
+      {
+        "id": "c85bedf0-dd37-4f2e-b2a3-dd2962353d5b",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "ghế chèo ; chỗ ngồi chèo",
+        "example": ""
+      },
+      {
+        "id": "3e260c75-f549-4643-9103-5e461ccc7282",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "dãy mái chèo",
+        "example": ""
+      },
+      {
+        "id": "aadc49ba-b221-4f25-96e4-287e8701a924",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "dãy phím ; bàn phím organ",
+        "example": ""
+      },
+      {
+        "id": "c4eb5e1b-aa9f-4ab5-87f9-d3784af2400c",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "bàn thợ",
+        "example": ""
+      },
+      {
+        "id": "7ede29e4-7be7-4cfc-8e75-68a6d74d4ac2",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "gửi tiền ; gửi vào ngân hàng",
+        "example": "She banks half of her salary every month ."
+      },
+      {
+        "id": "6a769f6b-cb40-47d4-bfab-8a62429d58b5",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "nghiêng ; nghiêng cánh",
+        "example": "The plane had to bank sharply to avoid the mountain ."
+      },
+      {
+        "id": "314022d3-2a24-4666-8720-c9d6480fca14",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "đắp bờ ; chất đống ; dồn thành đống",
+        "example": "Workers banked earth to hold back the floodwater."
+      },
+      {
+        "id": "0c4c5ef6-a93d-45c6-82ef-b7f08bd16fb6",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "làm cái ; làm nhà cái",
+        "example": "I'll bank this game ."
+      },
+      {
+        "id": "196846f9-8137-4ac0-b9eb-2be111aab25e",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "làm nghề ngân hàng",
+        "example": ""
+      }
+    ],
+    "srs": {
+      "due": 1792084058617,
+      "interval": 259200000,
+      "easeFactor": 2.65,
+      "reps": 1,
+      "step": 3
+    }
+  },
+  {
+    "id": "5c19953d-4ee6-4086-a686-c1a4ae8c682c",
+    "sentence": "happy",
+    "partOfSpeech": "adjective",
+    "phonetics": [
+      {
+        "ipa": "/ˈhapɪj/",
+        "dialect": "uk",
+        "pos": [],
+        "context": "UK",
+        "assignment": "explicit"
+      }
+    ],
+    "phonetic": "/ˈhapɪj/",
+    "posEntries": [
+      {
+        "id": "204634da-adfd-441a-88ff-1533fb3d21f7",
+        "partOfSpeech": "adjective",
+        "meanings": [
+          {
+            "id": "8704e2b3-1cf3-4a13-bd1d-462aeab3fd87",
+            "meaning": "vui vẻ ; hạnh phúc",
+            "notes": [
+              "Cảm thấy hoặc thể hiện niềm vui , sự hài lòng ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "ea1ef8d3-a295-4664-8693-72053bf1ace2",
+                "sentence": "She has a happy smile on her face .",
+                "translation": "Cô ấy có nụ cười hạnh phúc trên khuôn mặt ."
+              }
+            ]
+          },
+          {
+            "id": "b018b274-ed4c-402d-be40-f9c337cabb42",
+            "meaning": "vui lòng ; sẵn lòng",
+            "notes": [
+              "Sẵn sàng làm gì , thường dùng như công thức lịch sự ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "56ff4f85-9cee-4fb5-a5ea-3e4aaaea8f5b",
+                "sentence": "I would be happy to assist you with your project .",
+                "translation": "Tôi rất sẵn lòng hỗ trợ bạn với dự án của bạn ."
+              }
+            ]
+          },
+          {
+            "id": "cbe65e17-3568-4626-a7ae-3b33311fb695",
+            "meaning": "hài lòng ; mãn nguyện",
+            "notes": [
+              "Hài lòng về ai/ cái gì ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "f8b8fca9-d269-4409-a2be-6570387a0d5f",
+                "sentence": "Are you happy with the final result ?",
+                "translation": "Bạn có hài lòng với kết quả cuối cùng không ?"
+              }
+            ]
+          },
+          {
+            "id": "7115113a-8c2a-49d7-8752-11a649783efa",
+            "meaning": "may mắn ; tốt phúc",
+            "notes": [
+              "Gặp điều thuận lợi , tốt lành ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "0fa57b12-023b-4136-a426-ef5fb06c5b25",
+                "sentence": "They had a happy marriage for over fifty years .",
+                "translation": "Họ đã có cuộc hôn nhân hạnh phúc hơn năm mươi năm ."
+              }
+            ]
+          },
+          {
+            "id": "8d1d3ff8-56d0-47da-9c6f-2f4a1dff6a18",
+            "meaning": "khéo léo ; đắt ý; thích hợp",
+            "notes": [
+              "Rất phù hợp , tài tình khi nói về lời nói , lựa chọn , cách xử sự ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "095e5fac-d0c1-439c-b211-cce8e2050be4",
+                "sentence": "That was a very happy choice of words .",
+                "translation": "Đó là cách chọn từ rất đắt ý."
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "phrasesAndIdioms": [
+      {
+        "id": "06b61f50-411b-4c2e-bf00-6d2631d53c66",
+        "phrase": "happy-go-lucky",
+        "translation": "vô tư lự , không lo nghĩ",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "cb7d745e-373b-496e-9077-f3ee335aafbc",
+        "phrase": "a happy medium",
+        "translation": "giải pháp trung dung , vừa phải",
+        "labels": [],
+        "type": "phrase"
+      }
+    ],
+    "usageNotes": [
+      "Đừng nhầm happy với bomb - happy / shell-shocked : nghĩa choáng váng vì bom thuộc về cụm bomb - happy , không phải nghĩa riêng của happy ."
+    ],
+    "relatedWords": {
+      "synonyms": [
+        "glad",
+        "felicitous"
+      ],
+      "antonyms": [
+        "unhappy"
+      ],
+      "similarWords": [
+        "felicitous",
+        "willing",
+        "fortunate",
+        "blessed",
+        "blissful",
+        "bright",
+        "golden",
+        "halcyon",
+        "prosperous",
+        "laughing",
+        "riant"
+      ],
+      "similarSpellings": [
+        "hippy",
+        "hap",
+        "hippo"
+      ],
+      "wordsContaining": [
+        "chappy",
+        "happy-go-lucky",
+        "slap-happy",
+        "unhappy"
+      ],
+      "wordsMentioning": [
+        "ai ai",
+        "biết chừng",
+        "biết chừng nào",
+        "bỏ mẹ",
+        "bộ điệu",
+        "bội phần",
+        "bời bời",
+        "càng",
+        "chúc",
+        "có hậu"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/happy--108506.webp?v=1775373656",
+        "alt": "happy",
+        "exampleSentence": "A child gives a happy smile after receiving a birthday present."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "test"
+    ],
+    "createdAt": 1791821869632,
+    "highlights": [
+      {
+        "id": "8704e2b3-1cf3-4a13-bd1d-462aeab3fd87",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "vui vẻ ; hạnh phúc",
+        "example": "She has a happy smile on her face ."
+      },
+      {
+        "id": "b018b274-ed4c-402d-be40-f9c337cabb42",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "vui lòng ; sẵn lòng",
+        "example": "I would be happy to assist you with your project ."
+      },
+      {
+        "id": "cbe65e17-3568-4626-a7ae-3b33311fb695",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "hài lòng ; mãn nguyện",
+        "example": "Are you happy with the final result ?"
+      },
+      {
+        "id": "7115113a-8c2a-49d7-8752-11a649783efa",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "may mắn ; tốt phúc",
+        "example": "They had a happy marriage for over fifty years ."
+      },
+      {
+        "id": "8d1d3ff8-56d0-47da-9c6f-2f4a1dff6a18",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "khéo léo ; đắt ý; thích hợp",
+        "example": "That was a very happy choice of words ."
+      }
+    ],
+    "srs": {
+      "due": 1792084058805,
+      "interval": 259200000,
+      "easeFactor": 2.65,
+      "reps": 1,
+      "step": 3
+    }
+  },
+  {
+    "id": "8921476c-ca5c-4928-9d72-d61c895ad97a",
+    "sentence": "take",
+    "partOfSpeech": "verb / noun",
+    "phonetics": [
+      {
+        "ipa": "/ˈteɪ̯k/",
+        "dialect": "",
+        "pos": [],
+        "assignment": "unlabelled"
+      }
+    ],
+    "phonetic": "/ˈteɪ̯k/",
+    "posEntries": [
+      {
+        "id": "a82ccdc2-11fe-4180-b74a-b5f2a0782181",
+        "partOfSpeech": "verb",
+        "meanings": [
+          {
+            "id": "ed53a044-92c4-4142-a697-3eef17a136a4",
+            "meaning": "cầm ; nắm ; giữ ; lấy",
+            "notes": [
+              "Đưa tay ra giữ , nắm hoặc nhận một vật gì đó ."
+            ],
+            "labels": [
+              "ngoại động từ"
+            ],
+            "examples": [
+              {
+                "id": "6758bd3e-2114-4db0-b9a9-ab0101dbf66c",
+                "sentence": "Please take my hand .",
+                "translation": "Hãy nắm lấy tay tôi ."
+              }
+            ]
+          },
+          {
+            "id": "a9ac0bf9-f285-46d0-84be-f6017ff43903",
+            "meaning": "lấy đi ; lấy ra; rút ra; trích ra",
+            "notes": [
+              "Lấy một vật khỏi vị trí của nó hoặc lấy đi khỏi ai."
+            ],
+            "labels": [
+              "ngoại động từ"
+            ],
+            "examples": [
+              {
+                "id": "c1b72276-3022-4324-8dcf-a4e51e2c291b",
+                "sentence": "Don't forget to take your keys .",
+                "translation": "Đừng quên mang theo chìa khóa của bạn ."
+              }
+            ]
+          },
+          {
+            "id": "eaa77b11-b130-4b56-bad1-ca59033e4e4c",
+            "meaning": "mang theo ; đem theo",
+            "notes": [
+              "Mang một vật hoặc người từ nơi này đến nơi khác ."
+            ],
+            "labels": [
+              "ngoại động từ"
+            ],
+            "examples": [
+              {
+                "id": "b4e23423-6677-4637-b700-68cf007457b0",
+                "sentence": "You must take your raincoat .",
+                "translation": "Anh phải mang theo áo mưa ."
+              }
+            ]
+          },
+          {
+            "id": "014d393d-5264-4f0c-9d8b-174d70b1fdc7",
+            "meaning": "đưa ; dẫn ; dắt",
+            "notes": [
+              "Đưa hoặc dẫn ai đến một nơi nào đó ."
+            ],
+            "labels": [
+              "ngoại động từ"
+            ],
+            "examples": [
+              {
+                "id": "f243366e-d05f-451d-9092-c9bc4acd59b4",
+                "sentence": "I'll take the children for a walk .",
+                "translation": "Tôi sẽ dẫn bọn trẻ đi dạo ."
+              }
+            ]
+          },
+          {
+            "id": "46c27ed5-d938-43d4-8b97-ecd11ad8a192",
+            "meaning": "đi ; đi bằng",
+            "notes": [
+              "Di chuyển bằng một phương tiện hoặc theo một con đường ."
+            ],
+            "labels": [
+              "ngoại động từ"
+            ],
+            "examples": [
+              {
+                "id": "4d25f4d4-92d0-4f31-8c32-38d4b7b93da0",
+                "sentence": "She takes the bus to work .",
+                "translation": "Cô ấy đi xe buýt đi làm ."
+              }
+            ]
+          },
+          {
+            "id": "86ea0c70-7bb4-4863-9112-3232ceb32024",
+            "meaning": "ăn ; uống ; dùng",
+            "notes": [
+              "Đưa thức ăn , đồ uống hoặc thuốc vào cơ thể ; mang cỡ giày , quần áo ."
+            ],
+            "labels": [
+              "ngoại động từ"
+            ],
+            "examples": [
+              {
+                "id": "4016e9a6-690e-49f2-9a8c-2275b044b608",
+                "sentence": "I take medicine twice a day.",
+                "translation": "Tôi uống thuốc hai lần một ngày ."
+              }
+            ]
+          },
+          {
+            "id": "07fcbf23-cada-43c2-a1b5-7ca0976b73a8",
+            "meaning": "làm ; thực hiện",
+            "notes": [
+              "Thực hiện một hành động , thường đi với danh từ chỉ hành động ."
+            ],
+            "labels": [
+              "ngoại động từ"
+            ],
+            "examples": [
+              {
+                "id": "2c4be24d-59b1-4a48-8880-4c93631e59e4",
+                "sentence": "Let's take a break for 10 minutes .",
+                "translation": "Hãy nghỉ giải lao 10 phút ."
+              }
+            ]
+          },
+          {
+            "id": "c878f123-2a1d-4765-ab5b-66619376ae04",
+            "meaning": "cần ; đòi hỏi ; tốn",
+            "notes": [
+              "Cần có thời gian , sức lực hoặc điều kiện nào đó để làm việc gì ."
+            ],
+            "labels": [
+              "ngoại động từ"
+            ],
+            "examples": [
+              {
+                "id": "616310b0-1322-4d03-8b14-75b8fe37736d",
+                "sentence": "Learning a language takes time .",
+                "translation": "Học một ngôn ngữ cần có thời gian ."
+              }
+            ]
+          },
+          {
+            "id": "dd198fd3-d507-49d0-b4c4-590d97364cad",
+            "meaning": "hiểu ; coi như ; cho là",
+            "notes": [
+              "Tiếp nhận , hiểu hoặc đánh giá sự việc theo một cách nào đó ."
+            ],
+            "labels": [
+              "ngoại động từ"
+            ],
+            "examples": [
+              {
+                "id": "db351ffa-341a-4b34-b24d-eb9c33d81357",
+                "sentence": "I take your point .",
+                "translation": "Tôi hiểu ý anh ."
+              }
+            ]
+          },
+          {
+            "id": "31f6831b-a7d3-4132-a193-1e89d86dccf7",
+            "meaning": "chịu ; chịu đựng ; tiếp nhận",
+            "notes": [
+              "Chịu đựng , chấp nhận hoặc tiếp nhận điều gì , thường là khó khăn ."
+            ],
+            "labels": [
+              "ngoại động từ"
+            ],
+            "examples": [
+              {
+                "id": "f3b04a81-fe56-4d27-ae4a-4246f115bea3",
+                "sentence": "The wooden bridge cannot take much weight .",
+                "translation": "Cây cầu gỗ không thể chịu được nhiều trọng lượng ."
+              }
+            ]
+          },
+          {
+            "id": "835e0960-030b-4ffa-b388-2069fd492d15",
+            "meaning": "ghi ; chép ; chụp",
+            "notes": [
+              "Ghi chép thông tin hoặc chụp ảnh ."
+            ],
+            "labels": [
+              "ngoại động từ"
+            ],
+            "examples": [
+              {
+                "id": "060038fc-b280-4578-9c8f-9f4052ff4e98",
+                "sentence": "The secretary took notes during the meeting .",
+                "translation": "Thư ký ghi chép trong cuộc họp ."
+              }
+            ]
+          },
+          {
+            "id": "1a53c7c8-7c90-4b6a-ad78-1e807e39cc70",
+            "meaning": "bắt ; chiếm ; giành được",
+            "notes": [
+              "Bắt giữ , chiếm đoạt hoặc giành được sesuatu."
+            ],
+            "labels": [
+              "ngoại động từ"
+            ],
+            "examples": [
+              {
+                "id": "16123c80-0152-437d-b87e-e33a56d7be75",
+                "sentence": "To take a fortress .",
+                "translation": "Chiếm một pháo đài ."
+              }
+            ]
+          },
+          {
+            "id": "7fa4eb0a-4265-4e2f-901d-642e1128cf55",
+            "meaning": "thuê ; mua",
+            "notes": [
+              "Thuê nhà , mua vé , đặt mua báo dài hạn ."
+            ],
+            "labels": [
+              "ngoại động từ"
+            ],
+            "examples": [
+              {
+                "id": "217ac297-5102-4cf0-b93c-0f45c4800314",
+                "sentence": "To take a house .",
+                "translation": "Thuê một căn nhà ."
+              }
+            ]
+          },
+          {
+            "id": "e6ccebb1-45bb-42c5-b3d6-fff23d1ce628",
+            "meaning": "được ; đoạt ; đỗ",
+            "notes": [
+              "Được giải , nhận bằng cấp , đạt được thành tích ."
+            ],
+            "labels": [
+              "ngoại động từ"
+            ],
+            "examples": [
+              {
+                "id": "6a511516-562b-4a38-96b3-8e15d46d860d",
+                "sentence": "To take a first prize .",
+                "translation": "Được giải nhất ."
+              }
+            ]
+          },
+          {
+            "id": "917efaef-b44e-4f6c-b8ea-cb4da5b09d4d",
+            "meaning": "mắc ; bị ; nhiễm",
+            "notes": [
+              "Mắc bệnh hoặc bị ảnh hưởng bởi bệnh ."
+            ],
+            "labels": [
+              "ngoại động từ"
+            ],
+            "examples": [
+              {
+                "id": "a14ef443-9c60-410e-89ce-cf5a9f993e39",
+                "sentence": "To take cold .",
+                "translation": "Bị cảm lạnh ."
+              }
+            ]
+          },
+          {
+            "id": "828ee3e5-fb1e-4796-b903-f690c4961937",
+            "meaning": "chứa được ; đựng được",
+            "notes": [
+              "Có sức chứa hoặc khả năng chịu đựng số lượng nào đó ."
+            ],
+            "labels": [
+              "ngoại động từ"
+            ],
+            "examples": [
+              {
+                "id": "0c0e8b2a-9da7-4580-892b-0d77e7a2c044",
+                "sentence": "The car can't take more than six .",
+                "translation": "Chiếc xe không chứa được quá sáu người ."
+              }
+            ]
+          },
+          {
+            "id": "db11c0ed-e517-465f-80b6-711ff8f41689",
+            "meaning": "tận dụng ; nắm lấy",
+            "notes": [
+              "Tận dụng cơ hội hoặc lợi thế ."
+            ],
+            "labels": [
+              "ngoại động từ"
+            ],
+            "examples": [
+              {
+                "id": "24f298d8-6322-4411-a356-bf531234861b",
+                "sentence": "To take the opportunity .",
+                "translation": "Nắm lấy cơ hội ."
+              }
+            ]
+          },
+          {
+            "id": "cde7a3f2-6825-4b80-b27e-2f5a5e41d530",
+            "meaning": "quyến rũ ; lôi cuốn",
+            "notes": [
+              "Làm ai say mê , bị hấp dẫn , thường dùng ở dạng bị động ."
+            ],
+            "labels": [
+              "ngoại động từ"
+            ],
+            "examples": [
+              {
+                "id": "991df3b6-8292-4bcf-8b66-67e4a245e651",
+                "sentence": "He was much taken with her .",
+                "translation": "Anh ta rất say mê cô ấy ."
+              }
+            ]
+          },
+          {
+            "id": "64d4e327-3904-452f-ad40-c5e1a931b629",
+            "meaning": "vượt qua",
+            "notes": [
+              "Vượt qua chướng ngại vật ; đi vào hoặc đến một nơi ."
+            ],
+            "labels": [
+              "ngoại động từ"
+            ],
+            "examples": [
+              {
+                "id": "8c821816-d80a-4472-87af-eca869cd4fb0",
+                "sentence": "The thoroughbred takes the hedge with greatest ease .",
+                "translation": "Con ngựa nòi vượt qua hàng rào một cách hết sức dễ dàng ."
+              }
+            ]
+          },
+          {
+            "id": "a1237f9b-7405-440b-b749-d1286675118f",
+            "meaning": "bén ; ngấm ; có hiệu lực",
+            "notes": [
+              "Bén lửa , ngấm thuốc , có tác dụng ; thành công , được ưa thích ."
+            ],
+            "labels": [
+              "nội động từ"
+            ],
+            "examples": [
+              {
+                "id": "d5f042cb-433b-4dd6-91fc-a06fbe9664a2",
+                "sentence": "The medicine did not take .",
+                "translation": "Thuốc không có hiệu lực ."
+              }
+            ]
+          },
+          {
+            "id": "80f49789-eccc-4c8f-84e1-21d42b8cb5ec",
+            "meaning": "ăn ảnh",
+            "notes": [
+              "Lên ảnh đẹp hay không đẹp ."
+            ],
+            "labels": [
+              "nội động từ"
+            ],
+            "examples": [
+              {
+                "id": "20fb70f0-518d-4e69-9a53-bde7db02cdef",
+                "sentence": "She does not take well .",
+                "translation": "Cô ấy không ăn ảnh lắm ."
+              }
+            ]
+          },
+          {
+            "id": "cce0571f-55b8-4980-857b-91d6004934e6",
+            "meaning": "thành công ; được ưa chuộng",
+            "notes": [
+              "Được công chúng đón nhận , thành công ."
+            ],
+            "labels": [
+              "nội động từ"
+            ],
+            "examples": [
+              {
+                "id": "4e5e55c1-e01f-479a-b9aa-2a98edf0750b",
+                "sentence": "His second play took even more than the first .",
+                "translation": "Vở kịch thứ hai của ông ấy còn thành công hơn cả vở đầu ."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "0944dbaa-e335-4fa5-b77f-27caa01fb708",
+        "partOfSpeech": "noun",
+        "meanings": [
+          {
+            "id": "de3ae6d1-2958-43fc-ae18-106e841b4965",
+            "meaning": "mẻ ; số lượng săn được ; số lượng câu được",
+            "notes": [
+              "Số lượng thu được từ việc săn bắn , câu cá , đánh bắt ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "a35ab2b1-3b27-46f3-8797-2d7c50159059",
+                "sentence": "The fisherman was pleased with his take .",
+                "translation": "Người ngư dân hài lòng với mẻ cá của mình ."
+              }
+            ]
+          },
+          {
+            "id": "c51a8f43-59a3-40f3-b1e7-994f036889a6",
+            "meaning": "tiền thu",
+            "notes": [
+              "Số tiền thu được từ buổi hòa nhạc , diễn kịch , chiếu phim ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "cc9a8e41-c190-4615-ae84-3d8d923dfc24",
+                "sentence": "The take from the concert was large .",
+                "translation": "Tiền thu từ buổi hòa nhạc rất lớn ."
+              }
+            ]
+          },
+          {
+            "id": "719c1645-ab7c-4835-a1f8-3ae4ec04cfbb",
+            "meaning": "cảnh quay",
+            "notes": [
+              "Đoạn phim được quay liên tục không ngắt trong điện ảnh ."
+            ],
+            "labels": [
+              "điện ảnh"
+            ],
+            "examples": [
+              {
+                "id": "d093f7dd-0ab5-4d74-9e10-f6e8025785be",
+                "sentence": "We had to do several takes for that scene .",
+                "translation": "Chúng tôi phải quay nhiều cảnh cho phân cảnh đó ."
+              }
+            ]
+          },
+          {
+            "id": "ccce3643-2226-4b6b-9b97-05a5045e8607",
+            "meaning": "sự cầm ; sự nắm ; sự lấy",
+            "notes": [
+              "Hành động cầm , nắm , lấy ."
+            ],
+            "labels": [],
+            "examples": []
+          }
+        ]
+      }
+    ],
+    "phrasesAndIdioms": [
+      {
+        "id": "9d787cde-17d7-4549-9220-386e40c4ba2c",
+        "phrase": "take after",
+        "translation": "giống người thân trong gia đình",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "aa946651-3a7a-4bb1-80c2-4910d73cd940",
+        "phrase": "take along",
+        "translation": "mang theo , đem theo",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "1e0e078d-8a66-4d44-98bc-8c97718cf9a5",
+        "phrase": "take away",
+        "translation": "mang đi , lấy đi , đem đi , cất đi",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "eb3fd62e-14af-40f2-9fcf-5e2bb6f4ade1",
+        "phrase": "take back",
+        "translation": "lấy lại , mang về ; rút lại lời nói",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "7bf2e3ad-7c5b-4b7d-a20a-59c3c46334b3",
+        "phrase": "take down",
+        "translation": "tháo xuống , hạ xuống , dỡ ra; ghi chép ; làm bẽ mặt",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "e21e0a74-b09e-45ea-a92b-a465a6ed960e",
+        "phrase": "take in",
+        "translation": "đưa vào , tiếp nhận , cho ở trọ , nhận nuôi ; thu hẹp lại ; hiểu , nắm được ; lừa gạt",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "7f7d1866-932d-4d34-8b4c-fb23ab1fd6cc",
+        "phrase": "take off",
+        "translation": "cởi , bỏ ra; cất cánh ; bắt chước , nhại ; thành công nhanh chóng ; bớt , giảm giá",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "a5f815af-5252-4ca1-90b2-7469a0b200b6",
+        "phrase": "take on",
+        "translation": "đảm nhiệm , nhận làm ; thuê , nhận vào làm ; nhận lời thách đấu",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "336c638e-93e3-4228-b27b-4429b0d962a2",
+        "phrase": "take out",
+        "translation": "đưa ra ngoài , lấy ra, xóa sạch ; được cấp giấy phép , bằng cấp ; lấy hàng bù tiền",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "ab7dabb7-3dee-4188-ba69-0b31ede38ee0",
+        "phrase": "take over",
+        "translation": "tiếp quản , kế tục , thay phiên",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "e2bf8be0-6503-40e1-a9d7-d016998b5bbe",
+        "phrase": "take to",
+        "translation": "dùng đến , trốn vào ; bắt đầu ham thích , nhiễm thói quen ; có cảm tình với ai",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "03d0dc0d-1434-4233-9714-7486a50d123e",
+        "phrase": "take up",
+        "translation": "nhặt lên , đưa lên ; tiếp tục công việc bỏ dở ; bắt đầu nghề , sở thích mới ; chiếm thời gian , chỗ ; thấm , hút",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "ac000698-d2a7-41e7-9a3c-4152dc0bbbda",
+        "phrase": "take up with",
+        "translation": "kết giao , thân thiết với ai",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "7825bb22-ab23-445d-a5b8-94ad35e3dc69",
+        "phrase": "take aside",
+        "translation": "kéo ra một chỗ để nói riêng",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "3a59913d-d5b1-44fb-aa53-590ab079b71b",
+        "phrase": "take place",
+        "translation": "xảy ra , diễn ra",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "082be2a7-526f-42c4-926b-43b3adf817d6",
+        "phrase": "take into account / take into consideration",
+        "translation": "tính đến , xem xét đến",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "aaccdc65-2c4b-42f5-b5f2-63d451678aa1",
+        "phrase": "take for granted",
+        "translation": "cho là đương nhiên",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "d4063eab-e8ff-4cce-90f0-9246ecb1cd5f",
+        "phrase": "take a look",
+        "translation": "nhìn , xem xét",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "324bca00-a95d-48ce-90e8-46a62c37c298",
+        "phrase": "take a break",
+        "translation": "nghỉ ngơi , nghỉ giải lao",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "bdd0ff4d-0ad0-4fa6-9d07-bdcb660abf53",
+        "phrase": "take it easy",
+        "translation": "thư giãn , đừng căng thẳng",
+        "labels": [
+          "khẩu ngữ"
+        ],
+        "type": "phrase"
+      },
+      {
+        "id": "afc82c0c-a20b-4b93-b205-2c5940b9aa40",
+        "phrase": "take someone's breath away",
+        "translation": "làm ai kinh ngạc , ngỡ ngàng",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "d8b157f8-b477-42f4-86d7-6642f71fa129",
+        "phrase": "take the bull by the horns",
+        "translation": "dũng cảm đối mặt với khó khăn",
+        "labels": [
+          "thành ngữ"
+        ],
+        "type": "phrase"
+      },
+      {
+        "id": "b4fcba43-d5ec-4630-b311-9721f9ceae9f",
+        "phrase": "take one's life in one's hand",
+        "translation": "liều mạng",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "58ca0cae-85b9-4ea7-878a-49e576742950",
+        "phrase": "chui xuống hang để trốn , nói về con mồi bị chó săn đuổi",
+        "translation": "take earth dùng",
+        "labels": [
+          "săn bắn",
+          "hiếm"
+        ],
+        "type": "phrase"
+      }
+    ],
+    "usageNotes": [
+      "Động từ take chia quá khứ là took , quá khứ phân từ là taken .",
+      "Take có rất nhiều nghĩa ; nghĩa cụ thể do cụm từ đi kèm quyết định , cần chú ý giới từ sau nó : take off , take on, take over , take up."
+    ],
+    "relatedWords": {
+      "synonyms": [
+        "contract",
+        "get",
+        "drive",
+        "contain",
+        "hold",
+        "accept",
+        "claim",
+        "have",
+        "subscribe",
+        "lease",
+        "rent",
+        "hire",
+        "charter",
+        "engage",
+        "carry",
+        "pack",
+        "aim",
+        "train",
+        "direct",
+        "make",
+        "exact",
+        "learn",
+        "study",
+        "read",
+        "admit",
+        "assume",
+        "strike",
+        "submit",
+        "consume",
+        "ingest",
+        "remove",
+        "wit"
+      ],
+      "antonyms": [
+        "disclaim",
+        "abstain",
+        "refrain",
+        "desist",
+        "obviate",
+        "eliminate",
+        "refuse",
+        "reject",
+        "decline",
+        "give"
+      ],
+      "similarWords": [],
+      "similarSpellings": [
+        "tike",
+        "toke",
+        "tyke",
+        "dak",
+        "tag",
+        "dike",
+        "duke",
+        "dyke",
+        "tack",
+        "teak"
+      ],
+      "wordsContaining": [
+        "betake",
+        "betaken",
+        "care-taker",
+        "census taker",
+        "check-taker",
+        "gas-take",
+        "intake",
+        "mistake",
+        "mistaken",
+        "mistakenness"
+      ],
+      "wordsMentioning": [
+        "a dua",
+        "an thần",
+        "an toạ",
+        "ăn",
+        "ăn bớt",
+        "ăn cánh",
+        "ăn chẹt",
+        "ăn cơm",
+        "ăn hối lộ",
+        "ăn lời"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/take--179479.webp?v=1775389540",
+        "alt": "take",
+        "exampleSentence": "He takes the bus to work every morning."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "test"
+    ],
+    "createdAt": 1791821871030,
+    "highlights": [
+      {
+        "id": "ed53a044-92c4-4142-a697-3eef17a136a4",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "cầm ; nắm ; giữ ; lấy",
+        "example": "Please take my hand ."
+      },
+      {
+        "id": "a9ac0bf9-f285-46d0-84be-f6017ff43903",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "lấy đi ; lấy ra; rút ra; trích ra",
+        "example": "Don't forget to take your keys ."
+      },
+      {
+        "id": "eaa77b11-b130-4b56-bad1-ca59033e4e4c",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "mang theo ; đem theo",
+        "example": "You must take your raincoat ."
+      },
+      {
+        "id": "014d393d-5264-4f0c-9d8b-174d70b1fdc7",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "đưa ; dẫn ; dắt",
+        "example": "I'll take the children for a walk ."
+      },
+      {
+        "id": "46c27ed5-d938-43d4-8b97-ecd11ad8a192",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "đi ; đi bằng",
+        "example": "She takes the bus to work ."
+      },
+      {
+        "id": "86ea0c70-7bb4-4863-9112-3232ceb32024",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "ăn ; uống ; dùng",
+        "example": "I take medicine twice a day."
+      },
+      {
+        "id": "07fcbf23-cada-43c2-a1b5-7ca0976b73a8",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "làm ; thực hiện",
+        "example": "Let's take a break for 10 minutes ."
+      },
+      {
+        "id": "c878f123-2a1d-4765-ab5b-66619376ae04",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "cần ; đòi hỏi ; tốn",
+        "example": "Learning a language takes time ."
+      },
+      {
+        "id": "dd198fd3-d507-49d0-b4c4-590d97364cad",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "hiểu ; coi như ; cho là",
+        "example": "I take your point ."
+      },
+      {
+        "id": "31f6831b-a7d3-4132-a193-1e89d86dccf7",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "chịu ; chịu đựng ; tiếp nhận",
+        "example": "The wooden bridge cannot take much weight ."
+      },
+      {
+        "id": "835e0960-030b-4ffa-b388-2069fd492d15",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "ghi ; chép ; chụp",
+        "example": "The secretary took notes during the meeting ."
+      },
+      {
+        "id": "1a53c7c8-7c90-4b6a-ad78-1e807e39cc70",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "bắt ; chiếm ; giành được",
+        "example": "To take a fortress ."
+      },
+      {
+        "id": "7fa4eb0a-4265-4e2f-901d-642e1128cf55",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "thuê ; mua",
+        "example": "To take a house ."
+      },
+      {
+        "id": "e6ccebb1-45bb-42c5-b3d6-fff23d1ce628",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "được ; đoạt ; đỗ",
+        "example": "To take a first prize ."
+      },
+      {
+        "id": "917efaef-b44e-4f6c-b8ea-cb4da5b09d4d",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "mắc ; bị ; nhiễm",
+        "example": "To take cold ."
+      },
+      {
+        "id": "828ee3e5-fb1e-4796-b903-f690c4961937",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "chứa được ; đựng được",
+        "example": "The car can't take more than six ."
+      },
+      {
+        "id": "db11c0ed-e517-465f-80b6-711ff8f41689",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "tận dụng ; nắm lấy",
+        "example": "To take the opportunity ."
+      },
+      {
+        "id": "cde7a3f2-6825-4b80-b27e-2f5a5e41d530",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "quyến rũ ; lôi cuốn",
+        "example": "He was much taken with her ."
+      },
+      {
+        "id": "64d4e327-3904-452f-ad40-c5e1a931b629",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "vượt qua",
+        "example": "The thoroughbred takes the hedge with greatest ease ."
+      },
+      {
+        "id": "a1237f9b-7405-440b-b749-d1286675118f",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "bén ; ngấm ; có hiệu lực",
+        "example": "The medicine did not take ."
+      },
+      {
+        "id": "80f49789-eccc-4c8f-84e1-21d42b8cb5ec",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "ăn ảnh",
+        "example": "She does not take well ."
+      },
+      {
+        "id": "cce0571f-55b8-4980-857b-91d6004934e6",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "thành công ; được ưa chuộng",
+        "example": "His second play took even more than the first ."
+      },
+      {
+        "id": "de3ae6d1-2958-43fc-ae18-106e841b4965",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "mẻ ; số lượng săn được ; số lượng câu được",
+        "example": "The fisherman was pleased with his take ."
+      },
+      {
+        "id": "c51a8f43-59a3-40f3-b1e7-994f036889a6",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "tiền thu",
+        "example": "The take from the concert was large ."
+      },
+      {
+        "id": "719c1645-ab7c-4835-a1f8-3ae4ec04cfbb",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "cảnh quay",
+        "example": "We had to do several takes for that scene ."
+      },
+      {
+        "id": "ccce3643-2226-4b6b-9b97-05a5045e8607",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "sự cầm ; sự nắm ; sự lấy",
+        "example": ""
+      }
+    ],
+    "srs": {
+      "due": 1792084058994,
+      "interval": 259200000,
+      "easeFactor": 2.65,
+      "reps": 1,
+      "step": 3
+    }
+  },
+  {
+    "id": "609e3289-b86d-47bc-b334-0ae1970e74e5",
+    "sentence": "a",
+    "partOfSpeech": "determiner / preposition / noun",
+    "phonetics": [
+      {
+        "ipa": "/ɔ/",
+        "dialect": "uk",
+        "pos": [
+          "adjective",
+          "adverb"
+        ],
+        "context": "UK tính từ trạng từ",
+        "assignment": "explicit"
+      },
+      {
+        "ipa": "/eɪ/",
+        "dialect": "",
+        "pos": [],
+        "context": "từ hạn định",
+        "assignment": "unlabelled"
+      },
+      {
+        "ipa": "/ˈʌ/",
+        "dialect": "",
+        "pos": [
+          "noun"
+        ],
+        "context": "danh từ",
+        "assignment": "unlabelled"
+      },
+      {
+        "ipa": "/eɪ̯/",
+        "dialect": "uk",
+        "pos": [],
+        "context": "UK số từ",
+        "assignment": "explicit"
+      },
+      {
+        "ipa": "/eː/",
+        "dialect": "",
+        "pos": [],
+        "context": "số từ",
+        "assignment": "unlabelled"
+      },
+      {
+        "ipa": "/ə/",
+        "dialect": "uk",
+        "pos": [
+          "preposition"
+        ],
+        "context": "UK giới từ",
+        "assignment": "explicit"
+      },
+      {
+        "ipa": "/ə/",
+        "dialect": "",
+        "pos": [
+          "preposition",
+          "verb"
+        ],
+        "context": "giới từ động từ",
+        "assignment": "unlabelled"
+      },
+      {
+        "ipa": "/ʌ/",
+        "dialect": "uk",
+        "pos": [
+          "pronoun"
+        ],
+        "context": "UK đại từ",
+        "assignment": "explicit"
+      }
+    ],
+    "phonetic": "/ɔ/",
+    "posEntries": [
+      {
+        "id": "ae434576-32e4-46e0-87bb-72180c0c29a1",
+        "partOfSpeech": "determiner",
+        "meanings": [
+          {
+            "id": "4b87c232-4551-4756-8785-e3cd51213b96",
+            "meaning": "một",
+            "notes": [
+              "Mạo từ bất định , dùng trước danh từ số ít đếm được chưa xác định hoặc được nhắc đến lần đầu ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "f366102c-a7a5-402d-b1bf-6702d74062c0",
+                "sentence": "I saw a bird in the tree .",
+                "translation": "Tôi thấy một con chim trên cây ."
+              }
+            ]
+          },
+          {
+            "id": "61f097db-dccd-4fa3-979c-f6cef6bff750",
+            "meaning": "một ... nào đó",
+            "notes": [
+              "Dùng trước tên riêng để chỉ một người hoặc vật chưa quen biết , hoặc một nhân vật kiểu như người đó ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "36bd632f-5e32-4130-ae54-7d9555460d52",
+                "sentence": "A Mr Nam called you .",
+                "translation": "Một ông Nam nào đó đã gọi cho anh ."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "002d4db9-8dcc-4038-9ee2-ef475b207507",
+        "partOfSpeech": "preposition",
+        "meanings": [
+          {
+            "id": "da890c54-e114-490e-9e5b-0632113844ad",
+            "meaning": "mỗi ; mỗi một",
+            "notes": [
+              "Dùng để chỉ đơn giá , tần suất hoặc tỉ lệ cho mỗi đơn vị ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "d8f78a9e-b931-49a1-a573-8bce8fa06fa3",
+                "sentence": "Twice a week .",
+                "translation": "Mỗi tuần hai lần ."
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "8d6f2470-e305-403e-abf0-63cdf0ef4936",
+        "partOfSpeech": "noun",
+        "meanings": [
+          {
+            "id": "6e7b4eff-8bef-40c9-9689-d228b496ead3",
+            "meaning": "chữ A ; chữ cái đầu tiên",
+            "notes": [
+              "Chữ cái đầu tiên trong bảng chữ cái tiếng Anh ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "07cc4fd8-96e9-424b-a766-e36f032e150a",
+                "sentence": "\" Apple \" begins with the letter A.",
+                "translation": "Từ \" Apple \" bắt đầu bằng chữ A."
+              }
+            ]
+          },
+          {
+            "id": "0d8cf48b-67bf-4573-ab36-a66649bdd942",
+            "meaning": "điểm A ; loại A; hạng nhất",
+            "notes": [
+              "Điểm số cao nhất hoặc đánh giá chất lượng tốt nhất ."
+            ],
+            "labels": [],
+            "examples": [
+              {
+                "id": "8f4ca308-7e5b-44ab-b0d7-bd595bc8eab7",
+                "sentence": "He got an A on his test .",
+                "translation": "Cậu ấy được điểm A trong bài kiểm tra ."
+              }
+            ]
+          },
+          {
+            "id": "ba6dc9d7-d1b3-4704-8f5c-d204fd2251cc",
+            "meaning": "nốt La",
+            "notes": [
+              "Nốt nhạc thứ sáu trong âm giai đô trưởng ."
+            ],
+            "labels": [
+              "âm nhạc"
+            ],
+            "examples": [
+              {
+                "id": "e9878d06-80c8-4435-8cf8-f3e98a18f7cc",
+                "sentence": "The song starts with the note A.",
+                "translation": "Bài hát bắt đầu bằng nốt La."
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "phrasesAndIdioms": [
+      {
+        "id": "a7db0531-8714-4bb2-b62e-4dde33ac810a",
+        "phrase": "from A to Z",
+        "translation": "từ đầu đến cuối , tường tận",
+        "labels": [],
+        "type": "phrase"
+      },
+      {
+        "id": "ea03bafa-c322-4057-b928-c01259553e26",
+        "phrase": "not to know A from B",
+        "translation": "không biết tí gì cả , một chữ bẻ đôi cũng không biết",
+        "labels": [
+          "thông tục"
+        ],
+        "type": "phrase"
+      }
+    ],
+    "usageNotes": [
+      "Mạo từ \"a\" dùng trước từ bắt đầu bằng phụ âm ; trước nguyên âm dùng \"an\". Khi dịch sang tiếng Việt thường thêm loại từ thích hợp : cái , con, chiếc , cuốn , người ... tùy danh từ đi kèm .",
+      "Dạng \"an\" dùng trước nguyên âm hoặc âm \"h\" câm , ví dụ : an apple , an hour ."
+    ],
+    "relatedWords": {
+      "synonyms": [
+        "a",
+        "ampere",
+        "amp",
+        "deoxyadenosine monophosphate",
+        "angstrom unit"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [
+        "e",
+        "i",
+        "j",
+        "o",
+        "u",
+        "y",
+        "ah",
+        "ay",
+        "Ea",
+        "eh"
+      ],
+      "wordsContaining": [
+        "a b c",
+        "a b c - book",
+        "a font",
+        "a fortiori",
+        "a la carte",
+        "a la mode",
+        "a posteriori",
+        "a priori",
+        "aard-wolf",
+        "aasvogel"
+      ],
+      "wordsMentioning": [
+        "a",
+        "a dua",
+        "a ha",
+        "a phiến",
+        "a tòng",
+        "à uôm",
+        "á khôi",
+        "ác",
+        "ác cảm",
+        "ác chiến"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/a--46838.webp?v=1775345337",
+        "alt": "a",
+        "exampleSentence": "A child points to the letter A in an alphabet book."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "test"
+    ],
+    "createdAt": 1791821871827,
+    "highlights": [
+      {
+        "id": "4b87c232-4551-4756-8785-e3cd51213b96",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "một",
+        "example": "I saw a bird in the tree ."
+      },
+      {
+        "id": "61f097db-dccd-4fa3-979c-f6cef6bff750",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "một ... nào đó",
+        "example": "A Mr Nam called you ."
+      },
+      {
+        "id": "da890c54-e114-490e-9e5b-0632113844ad",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "mỗi ; mỗi một",
+        "example": "Twice a week ."
+      },
+      {
+        "id": "6e7b4eff-8bef-40c9-9689-d228b496ead3",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "chữ A ; chữ cái đầu tiên",
+        "example": "\" Apple \" begins with the letter A."
+      },
+      {
+        "id": "0d8cf48b-67bf-4573-ab36-a66649bdd942",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "điểm A ; loại A; hạng nhất",
+        "example": "He got an A on his test ."
+      },
+      {
+        "id": "ba6dc9d7-d1b3-4704-8f5c-d204fd2251cc",
+        "wordIndices": [
+          0
+        ],
+        "meaning": "nốt La",
+        "example": "The song starts with the note A."
+      }
+    ],
+    "srs": {
+      "due": 1792084059187,
+      "interval": 259200000,
+      "easeFactor": 2.65,
+      "reps": 1,
+      "step": 3
+    }
+  }
+]
