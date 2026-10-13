@@ -4,21 +4,33 @@
 export interface KeycapsSwitchItem {
   id: string
   name: string
+  category?: string
 }
 
 export const KEYCAPS_SWITCHES: KeycapsSwitchItem[] = [
-  { id: "mechanical/alpaca", name: "Alpacas" },
-  { id: "mechanical/blackink", name: "Black Inks" },
-  { id: "mechanical/bluealps", name: "Blue Alps" },
-  { id: "mechanical/boxnavy", name: "Box Navies" },
-  { id: "mechanical/buckling", name: "Buckling Spring" },
-  { id: "mechanical/cream", name: "Creams" },
-  { id: "mechanical/holypanda", name: "Holy Pandas" },
-  { id: "mechanical/mxblack", name: "MX Blacks" },
-  { id: "mechanical/mxbrown", name: "MX Browns" },
-  { id: "mechanical/redink", name: "Red Inks" },
-  { id: "mechanical/topre", name: "Topre" },
-  { id: "mechanical/turquoise", name: "Turquoise" },
+  // TypeLouder switches (typelouder.app)
+  { id: "typelouder/frost-click", name: "Frost Click", category: "TypeLouder" },
+  { id: "typelouder/ruby-thock", name: "Ruby Thock", category: "TypeLouder" },
+  { id: "typelouder/chestnut-bump", name: "Chestnut Bump", category: "TypeLouder" },
+  { id: "typelouder/midnight-thock", name: "Midnight Thock", category: "TypeLouder" },
+  { id: "typelouder/alpine-pop", name: "Alpine Pop", category: "TypeLouder" },
+  { id: "typelouder/onyx-glide", name: "Onyx Glide", category: "TypeLouder" },
+  { id: "typelouder/glacier-glide", name: "Glacier Glide", category: "TypeLouder" },
+  { id: "typelouder/cream-clack", name: "Cream Clack", category: "TypeLouder" },
+
+  // Mechanical switches (Entertrained)
+  { id: "mechanical/alpaca", name: "Alpacas", category: "Mechanical" },
+  { id: "mechanical/blackink", name: "Black Inks", category: "Mechanical" },
+  { id: "mechanical/bluealps", name: "Blue Alps", category: "Mechanical" },
+  { id: "mechanical/boxnavy", name: "Box Navies", category: "Mechanical" },
+  { id: "mechanical/buckling", name: "Buckling Spring", category: "Mechanical" },
+  { id: "mechanical/cream", name: "Creams", category: "Mechanical" },
+  { id: "mechanical/holypanda", name: "Holy Pandas", category: "Mechanical" },
+  { id: "mechanical/mxblack", name: "MX Blacks", category: "Mechanical" },
+  { id: "mechanical/mxbrown", name: "MX Browns", category: "Mechanical" },
+  { id: "mechanical/redink", name: "Red Inks", category: "Mechanical" },
+  { id: "mechanical/topre", name: "Topre", category: "Mechanical" },
+  { id: "mechanical/turquoise", name: "Turquoise", category: "Mechanical" },
 ]
 
 export interface ErrorSoundItem {
@@ -98,6 +110,25 @@ async function loadBufferFromUrl(url: string, ctx: AudioContext): Promise<AudioB
 export function preloadSwitch(switchId: string = "mechanical/mxbrown") {
   const ctx = getAudioContext()
   if (!ctx) return
+
+  if (switchId.startsWith("typelouder/")) {
+    const sw = switchId.replace(/^typelouder\//, "")
+    const files = [
+      `sounds/typelouder/${sw}/key1.mp3`,
+      `sounds/typelouder/${sw}/key2.mp3`,
+      `sounds/typelouder/${sw}/key3.mp3`,
+      `sounds/typelouder/${sw}/key4.mp3`,
+      `sounds/typelouder/${sw}/key5.mp3`,
+      `sounds/typelouder/${sw}/space.mp3`,
+      `sounds/typelouder/${sw}/enter.mp3`,
+      `sounds/typelouder/${sw}/backspace.mp3`,
+    ]
+    for (const f of files) {
+      loadBufferFromUrl(resolveAssetUrl(f), ctx).catch(() => {})
+    }
+    return
+  }
+
   const sw = switchId.replace(/^mechanical\//, "")
   const files = [
     `sounds/keycaps/mechanical/${sw}/press/GENERIC.mp3`,
@@ -145,6 +176,50 @@ export async function playKeycapsSound(options: PlaySoundOptions = {}) {
 
     if (volume <= 0) return
 
+    // TypeLouder sound pack engine
+    if (switchId.startsWith("typelouder/")) {
+      // TypeLouder recordings are single down-stroke events
+      if (action === "release") return
+
+      const sw = switchId.replace(/^typelouder\//, "")
+      let soundName: string
+
+      if (special && type === "space") {
+        soundName = "space.mp3"
+      } else if (special && type === "enter") {
+        soundName = "enter.mp3"
+      } else if (special && type === "backspace") {
+        soundName = "backspace.mp3"
+      } else {
+        // Multi-sample variation across key1..key5
+        const variation = Math.floor(Math.random() * 5) + 1
+        soundName = `key${variation}.mp3`
+      }
+
+      const relPath = `sounds/typelouder/${sw}/${soundName}`
+      const url = resolveAssetUrl(relPath)
+      const audioBuf = await loadBufferFromUrl(url, ctx)
+      if (!audioBuf) return
+
+      const source = ctx.createBufferSource()
+      source.buffer = audioBuf
+
+      // TypeLouder pitch modulation formula (0.97 + Math.random() * 0.06):
+      const baseVariation = 0.97 + Math.random() * 0.06
+      const pitchFactor = Math.pow(2, pitchModifier / 12)
+      const finalRate = Math.max(0.2, Math.min(3.0, baseVariation * pitchFactor))
+      source.playbackRate.value = finalRate
+
+      const gainNode = ctx.createGain()
+      gainNode.gain.value = Math.max(0, Math.min(1, volume))
+
+      source.connect(gainNode)
+      gainNode.connect(ctx.destination)
+      source.start(0)
+      return
+    }
+
+    // Classic Entertrained Mechanical switches
     const sw = switchId.replace(/^mechanical\//, "")
     let soundName = "GENERIC"
     if (special) {

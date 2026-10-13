@@ -738,11 +738,20 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                       }}
                       className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm font-medium cursor-pointer"
                     >
-                      {KEYCAPS_SWITCHES.map(sw => (
-                        <option key={sw.id} value={sw.id}>
-                          {sw.name}
-                        </option>
-                      ))}
+                      <optgroup label="TypeLouder Switches">
+                        {KEYCAPS_SWITCHES.filter(sw => sw.category === "TypeLouder").map(sw => (
+                          <option key={sw.id} value={sw.id}>
+                            {sw.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Mechanical (Entertrained)">
+                        {KEYCAPS_SWITCHES.filter(sw => sw.category !== "TypeLouder").map(sw => (
+                          <option key={sw.id} value={sw.id}>
+                            {sw.name}
+                          </option>
+                        ))}
+                      </optgroup>
                     </select>
                   </div>
 
