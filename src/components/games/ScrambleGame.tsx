@@ -195,7 +195,7 @@ export function ScrambleGame({ onExit }: { onExit: () => void }) {
     <div className="max-w-2xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full">
       <GameHeader
         onExit={onExit}
-        title="Word Scramble"
+        title="Xáo trộn chữ cái · Word Scramble"
         current={index + 1}
         total={notes.length}
         right={

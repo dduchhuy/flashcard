@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo, Component, ReactNode, ErrorInfo } from 'react'
 import { useFlashcardStore, Flashcard, getCardTags, getCardsForMode, normalizePhraseItem } from '../store'
-import { ThumbsDown, ThumbsUp, Lightbulb, LightbulbOff, Layers, MousePointerClick, Grid2X2, Type, BrainCircuit, Headphones, Volume2, Shuffle, Zap, ListOrdered, ToggleLeft, Skull, Sparkles, ChevronRight, Tag as TagIcon, ChevronDown, Check } from 'lucide-react'
+import { ThumbsDown, ThumbsUp, Lightbulb, LightbulbOff, Layers, MousePointerClick, Grid2X2, Type, BrainCircuit, Headphones, Volume2, Shuffle, Zap, ListOrdered, ToggleLeft, Skull, Sparkles, ChevronRight, Tag as TagIcon, ChevronDown, Check, Link2, Search, LayoutGrid, ArrowUpDown, PenLine } from 'lucide-react'
 import { MatchGame } from './games/MatchGame'
 import { EmptyState, CardDetailModal, RootCardButton, GameHeader, ResultScreen } from './games/shared'
 import { MemoryGame } from './games/MemoryGame'
@@ -12,6 +12,11 @@ import { SentenceGame } from './games/SentenceGame'
 import { TrueFalseGame } from './games/TrueFalseGame'
 import { HangmanGame } from './games/HangmanGame'
 import { TypingGame } from './games/TypingGame'
+import { MissingLettersGame } from './games/MissingLettersGame'
+import { WordSearchGame } from './games/WordSearchGame'
+import { CrosswordGame } from './games/CrosswordGame'
+import { WordLadderGame } from './games/WordLadderGame'
+import { WordChainGame } from './games/WordChainGame'
 import { SelectDropdown } from './SelectDropdown'
 
 type Segment = {
@@ -21,7 +26,7 @@ type Segment = {
   meaning?: string
 }
 
-type GameMode = 'menu' | 'swipe' | 'quiz' | 'match' | 'memory' | 'fill' | 'listen' | 'scramble' | 'speed' | 'sentence' | 'truefalse' | 'hangman' | 'typing'
+type GameMode = 'menu' | 'swipe' | 'quiz' | 'match' | 'memory' | 'fill' | 'listen' | 'scramble' | 'speed' | 'sentence' | 'truefalse' | 'hangman' | 'typing' | 'missing' | 'wordsearch' | 'crossword' | 'ladder' | 'wordchain'
 
 interface ErrorBoundaryProps {
   children: ReactNode
@@ -101,6 +106,11 @@ export function TabGame() {
           {gameMode === 'truefalse' && <TrueFalseGame onExit={() => setGameMode('menu')} />}
           {gameMode === 'hangman' && <HangmanGame onExit={() => setGameMode('menu')} />}
           {gameMode === 'typing' && <TypingGame onExit={() => setGameMode('menu')} />}
+          {gameMode === 'missing' && <MissingLettersGame onExit={() => setGameMode('menu')} />}
+          {gameMode === 'wordsearch' && <WordSearchGame onExit={() => setGameMode('menu')} />}
+          {gameMode === 'crossword' && <CrosswordGame onExit={() => setGameMode('menu')} />}
+          {gameMode === 'ladder' && <WordLadderGame onExit={() => setGameMode('menu')} />}
+          {gameMode === 'wordchain' && <WordChainGame onExit={() => setGameMode('menu')} />}
         </GameErrorBoundary>
       )}
     </div>
@@ -357,6 +367,42 @@ function GameMenu({ onSelect }: { onSelect: (mode: GameMode) => void }) {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
             <button 
+              onClick={() => onSelect('missing')}
+              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-amber-300 dark:hover:border-amber-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <PenLine size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                  Điền chữ cái còn thiếu
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                  Missing Letters: a _ a n d o n
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 group-hover:text-amber-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
+
+            <button 
+              onClick={() => onSelect('scramble')}
+              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Shuffle size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                  Xáo trộn chữ cái
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                  Word Scramble: tca ➔ cat
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
+
+            <button 
               onClick={() => onSelect('fill')}
               className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-orange-300 dark:hover:border-orange-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
             >
@@ -411,24 +457,6 @@ function GameMenu({ onSelect }: { onSelect: (mode: GameMode) => void }) {
             </button>
 
             <button 
-              onClick={() => onSelect('scramble')}
-              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Shuffle size={20} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                  Word Scramble
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
-                  Rearrange letter tiles into the word
-                </p>
-              </div>
-              <ChevronRight size={16} className="text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition-all shrink-0" />
-            </button>
-
-            <button 
               onClick={() => onSelect('listen')}
               className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-cyan-300 dark:hover:border-cyan-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
             >
@@ -462,6 +490,89 @@ function GameMenu({ onSelect }: { onSelect: (mode: GameMode) => void }) {
                 </p>
               </div>
               <ChevronRight size={16} className="text-gray-400 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
+          </div>
+        </div>
+
+        {/* Section 4: Word Games & Puzzles */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="w-2 h-2 rounded-full bg-indigo-500" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              Word Games & Puzzles (Trò chơi từ vựng & Ô chữ)
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
+            <button 
+              onClick={() => onSelect('wordchain')}
+              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-purple-300 dark:hover:border-purple-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Link2 size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                  English Word Chain
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                  Nối từ tiếng Anh: apple ➔ elephant
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 group-hover:text-purple-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
+
+            <button 
+              onClick={() => onSelect('wordsearch')}
+              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Search size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                  Word Search
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                  Tìm từ trong bảng chữ (ngang, dọc, chéo)
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
+
+            <button 
+              onClick={() => onSelect('crossword')}
+              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-blue-300 dark:hover:border-blue-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <LayoutGrid size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  Crossword (Ô chữ)
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                  Điền ô chữ đan xen theo gợi ý nghĩa
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
+
+            <button 
+              onClick={() => onSelect('ladder')}
+              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-violet-300 dark:hover:border-violet-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <ArrowUpDown size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                  Word Ladder
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                  Biến đổi từ: CAT ➔ COT ➔ DOG
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 group-hover:text-violet-500 group-hover:translate-x-0.5 transition-all shrink-0" />
             </button>
           </div>
         </div>
