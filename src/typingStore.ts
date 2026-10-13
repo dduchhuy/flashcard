@@ -41,6 +41,7 @@ export interface TypingSettings {
   correctColor: string
   errorColor: string
   fontSize: number
+  fontWeight: number
   lineHeight: number
   fontFamily: string
 
@@ -78,6 +79,7 @@ export const defaultTypingSettings: TypingSettings = {
   correctColor: '#111827',
   errorColor: '#e11d48',
   fontSize: 20,
+  fontWeight: 400,
   lineHeight: 1.8,
   fontFamily: 'JetBrains Mono',
 

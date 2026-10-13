@@ -3,6 +3,7 @@ import { CheckCircle2, RotateCcw, ChevronRight, Timer, Gauge, Target, Volume2, V
 import { useTypingStore, Book, BookChapter } from "../../typingStore"
 import { isCharMatch, resolveTelexRevert, ACCENT_TO_EXPANSION, TELEX_MAP } from "../../utils/bookUtils"
 import { playKeycapsSound, playErrorSound, preloadSwitch, preloadError } from "../../utils/typingAudio"
+import { loadFont, getFontVariationSettings } from "../../utils/fontLoader"
 
 interface TypingModeProps {
   book: Book
@@ -46,17 +47,10 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
   const lastKeyTimeRef = useRef<number>(Date.now())
   const isAfkPausedRef = useRef<boolean>(false)
 
-  // Dynamically load Google Font if chosen
+  // Dynamically load font (Google Fonts, CDN, system)
   useEffect(() => {
     if (!settings.fontFamily) return
-    const fontName = settings.fontFamily.split(",")[0].replace(/['"]/g, "").trim()
-    const id = `gfont-${fontName.replace(/\s+/g, "-").toLowerCase()}`
-    if (document.getElementById(id)) return
-    const link = document.createElement("link")
-    link.id = id
-    link.rel = "stylesheet"
-    link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName)}:wght@400;600;700&display=swap`
-    document.head.appendChild(link)
+    loadFont(settings.fontFamily)
   }, [settings.fontFamily])
 
   // Preload sound assets
@@ -579,7 +573,9 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
   const containerStyle: React.CSSProperties = {
     fontFamily: settings.fontFamily,
     fontSize: `${settings.fontSize}px`,
+    fontWeight: settings.fontWeight || 400,
     lineHeight: settings.lineHeight,
+    fontVariationSettings: getFontVariationSettings(settings.fontFamily),
   }
 
   return (
@@ -681,12 +677,12 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
                   resetParagraphState()
                 }
               }}
-              className={`relative rounded-2xl px-4 py-3 transition-all ${
+              className={`relative py-1 transition-colors ${
                 isActive
-                  ? "bg-white dark:bg-gray-800 shadow-md ring-1 ring-purple-200 dark:ring-purple-800"
+                  ? "cursor-text"
                   : done
                   ? "text-gray-700 dark:text-gray-300 cursor-default opacity-85"
-                  : "text-gray-400 dark:text-gray-500 cursor-pointer hover:bg-gray-100/60 dark:hover:bg-gray-800/40"
+                  : "text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-400"
               }`}
             >
               {isActive ? renderActive() : p}

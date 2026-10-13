@@ -1,4 +1,4 @@
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { X, Sliders, Volume2, Database, RotateCcw, Play, Upload, Download, FileText, BookOpen, Check, AlertCircle } from "lucide-react"
 import { useTypingStore, Book } from "../../typingStore"
 import { useFlashcardStore } from "../../store"
@@ -15,59 +15,13 @@ import {
 } from "../../utils/bookUtils"
 import { loadAllFromGitData, exportAllToGitData } from "../../utils/gitDataService"
 
+import { FONT_OPTIONS, loadFont, getFontVariationSettings } from "../../utils/fontLoader"
+
 interface TypingSettingsModalProps {
   isOpen: boolean
   onClose: () => void
   currentBook?: Book | null
 }
-
-const FONT_OPTIONS = [
-  // Monospace
-  { group: "Monospace", fonts: [
-    { name: "JetBrains Mono", value: "JetBrains Mono, monospace" },
-    { name: "Fira Mono", value: "Fira Mono, monospace" },
-    { name: "Roboto Mono", value: "Roboto Mono, monospace" },
-    { name: "Source Code Pro", value: "Source Code Pro, monospace" },
-    { name: "Courier Prime", value: "Courier Prime, monospace" },
-    { name: "DejaVu Mono", value: "DejaVu Sans Mono, monospace" },
-    { name: "Dyslexic Mono", value: "OpenDyslexicMono, monospace" },
-    { name: "Noto Sans Mono", value: "Noto Sans Mono, monospace" },
-    { name: "Recursive Casual", value: "'Recursive', monospace" },
-    { name: "Recursive Linear", value: "'Recursive', monospace" },
-    { name: "Ubuntu Mono", value: "Ubuntu Mono, monospace" },
-    { name: "Victor Mono", value: "Victor Mono, monospace" },
-  ]},
-  // Sans-serif
-  { group: "Sans-Serif", fonts: [
-    { name: "Arial", value: "Arial, sans-serif" },
-    { name: "Open Sans", value: "Open Sans, sans-serif" },
-    { name: "Noto Sans", value: "Noto Sans, sans-serif" },
-    { name: "Geologica", value: "Geologica, sans-serif" },
-    { name: "Alegreya Sans", value: "Alegreya Sans, sans-serif" },
-    { name: "Atkinson Hyperlegible", value: "Atkinson Hyperlegible, sans-serif" },
-    { name: "Comfortaa", value: "Comfortaa, sans-serif" },
-    { name: "Comic Neue", value: "Comic Neue, sans-serif" },
-    { name: "Open Dyslexic", value: "OpenDyslexic, sans-serif" },
-    { name: "Play", value: "Play, sans-serif" },
-    { name: "Ubuntu", value: "Ubuntu, sans-serif" },
-    { name: "Ysabeau", value: "Ysabeau Office, sans-serif" },
-  ]},
-  // Serif
-  { group: "Serif", fonts: [
-    { name: "EB Garamond", value: "EB Garamond, serif" },
-    { name: "Times New Roman", value: "'Times New Roman', Times, serif" },
-    { name: "Libre Baskerville", value: "Libre Baskerville, serif" },
-    { name: "Literata", value: "Literata, serif" },
-    { name: "Noto Serif", value: "Noto Serif, serif" },
-    { name: "Piazzolla", value: "Piazzolla, serif" },
-    { name: "Roboto Slab", value: "Roboto Slab, serif" },
-    { name: "Source Serif 4", value: "Source Serif 4, serif" },
-    { name: "Vollkorn", value: "Vollkorn, serif" },
-    { name: "Alegreya", value: "Alegreya, serif" },
-    { name: "DejaVu Serif", value: "DejaVu Serif, serif" },
-    { name: "Gentium Book Plus", value: "Gentium Book Plus, serif" },
-  ]},
-]
 
 export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSettingsModalProps) {
   const {
@@ -86,6 +40,12 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
   const [isGitSyncing, setIsGitSyncing] = useState(false)
   const bookImportInputRef = useRef<HTMLInputElement>(null)
   const saveImportInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (isOpen && settings.fontFamily) {
+      loadFont(settings.fontFamily)
+    }
+  }, [isOpen, settings.fontFamily])
 
   if (!isOpen) return null
 
@@ -380,6 +340,75 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                         onChange={e => updateTypingSettings({ lineHeight: parseFloat(e.target.value) })}
                         className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
                       />
+                    </div>
+                  </div>
+
+                  {/* Font Weight (Độ đậm của font) */}
+                  <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700/80">
+                    <div className="flex justify-between items-center text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <span>Font Weight (Độ đậm của chữ)</span>
+                      <span className="font-mono font-semibold text-purple-600 dark:text-purple-400">
+                        {settings.fontWeight === 300
+                          ? "300 · Light"
+                          : settings.fontWeight === 400
+                          ? "400 · Regular"
+                          : settings.fontWeight === 500
+                          ? "500 · Medium"
+                          : settings.fontWeight === 600
+                          ? "600 · Semi-Bold"
+                          : settings.fontWeight === 700
+                          ? "700 · Bold"
+                          : settings.fontWeight === 800
+                          ? "800 · Extra Bold"
+                          : `${settings.fontWeight || 400}`}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                      {[
+                        { label: "Light", weight: 300 },
+                        { label: "Regular", weight: 400 },
+                        { label: "Medium", weight: 500 },
+                        { label: "Semi-Bold", weight: 600 },
+                        { label: "Bold", weight: 700 },
+                        { label: "Black", weight: 800 },
+                      ].map(w => (
+                        <button
+                          key={w.weight}
+                          type="button"
+                          onClick={() => updateTypingSettings({ fontWeight: w.weight })}
+                          className={`py-1.5 px-2 rounded-xl text-xs transition-all cursor-pointer text-center ${
+                            (settings.fontWeight || 400) === w.weight
+                              ? "bg-purple-600 text-white font-bold shadow-xs ring-2 ring-purple-400/40"
+                              : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200/60 dark:border-gray-700/60"
+                          }`}
+                          style={{ fontWeight: w.weight }}
+                        >
+                          {w.weight}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Live Typography Preview */}
+                  <div
+                    className="p-4 rounded-2xl bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 shadow-inner select-none"
+                    style={{
+                      fontFamily: settings.fontFamily,
+                      fontSize: `${Math.min(settings.fontSize, 22)}px`,
+                      fontWeight: settings.fontWeight || 400,
+                      lineHeight: settings.lineHeight,
+                      fontVariationSettings: getFontVariationSettings(settings.fontFamily),
+                    }}
+                  >
+                    <div className="text-[11px] font-sans text-gray-400 uppercase tracking-wider mb-1 font-semibold">
+                      Preview ({settings.fontFamily} · {settings.fontWeight || 400})
+                    </div>
+                    <div className="break-words">
+                      <span style={{ color: settings.correctColor }}>The quick brown fox</span>{" "}
+                      <span style={{ color: settings.errorColor }}>jumps</span>{" "}
+                      <span style={{ color: settings.untypedColor, opacity: settings.untypedOpacity }}>
+                        over the lazy dog. 1234567890
+                      </span>
                     </div>
                   </div>
                 </div>

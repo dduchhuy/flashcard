@@ -77,8 +77,8 @@ async function fetchFileContent(category: 'book' | 'vocab' | 'sentence' | 'save'
     } catch {}
   }
 
-  if (!res.ok) {
-    throw new Error(`Failed to load data/${category}/${name}: ${res.statusText}`)
+  if (!res || !res.ok) {
+    throw new Error(`Failed to load data/${category}/${name}: ${res ? res.statusText : 'Network error'}`)
   }
 
   const blob = await res.blob()
