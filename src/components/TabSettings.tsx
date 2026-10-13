@@ -88,7 +88,7 @@ export function TabSettings() {
 
   const handleExport = async () => {
     if (flashcards.length === 0) {
-      alert('Không có thẻ nào để export (No cards to export).')
+      alert('No cards to export.')
       return
     }
 
@@ -109,7 +109,7 @@ export function TabSettings() {
         }
       })
       
-      const confirm = window.confirm(`Bạn đang chọn export TẤT CẢ. Hệ thống sẽ tự động tải xuống ${Object.keys(tagGroups).length} file riêng biệt cho từng tag. Bạn có chắc chắn không?`)
+      const confirm = window.confirm(`You are exporting ALL tags. The system will download ${Object.keys(tagGroups).length} separate files for each tag. Do you want to proceed?`)
       if (!confirm) return
       
       Object.entries(tagGroups).forEach(([tag, cards], index) => {
@@ -127,7 +127,7 @@ export function TabSettings() {
     })
 
     if (cardsToExport.length === 0) {
-      alert('Không có thẻ nào để export (No cards to export).')
+      alert('No cards to export.')
       return
     }
 
@@ -199,7 +199,7 @@ export function TabSettings() {
         })
       } catch (error) {
         console.error(`Failed to import ${file.name}`, error)
-        alert(`Lỗi khi đọc file (Error reading file): ${file.name}`)
+        alert(`Error reading file: ${file.name}`)
       }
     }
 
@@ -738,14 +738,14 @@ export function TabSettings() {
               type="button"
               onClick={() => refreshManifest()}
               className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
-              title="Làm mới danh sách tệp"
+              title="Refresh file list"
             >
               <RefreshCw size={15} className={isGitSyncing ? 'animate-spin' : ''} />
             </button>
           </div>
 
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Dữ liệu được lưu trữ trực tiếp dưới dạng tệp trong thư mục <code className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-xs font-mono text-purple-600 dark:text-purple-300">Flashcard/data</code> để bạn đưa thẳng lên Git mà không phụ thuộc vào Firebase.
+            Data is stored directly as files in the <code className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-xs font-mono text-purple-600 dark:text-purple-300">Flashcard/data</code> folder so you can push directly to Git without relying on Firebase.
           </p>
 
           {/* Folder Breakdown */}
@@ -755,7 +755,7 @@ export function TabSettings() {
                 <BookOpen size={14} /> data/book
               </div>
               <div className="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1">
-                {gitManifest?.book.length ?? 0} <span className="text-xs font-normal text-gray-500">tệp sách (.json, .epub, .txt)</span>
+                {gitManifest?.book.length ?? 0} <span className="text-xs font-normal text-gray-500">books (.json, .epub, .txt)</span>
               </div>
             </div>
 
@@ -764,7 +764,7 @@ export function TabSettings() {
                 <FileText size={14} /> data/vocab
               </div>
               <div className="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1">
-                {gitManifest?.vocab.length ?? 0} <span className="text-xs font-normal text-gray-500">tệp từ vựng (Word cards)</span>
+                {gitManifest?.vocab.length ?? 0} <span className="text-xs font-normal text-gray-500">vocab files (Word cards)</span>
               </div>
             </div>
 
@@ -773,7 +773,7 @@ export function TabSettings() {
                 <SparklesIcon size={14} /> data/sentence
               </div>
               <div className="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1">
-                {gitManifest?.sentence.length ?? 0} <span className="text-xs font-normal text-gray-500">tệp câu (Sentence cards)</span>
+                {gitManifest?.sentence.length ?? 0} <span className="text-xs font-normal text-gray-500">sentence files (Sentence cards)</span>
               </div>
             </div>
 
@@ -782,7 +782,7 @@ export function TabSettings() {
                 <Database size={14} /> data/save
               </div>
               <div className="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1">
-                {gitManifest?.save.length ?? 0} <span className="text-xs font-normal text-gray-500">tệp tiến trình (.save.json)</span>
+                {gitManifest?.save.length ?? 0} <span className="text-xs font-normal text-gray-500">progress files (.save.json)</span>
               </div>
             </div>
           </div>
@@ -790,8 +790,8 @@ export function TabSettings() {
           {/* Auto load switch */}
           <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
             <div>
-              <div className="text-sm font-medium text-gray-800 dark:text-gray-200">Tự động nạp khi khởi động</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400">Tự nạp sách, từ vựng, câu từ data/ khi mở web</div>
+              <div className="text-sm font-medium text-gray-800 dark:text-gray-200">Auto-load on startup</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Automatically load books, vocab, and sentences from data/ on launch</div>
             </div>
             <button
               type="button"
@@ -813,7 +813,7 @@ export function TabSettings() {
               className="flex-1 flex justify-center items-center gap-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white py-2.5 px-3 rounded-xl font-medium text-sm transition-colors shadow-xs cursor-pointer"
             >
               <Download size={16} className={isGitSyncing ? 'animate-bounce' : ''} />
-              {isGitSyncing ? 'Đang nạp dữ liệu...' : 'Nạp dữ liệu từ Git folder'}
+              {isGitSyncing ? 'Loading data...' : 'Load Data from Git Folder'}
             </button>
 
             <button
@@ -823,7 +823,7 @@ export function TabSettings() {
               className="flex-1 flex justify-center items-center gap-2 bg-purple-50 text-purple-700 hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50 py-2.5 px-3 rounded-xl font-medium text-sm border border-purple-200/60 dark:border-purple-800/60 transition-colors cursor-pointer"
             >
               <Upload size={16} />
-              {isGitSyncing ? 'Đang xuất...' : 'Xuất toàn bộ ra Git folder'}
+              {isGitSyncing ? 'Exporting...' : 'Export All to Git Folder'}
             </button>
           </div>
 
@@ -887,7 +887,7 @@ export function TabSettings() {
                 <div>
                   <h4 className="text-sm font-medium text-green-800 dark:text-green-300">Import Successful!</h4>
                   <p className="text-sm text-green-700 dark:text-green-400 mt-1">
-                    Đã nhập dữ liệu cho các tag: <span className="font-bold">{importedTags.join(', ')}</span>
+                    Imported data for tags: <span className="font-bold">{importedTags.join(', ')}</span>
                   </p>
                 </div>
               </div>

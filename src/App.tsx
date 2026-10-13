@@ -182,11 +182,11 @@ function App() {
 
           <div>
             {isLoading ? (
-              <span className="text-sm text-gray-500">Đang tải...</span>
+              <span className="text-sm text-gray-500">Loading...</span>
             ) : user ? (
               <button 
                 onClick={() => {
-                  if (window.confirm("Bạn có chắc chắn muốn đăng xuất không?")) {
+                  if (window.confirm("Are you sure you want to log out?")) {
                     logout()
                   }
                 }} 
@@ -197,7 +197,7 @@ function App() {
               </button>
             ) : (
               <button onClick={loginWithGoogle} className="flex items-center gap-2 text-sm bg-purple-600 hover:bg-purple-700 text-white px-4 py-1.5 rounded-full transition-colors font-medium shadow-sm">
-                <LogIn size={16} /> Đăng nhập
+                <LogIn size={16} /> Sign In
               </button>
             )}
           </div>

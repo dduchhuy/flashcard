@@ -187,10 +187,10 @@ export function TabAdd() {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h3 className="font-bold text-purple-900 dark:text-purple-200 text-sm sm:text-base">
-                  Thêm Note cho Từ hoặc Cụm từ (Step 2: Add Word Notes)
+                  Add Notes for Words or Phrases (Step 2: Add Word Notes)
                 </h3>
                 <p className="text-xs text-purple-700/80 dark:text-purple-300/80 mt-0.5">
-                  Câu vừa tạo: &ldquo;{annotatingCard.sentence}&rdquo;. Kéo chọn từ để thêm note/nghĩa.
+                  Created sentence: &ldquo;{annotatingCard.sentence}&rdquo;. Select text to add notes/meanings.
                 </p>
               </div>
               <button
@@ -198,7 +198,7 @@ export function TabAdd() {
                 onClick={() => setAnnotatingCardId(null)}
                 className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-colors shadow-xs shrink-0 cursor-pointer"
               >
-                Xong / Hoàn tất
+                Done / Finish
               </button>
             </div>
 
@@ -258,7 +258,7 @@ export function TabAdd() {
                 <input
                   value={sentenceTranslation}
                   onChange={(e) => setSentenceTranslation(e.target.value)}
-                  placeholder="Sentence translation / Nghĩa của toàn bộ câu hoặc cụm từ (optional)..."
+                  placeholder="Sentence translation / Meaning of the sentence or phrase (optional)..."
                   className="w-full bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-sm focus:outline-none"
                 />
               </div>
@@ -332,7 +332,7 @@ export function TabAdd() {
                     {/* POS Header */}
                     <div className="flex items-center gap-2">
                       <input
-                        placeholder="Part of speech (e.g. noun, verb, danh từ...)"
+                        placeholder="Part of speech (e.g. noun, verb, adjective...)"
                         value={pos.partOfSpeech}
                         onChange={e => {
                           const updated = [...posFormEntries]
@@ -370,7 +370,7 @@ export function TabAdd() {
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-purple-600 dark:text-purple-400">#{mIdx + 1}</span>
                             <input
-                              placeholder="Meaning (e.g. hành động; hành vi; hoạt động; việc làm)"
+                              placeholder="Meaning (e.g. action; activity; operation; deed...)"
                               value={m.meaning}
                               onChange={e => {
                                 const updated = [...posFormEntries]
@@ -410,7 +410,7 @@ export function TabAdd() {
                                   className="flex-1 bg-transparent text-xs text-gray-700 dark:text-gray-200 italic placeholder-gray-400 focus:outline-none w-full"
                                 />
                                 <input
-                                  placeholder="Translation (e.g. Anh ấy là con người hành động...)"
+                                  placeholder="Translation (e.g. He is a man of action...)"
                                   value={ex.translation}
                                   onChange={e => {
                                     const updated = [...posFormEntries]
@@ -505,13 +505,13 @@ export function TabAdd() {
                             updated[pIdx].translation = tmp
                             setPhrasesForm(updated)
                           }}
-                          title="Hoán đổi cụm từ tiếng Anh và câu dịch"
+                          title="Swap English phrase and translation"
                           className="p-1 text-gray-400 hover:text-purple-600 transition-colors shrink-0"
                         >
                           <ArrowLeftRight size={13} />
                         </button>
                         <input
-                          placeholder="Translation (e.g. bắt đầu hành động, bắt đầu chiến đấu)"
+                          placeholder="Translation (e.g. take action, swing into action...)"
                           value={item.translation}
                           onChange={e => {
                             const updated = [...phrasesForm]
@@ -549,14 +549,14 @@ export function TabAdd() {
                 </div>
 
                 {usageNotesForm.length === 0 ? (
-                  <p className="text-xs text-gray-400 italic">No usage notes added yet. Click above to add grammar or usage tips (e.g. "Khi là danh từ, trọng âm rơi vào âm tiết thứ nhất...").</p>
+                  <p className="text-xs text-gray-400 italic">No usage notes added yet. Click above to add grammar or usage tips (e.g. "When used as a noun, stress falls on the first syllable...").</p>
                 ) : (
                   <div className="space-y-2">
                     {usageNotesForm.map((note, nIdx) => (
                       <div key={nIdx} className="flex gap-2 items-start bg-white dark:bg-gray-800/80 p-2.5 rounded-xl border border-gray-200 dark:border-gray-700">
                         <textarea
                           rows={2}
-                          placeholder="Usage note, grammar tip, or distinction (e.g. Thường dùng trong thể thao hoặc hành chính...)"
+                          placeholder="Usage note, grammar tip, or distinction (e.g. Often used in formal or administrative contexts...)"
                           value={note}
                           onChange={e => {
                             const updated = [...usageNotesForm]

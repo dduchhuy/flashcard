@@ -169,17 +169,17 @@ export function WordLadderGame({ onExit }: { onExit: () => void }) {
     if (!guess) return
 
     if (guess.length !== puzzle.start.length) {
-      setErrorMessage(`Từ phải có đúng ${puzzle.start.length} chữ cái!`)
+      setErrorMessage(`Word must have exactly ${puzzle.start.length} letters!`)
       return
     }
 
     if (!isOneLetterDiff(currentTopWord, guess)) {
-      setErrorMessage(`Chỉ được đổi đúng 1 chữ cái từ "${currentTopWord.toUpperCase()}"!`)
+      setErrorMessage(`Change exactly 1 letter from "${currentTopWord.toUpperCase()}"!`)
       return
     }
 
     if (!fullDictionary.has(guess)) {
-      setErrorMessage(`"${guess.toUpperCase()}" không có trong từ điển tiếng Anh hợp lệ!`)
+      setErrorMessage(`"${guess.toUpperCase()}" is not in the dictionary!`)
       return
     }
 
@@ -230,23 +230,23 @@ export function WordLadderGame({ onExit }: { onExit: () => void }) {
         onExit={onExit}
         center={
           <div className="flex items-center gap-2 text-xs font-bold text-gray-700 dark:text-gray-200">
-            <span>Word Ladder · Biến đổi từ</span>
+            <span>Word Ladder</span>
             <span className="text-gray-400">·</span>
-            <span className="text-purple-600 dark:text-purple-400">Par: {parSteps} bước</span>
+            <span className="text-purple-600 dark:text-purple-400">Par: {parSteps} steps</span>
           </div>
         }
         right={
           <div className="flex items-center gap-1.5">
             <button
               onClick={handleHint}
-              title="Gợi ý bước kế tiếp"
+              title="Hint next step"
               className="p-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors cursor-pointer"
             >
               <Lightbulb size={16} />
             </button>
             <button
               onClick={() => setSeed(s => s + 1)}
-              title="Tạo màn mới"
+              title="New puzzle"
               className="p-1.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-400 hover:text-purple-600 transition-colors cursor-pointer"
             >
               <RefreshCw size={16} />
@@ -258,15 +258,15 @@ export function WordLadderGame({ onExit }: { onExit: () => void }) {
       {/* Ladder Card */}
       <div className="w-full bg-white dark:bg-gray-800 rounded-3xl border border-gray-200/80 dark:border-gray-700/80 shadow-md p-5 sm:p-6 mt-2 flex flex-col items-center relative">
         <div className="text-xs text-gray-500 dark:text-gray-400 mb-4 text-center">
-          Biến từ <span className="font-extrabold text-purple-600 uppercase">{puzzle.start}</span> thành{' '}
-          <span className="font-extrabold text-emerald-600 uppercase">{puzzle.target}</span> bằng cách đổi từng chữ cái!
+          Transform <span className="font-extrabold text-purple-600 uppercase">{puzzle.start}</span> into{' '}
+          <span className="font-extrabold text-emerald-600 uppercase">{puzzle.target}</span> by changing one letter at a time!
         </div>
 
         {/* Visual Ladder Display */}
         <div className="w-full max-w-xs space-y-2 mb-6">
           {/* Target Word at the goal end */}
           <div className="flex items-center justify-between p-2.5 rounded-xl border-2 border-dashed border-emerald-400 dark:border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-200">
-            <div className="text-xs font-semibold text-emerald-600">Đích đến (Goal):</div>
+            <div className="text-xs font-semibold text-emerald-600">Goal:</div>
             <div className="flex gap-1.5">
               {puzzle.target.toUpperCase().split('').map((ch, idx) => (
                 <span key={idx} className="w-8 h-9 rounded-lg bg-emerald-600 text-white font-black text-lg flex items-center justify-center shadow-xs">
@@ -290,7 +290,7 @@ export function WordLadderGame({ onExit }: { onExit: () => void }) {
                   className="flex items-center justify-between p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-850 shadow-xs"
                 >
                   <div className="text-xs font-semibold text-gray-400">
-                    {rIdx === 0 ? 'Bắt đầu' : `Bước ${rIdx}`}
+                    {rIdx === 0 ? 'Start' : `Step ${rIdx}`}
                   </div>
                   <div className="flex gap-1.5">
                     {rWord.toUpperCase().split('').map((ch, idx) => {
@@ -327,20 +327,20 @@ export function WordLadderGame({ onExit }: { onExit: () => void }) {
                 setCurrentInput(e.target.value.toLowerCase())
                 if (errorMessage) setErrorMessage('')
               }}
-              placeholder={`Đổi 1 chữ từ ${currentTopWord.toUpperCase()}...`}
+              placeholder={`Change 1 letter from ${currentTopWord.toUpperCase()}...`}
               className="flex-1 p-2.5 rounded-xl border border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 font-bold uppercase tracking-wider text-center text-lg focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-xs"
             />
             <button
               type="submit"
               className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm rounded-xl transition-colors shadow-xs cursor-pointer"
             >
-              Thử
+              Try
             </button>
             {rungs.length > 1 && (
               <button
                 type="button"
                 onClick={handleUndo}
-                title="Lùi 1 bước"
+                title="Undo step"
                 className="p-2.5 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors cursor-pointer"
               >
                 <RotateCcw size={18} />

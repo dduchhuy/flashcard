@@ -328,7 +328,7 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
 
                     <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700/80">
                       <div className="flex justify-between text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        <span>Line Height (Khoảng cách dòng)</span>
+                        <span>Line Height</span>
                         <span className="font-mono">{settings.lineHeight.toFixed(1)}</span>
                       </div>
                       <input
@@ -343,10 +343,10 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                     </div>
                   </div>
 
-                  {/* Font Weight (Độ đậm của font) */}
+                  {/* Font Weight */}
                   <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700/80">
                     <div className="flex justify-between items-center text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      <span>Font Weight (Độ đậm của chữ)</span>
+                      <span>Font Weight</span>
                       <span className="font-mono font-semibold text-purple-600 dark:text-purple-400">
                         {settings.fontWeight === 300
                           ? "300 · Light"
@@ -933,12 +933,12 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                   {/* Recommendation banner */}
                   <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-800/40 text-xs text-purple-900 dark:text-purple-200 space-y-1">
                     <div className="font-bold flex items-center gap-1.5">
-                      💡 Khuyên dùng định dạng xuất:
+                      💡 Recommended export formats:
                     </div>
                     <ul className="list-disc list-inside space-y-0.5 text-purple-800/90 dark:text-purple-300">
-                      <li><strong>JSON (Khuyên dùng tốt nhất)</strong>: Lưu trữ trọn vẹn cấu trúc chương phân cấp lồng nhau, tác giả và nội dung. Dễ dàng chuyển sang máy khác import lại là dùng được ngay.</li>
-                      <li><strong>EPUB</strong>: Dành cho máy đọc sách (Kindle, Apple Books, Kobo...).</li>
-                      <li><strong>TXT</strong>: Văn bản thuần mở được trên mọi máy tính, điện thoại.</li>
+                      <li><strong>JSON (Recommended)</strong>: Stores complete nested chapter hierarchy, author, and content. Easily imported into other devices.</li>
+                      <li><strong>EPUB</strong>: For e-readers (Kindle, Apple Books, Kobo...).</li>
+                      <li><strong>TXT</strong>: Plain text readable on any computer or mobile device.</li>
                     </ul>
                   </div>
 
@@ -971,11 +971,11 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                   <div className="flex items-center gap-2">
                     <BookOpen size={18} className="text-emerald-600 dark:text-emerald-400" />
                     <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                      Save File (Tiến trình & Ghi chú của sách)
+                      Save File (Book Progress &amp; Notes)
                     </h3>
                   </div>
                   <p className="text-xs text-gray-500">
-                    File save chứa toàn bộ <strong>tiến trình gõ (WPM, Accuracy, Thời gian)</strong> của các đoạn văn, vị trí đọc hiện tại, và <strong>tất cả các ghi chú/thẻ từ vựng</strong> bạn đã tạo từ cuốn sách này.
+                    Save file contains all <strong>typing progress (WPM, Accuracy, Time)</strong> across paragraphs, current reading position, and <strong>all notes/word cards</strong> created from this book.
                   </p>
 
                   <div className="flex flex-wrap gap-2 pt-1">
@@ -1015,7 +1015,7 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                   </h3>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Lưu trữ và đồng bộ trực tiếp với thư mục Git: <code className="font-mono text-purple-600 dark:text-purple-300">data/book</code>, <code className="font-mono text-purple-600 dark:text-purple-300">data/vocab</code>, <code className="font-mono text-purple-600 dark:text-purple-300">data/sentence</code>, <code className="font-mono text-purple-600 dark:text-purple-300">data/save</code>.
+                  Store and synchronize directly with Git folders: <code className="font-mono text-purple-600 dark:text-purple-300">data/book</code>, <code className="font-mono text-purple-600 dark:text-purple-300">data/vocab</code>, <code className="font-mono text-purple-600 dark:text-purple-300">data/sentence</code>, <code className="font-mono text-purple-600 dark:text-purple-300">data/save</code>.
                 </p>
                 <div className="flex flex-wrap gap-2.5">
                   <button
@@ -1025,7 +1025,7 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                     className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white text-xs font-semibold shadow-xs flex items-center gap-2 cursor-pointer transition-colors"
                   >
                     <Download size={14} className={isGitSyncing ? "animate-bounce" : ""} />
-                    {isGitSyncing ? "Đang nạp..." : "Nạp từ Git Folders"}
+                    {isGitSyncing ? "Loading..." : "Load from Git Folders"}
                   </button>
                   <button
                     type="button"
@@ -1033,7 +1033,7 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                     disabled={isGitSyncing}
                     className="px-4 py-2 rounded-xl bg-white dark:bg-gray-800 text-purple-700 dark:text-purple-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-purple-200 dark:border-purple-800 text-xs font-semibold shadow-xs flex items-center gap-2 cursor-pointer transition-colors"
                   >
-                    <Upload size={14} /> Xuất ra Git Folders
+                    <Upload size={14} /> Export to Git Folders
                   </button>
                 </div>
               </div>

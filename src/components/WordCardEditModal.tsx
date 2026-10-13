@@ -220,7 +220,7 @@ export function WordCardEditModal({ card, isOpen, onClose }: WordCardEditModalPr
                 {/* POS Title & Phonetic */}
                 <div className="flex items-center gap-2">
                   <input
-                    placeholder="Part of speech (e.g. noun, verb, danh từ...)"
+                    placeholder="Part of speech (e.g. noun, verb, adjective...)"
                     value={pos.partOfSpeech}
                     onChange={e => {
                       const updated = [...posFormEntries]
@@ -263,7 +263,7 @@ export function WordCardEditModal({ card, isOpen, onClose }: WordCardEditModalPr
                           #{mIdx + 1}
                         </span>
                         <input
-                          placeholder="Meaning (e.g. hành động; việc làm; diễn biến phim...)"
+                          placeholder="Meaning (e.g. action; activity; operation; event...)"
                           value={m.meaning}
                           onChange={e => {
                             const updated = [...posFormEntries]
@@ -310,7 +310,7 @@ export function WordCardEditModal({ card, isOpen, onClose }: WordCardEditModalPr
                               className="flex-1 bg-transparent text-xs text-gray-700 dark:text-gray-200 italic placeholder-gray-400 focus:outline-none w-full"
                             />
                             <input
-                              placeholder="Translation (e.g. Anh ấy là con người hành động...)"
+                              placeholder="Translation (e.g. He is a man of action...)"
                               value={ex.translation || ''}
                               onChange={e => {
                                 const updated = [...posFormEntries]
@@ -416,13 +416,13 @@ export function WordCardEditModal({ card, isOpen, onClose }: WordCardEditModalPr
                     updated[piIdx].translation = tmp
                     setPhrasesForm(updated)
                   }}
-                  title="Hoán đổi cụm từ tiếng Anh và câu dịch"
+                  title="Swap English phrase and translation"
                   className="p-1.5 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-lg transition-colors shrink-0"
                 >
                   <ArrowLeftRight size={15} />
                 </button>
                 <input
-                  placeholder="Translation / Meaning (e.g. dễ như ăn bánh, nghỉ tay...)"
+                  placeholder="Translation / Meaning (e.g. piece of cake, call it a day...)"
                   value={pi.translation}
                   onChange={e => {
                     const updated = [...phrasesForm]
@@ -469,7 +469,7 @@ export function WordCardEditModal({ card, isOpen, onClose }: WordCardEditModalPr
                   >
                     <textarea
                       rows={2}
-                      placeholder="Usage note, grammar tip, or distinction (e.g. Khi là danh từ, trọng âm rơi vào âm tiết thứ nhất...)"
+                      placeholder="Usage note, grammar tip, or distinction (e.g. When used as a noun, stress is on the first syllable...)"
                       value={note}
                       onChange={e => {
                         const updated = [...usageNotesForm]

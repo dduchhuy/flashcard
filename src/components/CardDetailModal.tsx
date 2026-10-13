@@ -384,7 +384,7 @@ export function CardDetailModal({
                     ? 'bg-gray-200/90 dark:bg-gray-700 text-gray-800 dark:text-gray-100'
                     : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/60'
                 }`}
-                title={isHeaderPinned ? 'Ghim thông tin (luôn hiện)' : 'Bỏ ghim (tự động ẩn khi di chuột xuống)'}
+                title={isHeaderPinned ? 'Pin details (always visible)' : 'Unpin details (auto-hide on scroll)'}
               >
                 <Pin size={18} className={isHeaderPinned ? 'fill-current' : ''} />
               </button>

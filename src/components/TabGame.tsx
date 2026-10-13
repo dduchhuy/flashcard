@@ -56,9 +56,9 @@ class GameErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
       return (
         <div className="text-center py-20 px-4 max-w-md mx-auto animate-in fade-in flex flex-col items-center">
           <div className="text-5xl mb-4">⚠️</div>
-          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">Đã xảy ra lỗi trong trò chơi</h2>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">An error occurred in the game</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-            {this.state.error?.message || 'Có lỗi khi khởi tạo hoặc tải dữ liệu trò chơi.'}
+            {this.state.error?.message || 'Error initializing or loading game data.'}
           </p>
           <button
             onClick={() => {
@@ -67,7 +67,7 @@ class GameErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
             }}
             className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-xl font-medium shadow-sm transition-colors"
           >
-            Quay lại Menu Trò chơi
+            Back to Games Menu
           </button>
         </div>
       )

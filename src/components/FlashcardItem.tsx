@@ -713,7 +713,7 @@ export function FlashcardItem({
             <input
               value={editTranslationValue}
               onChange={(e) => setEditTranslationValue(e.target.value)}
-              placeholder="Sentence translation / Nghĩa của câu (optional)"
+              placeholder="Sentence translation / Meaning (optional)"
               className="w-full p-2 border border-purple-300 dark:border-purple-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
             />
             <div className="flex flex-col sm:flex-row gap-2">
@@ -741,7 +741,7 @@ export function FlashcardItem({
             <div className="mt-2 p-3 bg-purple-50/50 dark:bg-purple-950/20 rounded-xl border border-purple-200/60 dark:border-purple-800/60 space-y-2.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-purple-900 dark:text-purple-200">
-                  Word Notes &amp; Highlights (Kéo chọn từ trong câu để ghi chú):
+                  Word Notes &amp; Highlights (Select text in sentence to annotate):
                 </span>
                 {editingIndices.length > 0 && (
                   <button
@@ -1301,7 +1301,7 @@ export function FlashcardItem({
 
             return (
               <div className="pt-2 border-t border-gray-100 dark:border-gray-700/60 space-y-2">
-                <div className="text-xs font-bold text-gray-700 dark:text-gray-300">Từ liên quan:</div>
+                <div className="text-xs font-bold text-gray-700 dark:text-gray-300">Related Words:</div>
                 
                 {displayFilter?.relatedWords.synonyms && currentCard.relatedWords.synonyms && currentCard.relatedWords.synonyms.length > 0 && (
                   <div className="flex items-center gap-1.5 flex-wrap text-xs">
