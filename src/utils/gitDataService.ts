@@ -43,6 +43,14 @@ export async function fetchDataManifest(): Promise<DataManifest> {
     }
   } catch {}
 
+  // 3. Fallback to GitHub raw
+  try {
+    const res = await fetch('https://raw.githubusercontent.com/dduchhuy/flashcard/main/data/manifest.json')
+    if (res.ok) {
+      return (await res.json()) as DataManifest
+    }
+  } catch {}
+
   return { book: [], vocab: [], sentence: [], save: [] }
 }
 
@@ -57,7 +65,16 @@ async function fetchFileContent(category: 'book' | 'vocab' | 'sentence' | 'save'
 
   // 2. Fallback to static URL
   if (!res || !res.ok) {
-    res = await fetch(`./data/${category}/${encodeURIComponent(name)}`)
+    try {
+      res = await fetch(`./data/${category}/${encodeURIComponent(name)}`)
+    } catch {}
+  }
+
+  // 3. Fallback to GitHub raw URL
+  if (!res || !res.ok) {
+    try {
+      res = await fetch(`https://raw.githubusercontent.com/dduchhuy/flashcard/main/data/${category}/${encodeURIComponent(name)}`)
+    } catch {}
   }
 
   if (!res.ok) {

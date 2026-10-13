@@ -1,0 +1,30 @@
+{
+  "book": [
+    {
+      "name": "welcome_to_typing.json",
+      "size": 1333,
+      "modified": 1791903448255.111
+    }
+  ],
+  "vocab": [
+    {
+      "name": "vocab.json",
+      "size": 127026,
+      "modified": 1791903448256.849
+    }
+  ],
+  "sentence": [
+    {
+      "name": "sentence.json",
+      "size": 4149,
+      "modified": 1791903448255.9082
+    }
+  ],
+  "save": [
+    {
+      "name": "welcome_to_typing.flashcard-save.json",
+      "size": 260,
+      "modified": 1791903448255.5386
+    }
+  ]
+}
