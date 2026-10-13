@@ -3,7 +3,7 @@ import { CheckCircle2, RotateCcw, ChevronRight, Timer, Gauge, Target, Volume2, V
 import { useTypingStore, Book, BookChapter } from "../../typingStore"
 import { isCharMatch, resolveTelexRevert, ACCENT_TO_EXPANSION, TELEX_MAP } from "../../utils/bookUtils"
 import { playKeycapsSound, playErrorSound, preloadSwitch, preloadError } from "../../utils/typingAudio"
-import { loadFont, getFontVariationSettings } from "../../utils/fontLoader"
+import { loadFont, getFontVariationSettings, getEffectiveFontFamily } from "../../utils/fontLoader"
 
 interface TypingModeProps {
   book: Book
@@ -585,7 +585,7 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
   }
 
   const containerStyle: React.CSSProperties = {
-    fontFamily: settings.fontFamily,
+    fontFamily: getEffectiveFontFamily(settings.fontFamily),
     fontSize: `${settings.fontSize}px`,
     fontWeight: settings.fontWeight || 400,
     lineHeight: settings.lineHeight,

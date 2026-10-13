@@ -3,6 +3,7 @@ import { Upload, BookOpen, Trash2, Play, AlertCircle, CheckCircle2, FolderGit2 }
 import { useTypingStore, Book } from '../../typingStore'
 import { flattenChapters, splitParagraphs, validateBookJson, parseTxtToBook, parseEpubToBook } from '../../utils/bookUtils'
 import { loadAllFromGitData } from '../../utils/gitDataService'
+import { saveBookFileToData, deleteBookFromData } from '../../utils/dataPersistence'
 import { BookReader } from './BookReader'
 
 function bookStats(book: Book, progress: Record<string, Record<number, unknown>> | undefined) {
@@ -62,10 +63,11 @@ export function TabTyping() {
       const existing = books.find(b => b.title === data.title && b.author.join('|') === data.author.join('|'))
       if (existing) {
         if (!window.confirm(`"${data.title}" already exists. Replace it? (Progress for chapters with the same id is kept.)`)) return
-        importBook(data, existing.id)
+        importBook(data, existing.id, file.name)
       } else {
-        importBook(data)
+        importBook(data, undefined, file.name)
       }
+      saveBookFileToData(file)
       setSuccess(`Imported "${data.title}" successfully.`)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -174,7 +176,10 @@ export function TabTyping() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (window.confirm(`Delete "${book.title}" and its typing progress? (Library cards are kept.)`)) deleteBook(book.id)
+                    if (window.confirm(`Delete "${book.title}" and its typing progress? (Library cards are kept.)`)) {
+                      deleteBook(book.id)
+                      deleteBookFromData(book.title, book.fileName)
+                    }
                   }}
                   title="Delete book"
                   className="px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-400 hover:text-rose-600 hover:border-rose-300 cursor-pointer"

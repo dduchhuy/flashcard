@@ -1,6 +1,7 @@
 import { useRef, useState, useMemo } from 'react'
 import { useFlashcardStore, getCardTags, migrateFlashcard, Flashcard } from '../store'
 import { useGitDataSync } from '../useGitDataSync'
+import { saveFlashcardsToData } from '../utils/dataPersistence'
 import { SelectDropdown } from './SelectDropdown'
 import { Download, Upload, RotateCcw, Moon, Sun, Palette, CheckCircle2, Trash2, Home, Sliders, FolderGit2, RefreshCw, FileText, BookOpen, Database, Sparkles as SparklesIcon } from 'lucide-react'
 
@@ -176,6 +177,15 @@ export function TabSettings() {
       try {
         const text = await file.text()
         const parsed = JSON.parse(text)
+
+        // Save imported JSON file directly to data/vocab/
+        try {
+          fetch('/api/data/write', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ category: 'vocab', name: file.name, content: text })
+          })
+        } catch {}
         
         let cardsToImport = []
         if (parsed.state && Array.isArray(parsed.state.flashcards)) {
@@ -363,6 +373,8 @@ export function TabSettings() {
         return { flashcards: Array.from(existingMap.values()) }
       })
       setImportedTags(Array.from(newTags))
+      // Persist full dataset to data/ directory on disk
+      saveFlashcardsToData(useFlashcardStore.getState().flashcards)
     }
 
     if (e.target) e.target.value = '' 

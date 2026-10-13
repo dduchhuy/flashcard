@@ -243,7 +243,105 @@ export default function gitDataPlugin(): Plugin {
         })
       })
 
-      // 5. Static file serving for /data/* in dev server
+      // 5. API: Delete a single file
+      server.middlewares.use('/api/data/delete', (req, res) => {
+        if (req.method !== 'DELETE' && req.method !== 'POST') {
+          res.statusCode = 405
+          res.end(JSON.stringify({ error: 'Method not allowed' }))
+          return
+        }
+
+        let body = ''
+        req.on('data', chunk => { body += chunk })
+        req.on('end', () => {
+          try {
+            const parsed = JSON.parse(body || '{}')
+            const { category, name, title } = parsed
+
+            if (!category || !name || !CATEGORIES.includes(category as Category)) {
+              res.statusCode = 400
+              res.end(JSON.stringify({ error: 'Invalid category or name' }))
+              return
+            }
+
+            const safeName = path.basename(name)
+            const filePath = path.join(dataDir, category, safeName)
+            const deletedFiles: string[] = []
+
+            // 1. Direct path deletion
+            if (fs.existsSync(filePath)) {
+              fs.unlinkSync(filePath)
+              deletedFiles.push(`data/${category}/${safeName}`)
+            }
+
+            // 2. Extra fuzzy cleanup for books & saves
+            if (category === 'book') {
+              const bookDir = path.join(dataDir, 'book')
+              const saveDir = path.join(dataDir, 'save')
+              const searchTerms = [
+                name.replace(/\.[^/.]+$/, ''),
+                title,
+                title ? sanitizeFilename(title) : null,
+                title ? sanitizeFilename(title.toLowerCase()) : null
+              ].filter(Boolean).map(s => String(s).toLowerCase())
+
+              // Scan data/book/
+              if (fs.existsSync(bookDir)) {
+                try {
+                  const bookFiles = fs.readdirSync(bookDir)
+                  for (const bf of bookFiles) {
+                    if (bf === '.gitkeep' || bf.startsWith('.')) continue
+                    const bfLower = bf.toLowerCase()
+                    const isMatch = searchTerms.some(term => bfLower.includes(term))
+                    if (isMatch) {
+                      const fullBf = path.join(bookDir, bf)
+                      try {
+                        fs.unlinkSync(fullBf)
+                        deletedFiles.push(`data/book/${bf}`)
+                      } catch {}
+                    } else if (bfLower.endsWith('.json')) {
+                      try {
+                        const content = JSON.parse(fs.readFileSync(path.join(bookDir, bf), 'utf8'))
+                        const bTitle = (content.book?.title || content.title || '').toLowerCase()
+                        if (bTitle && searchTerms.some(term => bTitle === term || bTitle.includes(term))) {
+                          fs.unlinkSync(path.join(bookDir, bf))
+                          deletedFiles.push(`data/book/${bf}`)
+                        }
+                      } catch {}
+                    }
+                  }
+                } catch {}
+              }
+
+              // Scan data/save/ to delete associated progress saves
+              if (fs.existsSync(saveDir)) {
+                try {
+                  const saveFiles = fs.readdirSync(saveDir)
+                  for (const sf of saveFiles) {
+                    if (sf === '.gitkeep' || sf.startsWith('.')) continue
+                    const sfLower = sf.toLowerCase()
+                    const isMatch = searchTerms.some(term => sfLower.includes(term))
+                    if (isMatch) {
+                      try {
+                        fs.unlinkSync(path.join(saveDir, sf))
+                        deletedFiles.push(`data/save/${sf}`)
+                      } catch {}
+                    }
+                  }
+                } catch {}
+              }
+            }
+
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ ok: true, deleted: deletedFiles.length > 0, deletedFiles }))
+          } catch (e) {
+            res.statusCode = 500
+            res.end(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }))
+          }
+        })
+      })
+
+      // 6. Static file serving for /data/* in dev server
       server.middlewares.use('/data', (req, res, next) => {
         const decodedUrl = decodeURIComponent(req.url?.split('?')[0] || '')
         const filePath = path.join(dataDir, decodedUrl)

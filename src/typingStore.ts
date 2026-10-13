@@ -17,6 +17,7 @@ export interface Book {
   author: string[]
   chapters: BookChapter[]
   importedAt: number
+  fileName?: string
 }
 
 export interface ParagraphProgress {
@@ -118,7 +119,7 @@ interface TypingState {
   viewMode: TypingViewMode
   settings: TypingSettings
 
-  importBook: (data: { title: string; author: string[]; chapters: BookChapter[] }, replaceId?: string) => string
+  importBook: (data: { title: string; author: string[]; chapters: BookChapter[]; fileName?: string }, replaceId?: string, fileName?: string) => string
   deleteBook: (bookId: string) => void
   markParagraphComplete: (bookId: string, chapterId: string, pIdx: number, p: ParagraphProgress) => void
   resetChapterProgress: (bookId: string, chapterId: string) => void
@@ -146,9 +147,17 @@ export const useTypingStore = create<TypingState>()(
       viewMode: 'typing',
       settings: defaultTypingSettings,
 
-      importBook: (data, replaceId) => {
+      importBook: (data, replaceId, fileName) => {
         const id = replaceId || uuidv4()
-        const book: Book = { id, title: data.title, author: data.author, chapters: data.chapters, importedAt: Date.now() }
+        const resolvedFileName = fileName || data.fileName
+        const book: Book = {
+          id,
+          title: data.title,
+          author: data.author,
+          chapters: data.chapters,
+          importedAt: Date.now(),
+          fileName: resolvedFileName
+        }
         setState(state => ({
           books: replaceId
             ? state.books.map(b => (b.id === replaceId ? book : b))

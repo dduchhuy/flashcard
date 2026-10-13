@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useFlashcardStore } from './store'
-import { loadAllFromGitData, exportAllToGitData, fetchDataManifest, DataManifest } from './utils/gitDataService'
+import { loadAllFromGitData, exportAllToGitData, fetchDataManifest, DataManifest, isGitDataSyncing } from './utils/gitDataService'
+import { saveFlashcardsToData } from './utils/dataPersistence'
 
 export function useGitDataSync() {
   const { settings } = useFlashcardStore()
@@ -66,6 +67,26 @@ export function useGitDataSync() {
       syncFromGit(false)
     }
   }, [settings.gitDataAutoLoad, syncFromGit, refreshManifest])
+
+  // Reactive auto-save to data/ directory whenever flashcards change
+  useEffect(() => {
+    let debounceTimer: any = null
+    const unsubscribe = useFlashcardStore.subscribe((state, prevState) => {
+      // Don't auto-save if initial startup sync is still in progress or git sync is active
+      if (!initialLoadDone.current || isGitDataSyncing) return
+      if (state.flashcards !== prevState.flashcards) {
+        if (debounceTimer) clearTimeout(debounceTimer)
+        debounceTimer = setTimeout(() => {
+          saveFlashcardsToData(state.flashcards)
+        }, 500)
+      }
+    })
+
+    return () => {
+      unsubscribe()
+      if (debounceTimer) clearTimeout(debounceTimer)
+    }
+  }, [])
 
   return {
     isSyncing,

@@ -16,7 +16,7 @@ import {
 } from "../../utils/bookUtils"
 import { loadAllFromGitData, exportAllToGitData } from "../../utils/gitDataService"
 
-import { FONT_OPTIONS, loadFont, getFontVariationSettings } from "../../utils/fontLoader"
+import { FONT_OPTIONS, loadFont, getFontVariationSettings, getEffectiveFontFamily } from "../../utils/fontLoader"
 
 interface TypingSettingsModalProps {
   isOpen: boolean
@@ -429,7 +429,7 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                   <div
                     className="p-4 rounded-2xl bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 shadow-inner select-none"
                     style={{
-                      fontFamily: settings.fontFamily,
+                      fontFamily: getEffectiveFontFamily(settings.fontFamily),
                       fontSize: `${Math.min(settings.fontSize, 22)}px`,
                       fontWeight: settings.fontWeight || 400,
                       lineHeight: settings.lineHeight,

@@ -116,7 +116,9 @@
     },
     "illustrations": [],
     "wordForms": [],
-    "tags": [],
+    "tags": [
+      "A1"
+    ],
     "createdAt": 1791867748563,
     "highlights": []
   },
@@ -181,6 +183,1059 @@
     "wordForms": [],
     "tags": [],
     "createdAt": 1791890483832,
+    "highlights": []
+  },
+  {
+    "id": "65b34c1b-3f42-42b9-b54b-8f892713fff3",
+    "sentence": "If you encounter foreign characters that are not easily typed on your keyboard, you can press any character (including Space bar) to mark them as typed.",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": []
+    },
+    "illustrations": [],
+    "wordForms": [],
+    "tags": [
+      "Welcome to Typing"
+    ],
+    "createdAt": 1791908512202,
+    "highlights": [
+      {
+        "wordIndices": [
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "meaning": "tessy",
+        "id": "377c3ee0-7101-4cc3-aead-d1eda0eda053"
+      }
+    ]
+  },
+  {
+    "id": "dda1efdb-b899-476b-9958-25a019ef6e36",
+    "sentence": "April",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/ˈeɪpɹɪl/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "April"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [
+        "april-fool-day",
+        "enalapril"
+      ],
+      "wordsMentioning": [
+        "Duy Tân",
+        "Hà Nội",
+        "khí hậu"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/april--53697.webp?v=1775348252",
+        "alt": "April",
+        "exampleSentence": "April brings gentle rain showers and blooming flowers."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791764379654,
+    "highlights": []
+  },
+  {
+    "id": "5f0c9cd3-62ed-4d28-a72e-4ba9129ca8ea",
+    "sentence": "August",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/ɔːˈɡʌst/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "venerable",
+        "grand",
+        "lordly",
+        "August"
+      ],
+      "antonyms": [],
+      "similarWords": [
+        "honorable",
+        "honourable",
+        "noble"
+      ],
+      "similarSpellings": [
+        "agist"
+      ],
+      "wordsContaining": [
+        "augustan",
+        "dendroaspis augusticeps",
+        "elaeagnus augustifolia"
+      ],
+      "wordsMentioning": [
+        "gió bão"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/august--56183.webp?v=1775351430",
+        "alt": "August",
+        "exampleSentence": "The august assembly gathered in the grand hall."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791764388962,
+    "highlights": []
+  },
+  {
+    "id": "1af37c60-1182-4b59-b6ed-f241a5cff31c",
+    "sentence": "December",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/dɪˈsɛmbə/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "December",
+        "Dec"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [
+        "decemberly"
+      ],
+      "wordsMentioning": [
+        "Duy Tân",
+        "Phong Trào Yêu Nước"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/december--80610.webp?v=1775363527",
+        "alt": "December",
+        "exampleSentence": "December is the month when many families decorate a Christmas tree."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791764500250,
+    "highlights": []
+  },
+  {
+    "id": "0ea64b2a-63d3-47aa-a8f9-fe4054d73216",
+    "sentence": "February",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/ˈfɛbɹʊəɹi/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "February"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": [
+        "Hoàng Hoa Thám"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/february--94249.webp?v=1775368847",
+        "alt": "February",
+        "exampleSentence": "February is the shortest month of the year."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791764568965,
+    "highlights": []
+  },
+  {
+    "id": "c5da105a-e22f-40ff-afbe-93ce3b89136b",
+    "sentence": "Friday",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/ˈfɹaɪdeɪ/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "Friday"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": []
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/friday--98567.webp?v=1775372254",
+        "alt": "Friday",
+        "exampleSentence": "People often look forward to Friday."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791764598841,
+    "highlights": []
+  },
+  {
+    "id": "f9bcbf2f-473d-421f-ada0-f07684971183",
+    "sentence": "have to",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": [
+        "Ad-free education account",
+        "About Us",
+        "Privacy Policy",
+        "Contact Us",
+        "Word List",
+        "Âm Lịch",
+        "Thời Tiết",
+        "English interface"
+      ]
+    },
+    "illustrations": [],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791764632628,
+    "highlights": []
+  },
+  {
+    "id": "0ea780bc-8ec9-41aa-bbea-d834ff051946",
+    "sentence": "I",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/aɪ/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "one",
+        "I",
+        "ace",
+        "single",
+        "unity",
+        "iodine"
+      ],
+      "antonyms": [],
+      "similarWords": [
+        "cardinal"
+      ],
+      "similarSpellings": [
+        "a",
+        "e",
+        "j",
+        "o",
+        "u",
+        "y",
+        "ii",
+        "ah",
+        "ay",
+        "Ea"
+      ],
+      "wordsContaining": [
+        "a fortiori",
+        "a posteriori",
+        "a priori",
+        "abaci",
+        "abatis",
+        "abatised",
+        "abattoir",
+        "abbatial",
+        "abbreviate",
+        "abbreviated"
+      ],
+      "wordsMentioning": [
+        "ác mộng",
+        "ai",
+        "ám chỉ",
+        "ăn đứt",
+        "ăn ở",
+        "âm ấm",
+        "ân hận",
+        "bà con",
+        "bác",
+        "ban đầu"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/i--113489.webp?v=1775376318",
+        "alt": "I",
+        "exampleSentence": "A child holds one red balloon."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791764659701,
+    "highlights": []
+  },
+  {
+    "id": "8c3d96ca-8154-4ff7-a102-0727961516f7",
+    "sentence": "January",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/ˈd͡ʒænjʊəɹi/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "January"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [
+        "anury"
+      ],
+      "wordsContaining": [],
+      "wordsMentioning": [
+        "giêng",
+        "Phong Trào Yêu Nước"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/january--119127.webp?v=1775377732",
+        "alt": "January",
+        "exampleSentence": "A calendar on the wall shows the month of January."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791764678464,
+    "highlights": []
+  },
+  {
+    "id": "55ffcfd6-dcc2-48ae-9a74-2b8a237d9174",
+    "sentence": "July",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/d͡ʒʊˈlaɪ/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "july"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [
+        "jell",
+        "jill",
+        "jelly",
+        "jolly",
+        "joule",
+        "jowly",
+        "ally",
+        "illy",
+        "oily",
+        "wily"
+      ],
+      "wordsContaining": [],
+      "wordsMentioning": [
+        "tết",
+        "Tôn Thất Thuyết"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/july--120140.webp?v=1775377879",
+        "alt": "July",
+        "exampleSentence": "The family celebrates Independence Day with fireworks in July."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791764683820,
+    "highlights": []
+  },
+  {
+    "id": "0f33a600-04cc-4039-8889-db32eb54a7e8",
+    "sentence": "June",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/d͡ʒuːn/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "june"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [
+        "juno",
+        "gene",
+        "jinn",
+        "one",
+        "uno",
+        "wane",
+        "wine"
+      ],
+      "wordsContaining": [
+        "jejune",
+        "jejunectomy",
+        "jejuneness"
+      ],
+      "wordsMentioning": [
+        "Phong Trào Yêu Nước"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/june--120208.webp?v=1775379858",
+        "alt": "June",
+        "exampleSentence": "June is a popular month for outdoor weddings."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791764684747,
+    "highlights": []
+  },
+  {
+    "id": "e2ee5d5f-317c-4928-8d3e-53aa7b1c138a",
+    "sentence": "March",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/mɑːtʃ/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "MArch",
+        "borderland",
+        "Mar",
+        "border",
+        "adjoin",
+        "edge",
+        "abut",
+        "butt",
+        "parade",
+        "exhibit",
+        "demonstrate",
+        "process"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [
+        "marsh",
+        "marc",
+        "marish",
+        "marshy",
+        "mark",
+        "marge",
+        "Maroc"
+      ],
+      "wordsContaining": [
+        "countermarch",
+        "dead march",
+        "démarche",
+        "forced march",
+        "frog-march",
+        "frog's-march",
+        "hunger-march",
+        "hunger-marcher",
+        "marchioness",
+        "marchpane"
+      ],
+      "wordsMentioning": [
+        "bọn",
+        "bôn tập",
+        "cản trở",
+        "cấp tốc",
+        "chặng",
+        "chỉ huy",
+        "dẫn đầu",
+        "diễu",
+        "diễu binh",
+        "Duy Tân"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/march--128981.webp?v=1775380159",
+        "alt": "March",
+        "exampleSentence": "The soldiers march across the field in perfect formation."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791764722513,
+    "highlights": []
+  },
+  {
+    "id": "d2ab2505-d794-4540-aeaa-9caa980e8089",
+    "sentence": "May",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/meɪ/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "whitethorn",
+        "Crataegus laevigata",
+        "Crataegus oxycantha",
+        "May"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [
+        "ma",
+        "my",
+        "maw",
+        "m",
+        "me",
+        "mi",
+        "mo",
+        "mew",
+        "moo",
+        "mow"
+      ],
+      "wordsContaining": [
+        "devil-may-care",
+        "dismay",
+        "may day",
+        "maybe",
+        "may-beettle",
+        "may-bug",
+        "mayfly",
+        "mayhem",
+        "mayonnaise",
+        "mayor"
+      ],
+      "wordsMentioning": [
+        "áo",
+        "bách",
+        "bại lộ",
+        "biết đâu chừng",
+        "bỏ lỡ",
+        "bỏ qua",
+        "cấm",
+        "cẩn thận",
+        "chẳng nữa",
+        "chần"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/may--129910.webp?v=1775380149",
+        "alt": "May",
+        "exampleSentence": "May is the month when apple trees bloom in the orchard."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791764725262,
+    "highlights": []
+  },
+  {
+    "id": "48de4544-febe-4ac8-9fa5-2c3c442c8aca",
+    "sentence": "Monday",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/ˈmʌndeɪ/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "Monday"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [
+        "monad",
+        "monde",
+        "monody"
+      ],
+      "wordsContaining": [
+        "mondayish"
+      ],
+      "wordsMentioning": [
+        "kể từ"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/monday--133114.webp?v=1775380805",
+        "alt": "Monday",
+        "exampleSentence": "Many people feel tired on Monday morning."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791764746779,
+    "highlights": []
+  },
+  {
+    "id": "438fdb16-3093-4310-8d80-d6712e2fdfef",
+    "sentence": "next to",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": [
+        "Ad-free education account",
+        "About Us",
+        "Privacy Policy",
+        "Contact Us",
+        "Word List",
+        "Âm Lịch",
+        "Thời Tiết",
+        "English interface"
+      ]
+    },
+    "illustrations": [],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791764771088,
+    "highlights": []
+  },
+  {
+    "id": "a715beac-6f89-4624-a059-a2aa5d22dc54",
+    "sentence": "November",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/nəʊˈvɛmbə/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "November"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": [
+        "khí hậu"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/november--138532.webp?v=1775381849",
+        "alt": "November",
+        "exampleSentence": "November brings cool weather and colorful fallen leaves."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791764782788,
+    "highlights": []
+  },
+  {
+    "id": "5156d5c3-589b-4428-8636-f35415f6d8b3",
+    "sentence": "October",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/ɒkˈtəʊbə/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "October"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": [
+        "chôm chôm",
+        "Hà Nội",
+        "khí hậu",
+        "Phong Trào Yêu Nước"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/october--139385.webp?v=1775382260",
+        "alt": "October",
+        "exampleSentence": "The leaves turn red and orange in October."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791764791567,
+    "highlights": []
+  },
+  {
+    "id": "1b09d9ec-c8d4-46d6-ac0e-2247a9e30cb3",
+    "sentence": "OK",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/ˌəʊˈkeɪ/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": []
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/ok--139800.webp?v=1775382015",
+        "alt": "OK",
+        "exampleSentence": "Everything is okay after the small storm passes."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791764797929,
+    "highlights": []
+  },
+  {
+    "id": "da2684d8-278e-4122-9101-349b6b0bfd34",
+    "sentence": "Saturday",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/ˈsætədeɪ/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "Saturday",
+        "Sat"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [
+        "sturdy"
+      ],
+      "wordsContaining": [],
+      "wordsMentioning": []
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/saturday--163278.webp?v=1775386360",
+        "alt": "Saturday",
+        "exampleSentence": "The family enjoys a relaxing Saturday at the park."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791764907981,
+    "highlights": []
+  },
+  {
+    "id": "2f07422d-84e1-4333-9b38-6fd76603e27b",
+    "sentence": "September",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/sɛpˈtɛmbə/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "September",
+        "Sept"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": []
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/september--166271.webp?v=1775386973",
+        "alt": "September",
+        "exampleSentence": "The calendar on the wall shows the month of September."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791764920926,
+    "highlights": []
+  },
+  {
+    "id": "3d677281-56ce-4522-a5f4-0a58b09ea6d0",
+    "sentence": "Sunday",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/ˈsʌndeɪ/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "Sunday",
+        "Dominicus",
+        "Sun"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [
+        "sundae",
+        "sandy",
+        "sundew"
+      ],
+      "wordsContaining": [
+        "sunday-school",
+        "easter sunday"
+      ],
+      "wordsMentioning": [
+        "báo",
+        "bộ cánh",
+        "chủ nhật",
+        "hả hê",
+        "mai",
+        "nằm khàn",
+        "nhằm",
+        "Tây Bắc"
+      ]
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/sunday--177494.webp?v=1775389320",
+        "alt": "Sunday",
+        "exampleSentence": "A family enjoys a relaxing picnic in the park on a sunny Sunday."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791764992933,
+    "highlights": []
+  },
+  {
+    "id": "ab43b5d8-39ba-4960-a0c5-501f054f35bc",
+    "sentence": "T-shirt",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/ˈtiːʃɜːt/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "jersey",
+        "T-shirt"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [
+        "sweat shirt"
+      ],
+      "wordsMentioning": []
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/t-shirt--179174.webp?v=1775389464",
+        "alt": "T-shirt",
+        "exampleSentence": "A child wears a colorful t-shirt to the park."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791765033029,
+    "highlights": []
+  },
+  {
+    "id": "a50568c7-aa16-4f18-a550-f63161482e76",
+    "sentence": "Tuesday",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/ˈtuzdeɪ/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "Tuesday"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": []
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/tuesday--185833.webp?v=1775390966",
+        "alt": "Tuesday",
+        "exampleSentence": "She marks her dentist appointment on the calendar for Tuesday."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791765034103,
+    "highlights": []
+  },
+  {
+    "id": "2131cdfd-191b-4f93-aa4c-89ccfc59730e",
+    "sentence": "TV",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/tiviː/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": []
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/tv--186266.webp?v=1775390941",
+        "alt": "TV",
+        "exampleSentence": "A family watches a tv in their living room."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791765036165,
+    "highlights": []
+  },
+  {
+    "id": "f6936494-7f16-4877-b5f1-ec1128099da4",
+    "sentence": "Thursday",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/ˈθɜːzdeɪ/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "Thursday"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": []
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/thursday--182436.webp?v=1775389996",
+        "alt": "Thursday",
+        "exampleSentence": "The calendar shows that today is Thursday."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791765061306,
+    "highlights": []
+  },
+  {
+    "id": "e4daae27-72b3-436d-b9d0-841abd545299",
+    "sentence": "Wednesday",
+    "partOfSpeech": "",
+    "phonetics": [],
+    "phonetic": "/ˈwɛnzdeɪ/",
+    "phrasesAndIdioms": [],
+    "usageNotes": [],
+    "relatedWords": {
+      "synonyms": [
+        "Wednesday",
+        "Midweek",
+        "Wed"
+      ],
+      "antonyms": [],
+      "similarWords": [],
+      "similarSpellings": [],
+      "wordsContaining": [],
+      "wordsMentioning": []
+    },
+    "illustrations": [
+      {
+        "imageUrl": "https://thumbs.vdict.com/images/en/wednesday--194258.webp?v=1775392178",
+        "alt": "Wednesday",
+        "exampleSentence": "The calendar page shows Wednesday in bold letters."
+      }
+    ],
+    "wordForms": [],
+    "tags": [
+      "A1"
+    ],
+    "createdAt": 1791765098817,
     "highlights": []
   }
 ]

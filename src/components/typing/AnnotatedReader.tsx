@@ -6,6 +6,7 @@ import { extractWordsAndSpaces } from '../../utils'
 import { splitSentences, sentenceKey, firstMeaningOf } from '../../utils/bookUtils'
 import { buildWordToFlashcardMap, findMatchingCard } from '../ClickableSentence'
 import { CardDetailModal } from '../CardDetailModal'
+import { loadFont, getFontVariationSettings, getEffectiveFontFamily } from '../../utils/fontLoader'
 
 interface AnnotatedReaderProps {
   book: Book
@@ -41,7 +42,12 @@ function hexToRgba(hex: string, alpha: number) {
 
 export function AnnotatedReader({ book, chapter, paragraphs, mode }: AnnotatedReaderProps) {
   const { flashcards, settings, addFlashcard, saveHighlight, removeHighlight, deleteFlashcard } = useFlashcardStore()
-  const { sentenceLinks, linkSentence, unlinkSentence } = useTypingStore()
+  const { sentenceLinks, linkSentence, unlinkSentence, settings: typingSettings } = useTypingStore()
+
+  // Load the current typing font when it changes
+  useEffect(() => {
+    if (typingSettings.fontFamily) loadFont(typingSettings.fontFamily)
+  }, [typingSettings.fontFamily])
 
   const [selection, setSelection] = useState<{ skey: string; start: number; end: number } | null>(null)
   const [editor, setEditor] = useState<Editor | null>(null)
@@ -356,7 +362,16 @@ export function AnnotatedReader({ book, chapter, paragraphs, mode }: AnnotatedRe
         </div>
       )}
 
-      <div className={`font-serif text-lg sm:text-xl leading-9 sm:leading-10 space-y-6 text-gray-800 dark:text-gray-200 ${mode === 'note' ? 'select-none' : ''}`}>
+      <div
+        className={`space-y-6 text-gray-800 dark:text-gray-200 ${mode === 'note' ? 'select-none' : ''}`}
+        style={{
+          fontFamily: getEffectiveFontFamily(typingSettings.fontFamily),
+          fontSize: `${typingSettings.fontSize || 20}px`,
+          fontWeight: typingSettings.fontWeight || 400,
+          lineHeight: typingSettings.lineHeight || 1.8,
+          fontVariationSettings: getFontVariationSettings(typingSettings.fontFamily) || undefined,
+        }}
+      >
         {paragraphs.map((p, pIdx) => {
           const sentences = splitSentences(p)
           return (

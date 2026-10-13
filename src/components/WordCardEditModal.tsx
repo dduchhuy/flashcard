@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Plus, Trash2, Check, Sparkles, ArrowLeftRight } from 'lucide-react'
 import { Flashcard, PosEntry, PhraseIdiom, useFlashcardStore, getCardTags } from '../store'
 
@@ -145,13 +146,17 @@ export function WordCardEditModal({ card, isOpen, onClose }: WordCardEditModalPr
     onClose()
   }
 
-  return (
+  if (typeof document === 'undefined') return null
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in"
+      className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 animate-in fade-in"
+      onClick={e => e.stopPropagation()}
       onPointerDown={onClose}
     >
       <div
         className="bg-white dark:bg-gray-800 p-6 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl space-y-6"
+        onClick={e => e.stopPropagation()}
         onPointerDown={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -523,6 +528,7 @@ export function WordCardEditModal({ card, isOpen, onClose }: WordCardEditModalPr
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

@@ -603,7 +603,11 @@ export function FlashcardItem({
         {showMenu && (
           <div className="absolute right-0 mt-1 w-36 bg-white border border-gray-100 rounded-lg shadow-lg z-20 py-1" onClick={e => e.stopPropagation()}>
             <button
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation()
+                // Close the card detail popup before opening the edit modal
+                setIsPopupOpen(false)
+                setPopupCard(null)
                 if (isWordCard) {
                   setIsWordEditModalOpen(true)
                 } else {
@@ -1374,6 +1378,20 @@ export function FlashcardItem({
         onClose={() => {
           setIsPopupOpen(false)
           setPopupCard(null)
+        }}
+        onEdit={(cardToEdit) => {
+          setIsPopupOpen(false)
+          setPopupCard(null)
+          if (isWordCard) {
+            setIsWordEditModalOpen(true)
+          } else {
+            setEditSentenceValue(cardToEdit.sentence)
+            setEditTranslationValue(cardToEdit.translation || '')
+            setEditPhoneticValue(cardToEdit.phonetic || '')
+            setEditPartOfSpeechValue(cardToEdit.partOfSpeech || '')
+            setEditUsageValue(cardToEdit.usageNotes?.[0] || '')
+            setIsEditingSentence(true)
+          }
         }}
       />
 

@@ -86,6 +86,8 @@ async function fetchFileContent(category: 'book' | 'vocab' | 'sentence' | 'save'
   return { text, blob }
 }
 
+export let isGitDataSyncing = false
+
 /** Load and import all data from Flashcard/data (book, vocab, sentence, save) */
 export async function loadAllFromGitData(options?: {
   onProgress?: (message: string) => void
@@ -95,44 +97,46 @@ export async function loadAllFromGitData(options?: {
   sentenceCount: number
   savesCount: number
 }> {
-  const manifest = await fetchDataManifest()
-  const notify = options?.onProgress || (() => {})
+  isGitDataSyncing = true
+  try {
+    const manifest = await fetchDataManifest()
+    const notify = options?.onProgress || (() => {})
 
-  let booksCount = 0
-  let vocabCount = 0
-  let sentenceCount = 0
-  let savesCount = 0
+    let booksCount = 0
+    let vocabCount = 0
+    let sentenceCount = 0
+    let savesCount = 0
 
-  // 1. Load Books from data/book
-  for (const item of manifest.book) {
-    try {
-      notify(`Reading book: ${item.name}...`)
-      const { text, blob } = await fetchFileContent('book', item.name)
-      const ext = item.name.split('.').pop()?.toLowerCase()
-      let parsedBook: { title: string; author: string[]; chapters: any[] } | null = null
+    // 1. Load Books from data/book
+    for (const item of manifest.book) {
+      try {
+        notify(`Reading book: ${item.name}...`)
+        const { text, blob } = await fetchFileContent('book', item.name)
+        const ext = item.name.split('.').pop()?.toLowerCase()
+        let parsedBook: { title: string; author: string[]; chapters: any[] } | null = null
 
-      if (ext === 'json') {
-        const json = JSON.parse(text)
-        parsedBook = validateBookJson(json)
-      } else if (ext === 'txt') {
-        parsedBook = parseTxtToBook(item.name, text)
-      } else if (ext === 'epub') {
-        const file = new File([blob], item.name, { type: 'application/epub+zip' })
-        parsedBook = await parseEpubToBook(file)
+        if (ext === 'json') {
+          const json = JSON.parse(text)
+          parsedBook = validateBookJson(json)
+        } else if (ext === 'txt') {
+          parsedBook = parseTxtToBook(item.name, text)
+        } else if (ext === 'epub') {
+          const file = new File([blob], item.name, { type: 'application/epub+zip' })
+          parsedBook = await parseEpubToBook(file)
+        }
+
+        if (parsedBook) {
+          const books = useTypingStore.getState().books
+          const existing = books.find(
+            b => b.title === parsedBook!.title && b.author.join('|') === parsedBook!.author.join('|')
+          )
+          useTypingStore.getState().importBook(parsedBook, existing?.id, item.name)
+          booksCount++
+        }
+      } catch (e) {
+        console.warn(`Error loading book "${item.name}":`, e)
       }
-
-      if (parsedBook) {
-        const books = useTypingStore.getState().books
-        const existing = books.find(
-          b => b.title === parsedBook!.title && b.author.join('|') === parsedBook!.author.join('|')
-        )
-        useTypingStore.getState().importBook(parsedBook, existing?.id)
-        booksCount++
-      }
-    } catch (e) {
-      console.warn(`Error loading book "${item.name}":`, e)
     }
-  }
 
   // 2. Load Word Cards from data/vocab
   const importedWordCards: Flashcard[] = []
@@ -203,7 +207,7 @@ export async function loadAllFromGitData(options?: {
         if (existing) {
           // Merge tags
           const mergedTags = Array.from(new Set([...getCardTags(existing), ...getCardTags(card)]))
-          currentMap.set(key, { ...existing, ...card, id: existing.id, tags: mergedTags })
+          currentMap.set(key, { ...card, ...existing, id: existing.id, tags: mergedTags })
         } else {
           currentMap.set(key, card)
         }
@@ -216,7 +220,7 @@ export async function loadAllFromGitData(options?: {
         const existing = currentMap.get(key)
         if (existing) {
           const mergedTags = Array.from(new Set([...getCardTags(existing), ...getCardTags(card)]))
-          currentMap.set(key, { ...existing, ...card, id: existing.id, tags: mergedTags })
+          currentMap.set(key, { ...card, ...existing, id: existing.id, tags: mergedTags })
         } else {
           currentMap.set(key, card)
         }
@@ -268,6 +272,9 @@ export async function loadAllFromGitData(options?: {
   useFlashcardStore.getState().updateSettings({ lastGitSync: Date.now() })
 
   return { booksCount, vocabCount, sentenceCount, savesCount }
+  } finally {
+    isGitDataSyncing = false
+  }
 }
 
 /** Export all current data to Flashcard/data on local disk or download zip */

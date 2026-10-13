@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { Flashcard, useFlashcardStore, getCardTags, normalizePhraseItem } from '../store'
-import { Volume2, X, Pin } from 'lucide-react'
+import { Volume2, X, Pin, Edit2 } from 'lucide-react'
 import { speakEnglish } from '../utils'
 import { buildWordToFlashcardMap, findMatchingCard, ClickableSentence } from './ClickableSentence'
 
@@ -93,13 +93,15 @@ export interface CardDetailModalProps {
   isOpen?: boolean
   clickWordToPopupCard?: boolean
   onClose: () => void
+  onEdit?: (card: Flashcard) => void
 }
 
 export function CardDetailModal({
   card,
   isOpen = true,
   clickWordToPopupCard,
-  onClose
+  onClose,
+  onEdit
 }: CardDetailModalProps) {
   const { flashcards } = useFlashcardStore()
   const [navigatedCard, setNavigatedCard] = useState<Flashcard | null>(null)
@@ -374,8 +376,21 @@ export function CardDetailModal({
               )}
             </div>
 
-            {/* Right Action Controls: Pin + Close */}
+            {/* Right Action Controls: Edit + Pin + Close */}
             <div className="flex items-center gap-1.5 shrink-0">
+              {onEdit && currentCard && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onEdit(currentCard)
+                  }}
+                  className="p-2 rounded-xl text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors"
+                  title="Edit this card"
+                >
+                  <Edit2 size={18} />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={togglePin}

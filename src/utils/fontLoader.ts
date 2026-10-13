@@ -87,44 +87,100 @@ const CDN_FONTS: Record<string, string> = {
 export function loadFont(fontFamily: string) {
   if (!fontFamily) return
 
-  const cleanName = fontFamily.split(',')[0].replace(/['"]/g, '').trim()
+  const cleanName = fontFamily.split(',')[0].replace(/['\"]/g, '').trim()
   if (SYSTEM_FONTS.has(cleanName)) return
 
-  // Check CDN fonts
-  if (CDN_FONTS[cleanName]) {
-    const cdnUrl = CDN_FONTS[cleanName]
+  // Check CDN fonts — also fuzzy-match any dyslexic variant
+  const cdnKey = CDN_FONTS[cleanName]
+    ?? CDN_FONTS[cleanName.replace(/\s+mono$/i, '').trim()]
+    ?? (cleanName.toLowerCase().includes('dyslexic')
+      ? 'https://cdn.jsdelivr.net/npm/@fontsource/opendyslexic/index.css'
+      : undefined)
+  if (cdnKey) {
     const id = `cdnfont-${cleanName.toLowerCase().replace(/\s+/g, '-')}`
     if (document.getElementById(id)) return
     const link = document.createElement('link')
     link.id = id
     link.rel = 'stylesheet'
-    link.href = cdnUrl
+    link.href = cdnKey
     document.head.appendChild(link)
     return
   }
 
-  // Google Fonts
-  let googleFamily = cleanName
-  if (cleanName.includes('Recursive')) {
-    googleFamily = 'Recursive:wght,CASL@300..800,0..1'
+  // Google Fonts — special handling for variable fonts
+  let googleFamily: string
+  const lower = cleanName.toLowerCase()
+  if (lower === 'recursive casual' || lower === 'recursive linear' || lower === 'recursive') {
+    // Recursive is a variable font with CASL axis; load the whole family once
+    googleFamily = 'Recursive:slnt,wght,CASL,CRSV@-15..0,300..800,0..1,0..1'
   } else {
     googleFamily = `${cleanName}:wght@300;400;500;600;700;800`
   }
 
-  const id = `gfont-${cleanName.toLowerCase().replace(/\s+/g, '-')}`
+  // Use a stable ID based on the base font name (so Recursive Casual & Linear share one load)
+  const baseId = cleanName.toLowerCase().replace(/\s+(casual|linear)$/i, '').replace(/\s+/g, '-')
+  const id = `gfont-${baseId}`
   if (document.getElementById(id)) return
   const link = document.createElement('link')
   link.id = id
   link.rel = 'stylesheet'
   link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(googleFamily)}&display=swap`
   document.head.appendChild(link)
+
+  ensureFontAliases()
+}
+
+function ensureFontAliases() {
+  if (typeof document === 'undefined') return
+  const id = 'font-alias-styles'
+  if (document.getElementById(id)) return
+  const style = document.createElement('style')
+  style.id = id
+  style.textContent = `
+    @font-face { font-family: 'OpenDyslexic Mono'; src: local('OpenDyslexic'); }
+    @font-face { font-family: 'Open Dyslexic'; src: local('OpenDyslexic'); }
+    @font-face { font-family: 'Recursive Casual'; src: local('Recursive'); }
+    @font-face { font-family: 'Recursive Linear'; src: local('Recursive'); }
+  `
+  document.head.appendChild(style)
+}
+
+/**
+ * Map selected font name to the actual CSS font-family declaration that browsers understand.
+ * For example:
+ * - 'OpenDyslexic Mono' -> "'OpenDyslexic', monospace"
+ * - 'Open Dyslexic' -> "'OpenDyslexic', sans-serif"
+ * - 'Recursive Casual' -> "'Recursive', monospace"
+ * - 'Recursive Linear' -> "'Recursive', monospace"
+ */
+export function getEffectiveFontFamily(fontFamily: string): string {
+  if (!fontFamily) return 'inherit'
+  const clean = fontFamily.split(',')[0].replace(/['"]/g, '').trim()
+  const lower = clean.toLowerCase()
+  if (lower === 'opendyslexic mono' || lower === 'dyslexic mono') {
+    return "'OpenDyslexic', monospace"
+  }
+  if (lower === 'open dyslexic' || lower === 'opendyslexic') {
+    return "'OpenDyslexic', sans-serif"
+  }
+  if (lower === 'recursive casual' || lower === 'recursive linear' || lower === 'recursive') {
+    return "'Recursive', monospace"
+  }
+  if (lower === 'dejavu mono') {
+    return "'DejaVu Mono', monospace"
+  }
+  if (lower === 'dejavu serif') {
+    return "'DejaVu Serif', serif"
+  }
+  return fontFamily
 }
 
 /** Get font-variation-settings if applicable (e.g. Recursive Casual vs Linear) */
 export function getFontVariationSettings(fontFamily: string): string | undefined {
   if (!fontFamily) return undefined
   const lower = fontFamily.toLowerCase()
-  if (lower.includes('recursive casual')) return "'CASL' 1"
-  if (lower.includes('recursive linear')) return "'CASL' 0"
+  if (lower.includes('recursive casual')) return "'CASL' 1, 'slnt' 0"
+  if (lower.includes('recursive linear')) return "'CASL' 0, 'slnt' 0"
   return undefined
 }
+
