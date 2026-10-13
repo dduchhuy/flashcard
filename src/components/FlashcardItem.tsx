@@ -924,7 +924,7 @@ export function FlashcardItem({
                                     setIsPopupOpen(true)
                                   } : undefined}
                                   title={canClickWord ? `Flashcard: ${matchedCard!.sentence}` : undefined}
-                                  className={`${effectiveIsLocked && lockedDragIndices.includes(idx) ? 'bg-blue-200 text-blue-900 rounded px-0.5' : ''} ${canClickWord ? 'cursor-pointer underline decoration-dotted decoration-purple-400 dark:decoration-purple-500 hover:text-purple-600 dark:hover:text-purple-400 hover:decoration-solid transition-colors' : ''}`}
+                                  className={`${effectiveIsLocked && lockedDragIndices.includes(idx) ? 'bg-blue-200 text-blue-900 rounded px-0.5' : ''} ${canClickWord ? 'cursor-pointer hover:text-purple-600 dark:hover:text-purple-400 transition-colors' : ''}`}
                                 >{word}</span>
                                 {i < seg.indices.length - 1 && spaces[idx]}
                               </span>
@@ -1224,7 +1224,7 @@ export function FlashcardItem({
                   } : undefined}
                   title={isClickable ? `Flashcard: ${matched!.sentence}` : undefined}
                   className={`px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200/50 dark:border-purple-800/50 text-[11px] font-medium transition-colors ${
-                    isClickable ? 'cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/60 underline decoration-dotted hover:decoration-solid' : ''
+                    isClickable ? 'cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/60' : ''
                   }`}
                 >
                   {w}

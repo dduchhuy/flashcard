@@ -697,7 +697,7 @@ export function CardDetailModal({
                   onClick={isClickable ? () => navigateToCard(matched!) : undefined}
                   title={isClickable ? `Open flashcard: ${matched!.sentence}` : undefined}
                   className={`text-xs px-2.5 py-0.5 rounded-lg bg-purple-100/70 dark:bg-purple-900/40 text-purple-800 dark:text-purple-200 font-medium transition-colors ${
-                    isClickable ? 'cursor-pointer hover:bg-purple-200 dark:hover:bg-purple-800/60 underline decoration-dotted hover:decoration-solid' : ''
+                    isClickable ? 'cursor-pointer hover:bg-purple-200 dark:hover:bg-purple-800/60' : ''
                   }`}
                 >
                   {w}

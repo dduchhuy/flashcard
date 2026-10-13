@@ -111,7 +111,7 @@ export function ClickableSentence({
                 onWordClick(matched)
               }}
               title={`View flashcard: ${matched.sentence}`}
-              className="cursor-pointer underline decoration-dotted decoration-purple-400 dark:decoration-purple-500 hover:text-purple-600 dark:hover:text-purple-400 hover:decoration-solid transition-colors"
+              className="cursor-pointer hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
             >
               {token}
             </span>
