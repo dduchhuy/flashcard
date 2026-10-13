@@ -166,7 +166,7 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
             const c = flashcards.find(f => f.id === currentQ.cardId)
             if (c) setShowModalCard(c)
           }}
-          className="absolute top-3 left-3"
+          className="absolute bottom-3 left-3"
         />
         
         {showFullSentence ? (

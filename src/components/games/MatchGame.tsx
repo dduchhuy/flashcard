@@ -258,7 +258,7 @@ export function MatchGame({ onExit }: { onExit: () => void }) {
                 onClick={() => handleSelect(item)}
                 className={`w-full h-full p-2.5 rounded-xl border-2 text-center text-xs sm:text-sm font-medium transition-all duration-300 ${btnClass} flex items-center justify-center`}
               >
-                <div className="line-clamp-2 whitespace-pre-wrap break-all">
+                <div className="line-clamp-2 whitespace-pre-wrap break-words">
                   {item.text}
                 </div>
               </button>
@@ -268,7 +268,7 @@ export function MatchGame({ onExit }: { onExit: () => void }) {
                   onClick={() => handleSelect(item)}
                   className={`w-full min-h-[4.5rem] h-auto p-2.5 rounded-xl border-2 text-center text-xs sm:text-sm font-medium shadow-2xl flex items-center justify-center ${overlayClass}`}
                 >
-                  <div className="whitespace-pre-wrap break-all">
+                  <div className="whitespace-pre-wrap break-words">
                     {item.text}
                   </div>
                 </button>

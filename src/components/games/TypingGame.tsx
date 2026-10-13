@@ -329,7 +329,7 @@ export function TypingGame({ onExit }: { onExit: () => void }) {
             const c = flashcards.find(f => f.id === currentQ.cardId)
             if (c) setShowModalCard(c)
           }}
-          className="absolute top-3 left-3"
+          className="absolute bottom-3 left-3"
         />
 
         <p className="text-[11px] font-semibold tracking-wider text-purple-600 dark:text-purple-400 uppercase mb-2">

@@ -196,7 +196,7 @@ export function MemoryGame({ onExit }: { onExit: () => void }) {
               </div>
               
               {/* Back (Face up) */}
-              <div className={`absolute w-full h-full rounded-xl border-2 backface-hidden rotate-y-180 p-1.5 sm:p-2 flex items-center justify-center text-center text-xs sm:text-sm font-medium break-all shadow-sm ${
+              <div className={`absolute w-full h-full rounded-xl border-2 backface-hidden rotate-y-180 p-1.5 sm:p-2 flex items-center justify-center text-center text-xs sm:text-sm font-medium break-words shadow-sm ${
                 c.isMatched ? 'bg-green-100 border-green-500 text-green-700 dark:bg-green-900/40 dark:text-green-200' :
                 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200'
               }`}>

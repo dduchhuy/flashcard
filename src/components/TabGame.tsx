@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo, Component, ReactNode, ErrorInfo } from 'react'
 import { useFlashcardStore, Flashcard, getCardTags, getCardsForMode, normalizePhraseItem } from '../store'
-import { ThumbsDown, ThumbsUp, Lightbulb, LightbulbOff, Layers, MousePointerClick, Grid2X2, Type, BrainCircuit, Headphones, Volume2, Shuffle, Zap, ListOrdered, ToggleLeft, Skull, Sparkles, ChevronRight } from 'lucide-react'
+import { ThumbsDown, ThumbsUp, Lightbulb, LightbulbOff, Layers, MousePointerClick, Grid2X2, Type, BrainCircuit, Headphones, Volume2, Shuffle, Zap, ListOrdered, ToggleLeft, Skull, Sparkles, ChevronRight, Tag as TagIcon, ChevronDown, Check } from 'lucide-react'
 import { MatchGame } from './games/MatchGame'
 import { EmptyState, CardDetailModal, RootCardButton, GameHeader, ResultScreen } from './games/shared'
 import { MemoryGame } from './games/MemoryGame'
@@ -109,7 +109,20 @@ export function TabGame() {
 
 function GameMenu({ onSelect }: { onSelect: (mode: GameMode) => void }) {
   const { flashcards, activeTags, setActiveTags, gameInputMode, setGameInputMode } = useFlashcardStore()
-  const allTags = Array.from(new Set(flashcards.flatMap(f => getCardTags(f))))
+  const [tagDropdownOpen, setTagDropdownOpen] = useState(false)
+  const tagDropdownRef = useRef<HTMLDivElement>(null)
+  const allTags = useMemo(() => Array.from(new Set(flashcards.flatMap(f => getCardTags(f)))).sort(), [flashcards])
+
+  useEffect(() => {
+    if (!tagDropdownOpen) return
+    const handleClick = (e: MouseEvent) => {
+      if (tagDropdownRef.current && !tagDropdownRef.current.contains(e.target as Node)) {
+        setTagDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [tagDropdownOpen])
 
   const toggleTag = (tag: string) => {
     if (activeTags.includes(tag)) {
@@ -157,35 +170,41 @@ function GameMenu({ onSelect }: { onSelect: (mode: GameMode) => void }) {
         {/* Center / Right: Tags & Cards Available on the same row */}
         <div className="flex items-center gap-2 flex-wrap min-w-0 ml-auto">
           {allTags.length > 0 && (
-            <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 max-w-full sm:max-w-md no-scrollbar">
+            <div className="relative" ref={tagDropdownRef}>
               <button
                 type="button"
-                onClick={() => setActiveTags([])}
-                className={`px-2.5 py-1 rounded-full text-xs font-medium shrink-0 transition-colors ${
-                  activeTags.length === 0
-                    ? 'bg-purple-600 text-white shadow-xs'
-                    : 'bg-gray-100 dark:bg-gray-700/60 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
+                onClick={() => setTagDropdownOpen(o => !o)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-gray-100 dark:bg-gray-700/60 text-gray-700 dark:text-gray-200 border border-gray-200/60 dark:border-gray-600/60 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
-                All Tags
+                <TagIcon size={14} className="text-purple-500" />
+                <span>{activeTags.length === 0 ? 'All tags' : `${activeTags.length} tag${activeTags.length > 1 ? 's' : ''}`}</span>
+                <ChevronDown size={13} className={`text-gray-400 transition-transform ${tagDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
-              {allTags.map(tag => {
-                const isActive = activeTags.includes(tag)
-                return (
+
+              {tagDropdownOpen && (
+                <div className="absolute top-full right-0 mt-1.5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl z-50 min-w-[190px] max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-1 p-1.5 space-y-0.5">
                   <button
-                    key={tag}
                     type="button"
-                    onClick={() => toggleTag(tag)}
-                    className={`px-2.5 py-1 rounded-full text-xs font-medium shrink-0 transition-colors ${
-                      isActive
-                        ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
-                        : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-purple-300'
-                    }`}
+                    onClick={() => { setActiveTags([]); setTagDropdownOpen(false) }}
+                    className={`w-full text-left px-3 py-2 text-xs rounded-lg flex items-center justify-between ${activeTags.length === 0 ? 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 font-semibold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
                   >
-                    #{tag}
+                    All tags {activeTags.length === 0 && <Check size={14} />}
                   </button>
-                )
-              })}
+                  {allTags.map(tag => {
+                    const isSelected = activeTags.includes(tag)
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => toggleTag(tag)}
+                        className={`w-full text-left px-3 py-2 text-xs rounded-lg flex items-center justify-between ${isSelected ? 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 font-semibold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                      >
+                        #{tag} {isSelected && <Check size={14} />}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )}
 
@@ -691,7 +710,7 @@ function QuizGame({ onExit }: { onExit: () => void }) {
         {currentCardObj && (
           <RootCardButton 
             onClick={() => setShowModalCard(currentCardObj)}
-            className="absolute top-3 left-3"
+            className="absolute bottom-3 left-3"
           />
         )}
 
@@ -982,49 +1001,19 @@ function SwipeGame({ onExit }: { onExit: () => void }) {
         />
       </div>
 
-      <div className="mt-3 flex flex-col items-center gap-2 w-full">
-        {/* Action buttons and counters */}
-        <div className="flex items-center justify-between w-full max-w-xs px-2">
-          <button
-            onClick={() => {
-              setLearningCards(prev => [...prev.slice(1), currentItem])
-              setSwipeCount(c => c + 1)
-              setUnknownCount(c => c + 1)
-            }}
-            title="Mark Unknown (Swipe Left)"
-            className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 flex items-center justify-center hover:bg-rose-100 hover:scale-105 transition-all shadow-xs cursor-pointer"
-          >
-            <ThumbsDown size={18} />
-          </button>
-
-          <div className="flex items-center gap-2.5 bg-white dark:bg-gray-800 px-3.5 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xs">
-            <div className="flex flex-col items-center">
-              <span className="font-bold text-rose-500 text-sm leading-none">{unknownCount}</span>
-              <span className="text-[10px] text-gray-400 mt-0.5">Unknown</span>
-            </div>
-            <div className="w-px h-5 bg-gray-200 dark:bg-gray-700" />
-            <div className="flex flex-col items-center">
-              <span className="font-bold text-gray-700 dark:text-gray-300 text-sm leading-none">{learningCards.length}</span>
-              <span className="text-[10px] text-gray-400 mt-0.5">left</span>
-            </div>
-            <div className="w-px h-5 bg-gray-200 dark:bg-gray-700" />
-            <div className="flex flex-col items-center">
-              <span className="font-bold text-emerald-500 text-sm leading-none">{knownCount}</span>
-              <span className="text-[10px] text-gray-400 mt-0.5">Known</span>
-            </div>
-          </div>
-
-          <button
-            onClick={() => {
-              setLearningCards(prev => prev.slice(1))
-              setSwipeCount(c => c + 1)
-              setKnownCount(c => c + 1)
-            }}
-            title="Mark Known (Swipe Right)"
-            className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center hover:bg-emerald-100 hover:scale-105 transition-all shadow-xs cursor-pointer"
-          >
-            <ThumbsUp size={18} />
-          </button>
+      {/* Counters — clean, unboxed, minimal layout */}
+      <div className="mt-4 flex items-center justify-center gap-8 sm:gap-10 w-full max-w-xs px-2 select-none">
+        <div className="flex flex-col items-center">
+          <span className="font-extrabold text-rose-500 text-lg sm:text-xl leading-none">{unknownCount}</span>
+          <span className="text-xs font-semibold text-rose-400/80 mt-1">Unknown</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="font-extrabold text-gray-700 dark:text-gray-300 text-lg sm:text-xl leading-none">{learningCards.length}</span>
+          <span className="text-xs font-semibold text-gray-400 mt-1">Remaining</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <span className="font-extrabold text-emerald-500 text-lg sm:text-xl leading-none">{knownCount}</span>
+          <span className="text-xs font-semibold text-emerald-400/80 mt-1">Known</span>
         </div>
       </div>
 
@@ -1108,8 +1097,20 @@ function SwipeableCard({
 
   const rotation = offsetX * 0.1
   const opacity = 1 - Math.abs(offsetX) / 500
-  const isRight = offsetX > 50
-  const isLeft = offsetX < -50
+  const rightProgress = Math.min(1, Math.max(0, offsetX / 100))
+  const leftProgress = Math.min(1, Math.max(0, -offsetX / 100))
+
+  const dynamicBorderColor = offsetX > 0
+    ? `rgba(74, 222, 128, ${rightProgress})`
+    : offsetX < 0
+    ? `rgba(244, 63, 94, ${leftProgress})`
+    : 'transparent'
+
+  const dynamicBoxShadow = offsetX > 0
+    ? `0 10px 25px -3px rgba(74, 222, 128, ${rightProgress * 0.3})`
+    : offsetX < 0
+    ? `0 10px 25px -3px rgba(244, 63, 94, ${leftProgress * 0.3})`
+    : ''
 
   const transformStyle = swiped 
     ? `translate(${offsetX > 0 ? 500 : -500}px, 0px) rotate(${offsetX > 0 ? 20 : -20}deg)`
@@ -1188,25 +1189,31 @@ function SwipeableCard({
       style={{
         transform: transformStyle,
         opacity: opacity,
-        borderColor: isRight ? '#4ade80' : isLeft ? '#f87171' : 'transparent',
-        boxShadow: isRight ? '0 10px 15px -3px rgba(74, 222, 128, 0.2)' : isLeft ? '0 10px 15px -3px rgba(248, 113, 113, 0.2)' : ''
+        borderColor: dynamicBorderColor,
+        boxShadow: dynamicBoxShadow
       }}
     >
-      {isRight && (
-        <div className="absolute top-4 left-4 text-green-500 border-2 border-green-500 rounded-full p-1.5 rotate-12 opacity-80 bg-white">
-          <ThumbsUp size={28} />
+      {offsetX > 5 && (
+        <div 
+          className="absolute top-4 right-4 text-emerald-500 border-2 border-emerald-500 rounded-full p-2 sm:p-2.5 shadow-md bg-white/95 dark:bg-gray-800/95 pointer-events-none rotate-12 flex items-center justify-center"
+          style={{ opacity: Math.min(1, Math.max(0, (offsetX - 5) / 70)) }}
+        >
+          <ThumbsUp size={24} strokeWidth={2.5} />
         </div>
       )}
-      {isLeft && (
-        <div className="absolute top-4 right-4 text-red-500 border-2 border-red-500 rounded-full p-1.5 -rotate-12 opacity-80 bg-white">
-          <ThumbsDown size={28} />
+      {offsetX < -5 && (
+        <div 
+          className="absolute top-4 left-4 text-rose-500 border-2 border-rose-500 rounded-full p-2 sm:p-2.5 shadow-md bg-white/95 dark:bg-gray-800/95 pointer-events-none -rotate-12 flex items-center justify-center"
+          style={{ opacity: Math.min(1, Math.max(0, (-offsetX - 5) / 70)) }}
+        >
+          <ThumbsDown size={24} strokeWidth={2.5} />
         </div>
       )}
 
-      {/* Top-left root card button */}
+      {/* Bottom-left root card button */}
       <RootCardButton
         onClick={() => onShowDetail?.(card)}
-        className="absolute top-3 left-3"
+        className="absolute bottom-3 left-3"
       />
 
       <button

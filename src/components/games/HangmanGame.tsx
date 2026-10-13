@@ -141,7 +141,7 @@ export function HangmanGame({ onExit }: { onExit: () => void }) {
             const c = flashcards.find(f => f.id === note.cardId)
             if (c) setShowModalCard(c)
           }}
-          className="absolute top-3 left-3"
+          className="absolute bottom-3 left-3"
         />
 
         <div className="flex justify-center mb-2"><Gallows misses={misses} /></div>

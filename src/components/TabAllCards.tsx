@@ -67,6 +67,90 @@ function getPageNumbers(current: number, total: number): (number | '...')[] {
   return pages
 }
 
+function SettingToggleSwitch({
+  checked,
+  onChange,
+  label,
+  description,
+  disabled
+}: {
+  checked: boolean
+  onChange: (next: boolean) => void
+  label: string
+  description?: string
+  disabled?: boolean
+}) {
+  return (
+    <div
+      onClick={() => !disabled && onChange(!checked)}
+      className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all select-none cursor-pointer ${
+        checked
+          ? 'bg-purple-50/70 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800'
+          : 'bg-white dark:bg-gray-800 border-gray-200/80 dark:border-gray-700/80 hover:bg-gray-50 dark:hover:bg-gray-750'
+      } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+    >
+      <div className="pr-3 min-w-0 flex-1">
+        <div className={`text-xs font-semibold ${checked ? 'text-purple-900 dark:text-purple-200' : 'text-gray-800 dark:text-gray-200'}`}>
+          {label}
+        </div>
+        {description && (
+          <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 leading-snug">
+            {description}
+          </div>
+        )}
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        disabled={disabled}
+        onClick={(e) => {
+          e.stopPropagation()
+          onChange(!checked)
+        }}
+        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+          checked ? 'bg-purple-600' : 'bg-gray-300 dark:bg-gray-600'
+        }`}
+      >
+        <span
+          className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+            checked ? 'translate-x-4' : 'translate-x-0'
+          }`}
+        />
+      </button>
+    </div>
+  )
+}
+
+function SettingCompactToggle({
+  checked,
+  onChange,
+  label
+}: {
+  checked: boolean
+  onChange: (next: boolean) => void
+  label: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className={`flex items-center justify-between p-2.5 rounded-xl border text-xs font-semibold transition-all text-left ${
+        checked
+          ? 'bg-purple-50 dark:bg-purple-950/40 border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300 shadow-2xs'
+          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/60'
+      }`}
+    >
+      <span className="truncate pr-2">{label}</span>
+      <div className={`w-4 h-4 rounded-md flex items-center justify-center shrink-0 transition-colors ${
+        checked ? 'bg-purple-600 text-white' : 'border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700'
+      }`}>
+        {checked && <Check size={12} strokeWidth={3} />}
+      </div>
+    </button>
+  )
+}
+
 export function TabAllCards() {
   const { flashcards } = useFlashcardStore()
 
@@ -373,19 +457,6 @@ export function TabAllCards() {
     setCurrentPage(newPage)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
-
-  // Active filter count for setting button badge
-  const activeFilterCount = useMemo(() => {
-    let count = 0
-    if (cardTypeFilter !== 'flashcard') count++
-    if (searchTargets.length !== 1 || searchTargets[0] !== 'word') count++
-    if (selectedTags.length > 0) count += selectedTags.length
-    if (sortBy !== 'date_desc') count++
-    if (viewMode !== 'list') count++
-    if (readingMode !== 'pagination') count++
-    if (JSON.stringify(displayFilter) !== JSON.stringify(defaultDisplayFilter)) count++
-    return count
-  }, [cardTypeFilter, searchTargets, selectedTags, sortBy, viewMode, readingMode, displayFilter])
 
   // Display Filter Helpers
   const selectAllDisplayFilter = () => {
@@ -819,19 +890,14 @@ export function TabAllCards() {
               setOpenQuickMenu(null)
             }}
             className={`h-11 px-3.5 sm:px-4 rounded-xl font-semibold text-sm flex items-center gap-2 border transition-all shrink-0 shadow-xs ${
-              isSettingsOpen || activeFilterCount > 0
+              isSettingsOpen
                 ? 'bg-purple-50 dark:bg-purple-950/50 border-purple-300 dark:border-purple-600 text-purple-700 dark:text-purple-300 ring-1 ring-purple-300 dark:ring-purple-700'
                 : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/80'
             }`}
             title="Settings & Filters"
           >
-            <SlidersHorizontal size={17} className={activeFilterCount > 0 ? 'text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'} />
+            <SlidersHorizontal size={17} className={isSettingsOpen ? 'text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'} />
             <span className="hidden sm:inline">Settings &amp; Filters</span>
-            {activeFilterCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-600 text-white leading-none">
-                {activeFilterCount}
-              </span>
-            )}
           </button>
         </div>
       </div>
@@ -882,13 +948,12 @@ export function TabAllCards() {
                 </button>
               </div>
             </div>
-
             {/* Modal Tabs Navigation */}
             <div className="shrink-0 flex border-b border-gray-100 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-800/70 px-4 sm:px-6 pt-2 gap-1.5 overflow-x-auto">
               <button
                 type="button"
                 onClick={() => setSettingsTab('layout')}
-                className={`pb-2.5 px-3 rounded-t-lg text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                className={`pb-2.5 px-3.5 rounded-t-lg text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
                   settingsTab === 'layout'
                     ? 'border-purple-600 text-purple-600 dark:text-purple-400 bg-white/80 dark:bg-gray-800/90 shadow-2xs'
                     : 'border-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
@@ -901,7 +966,7 @@ export function TabAllCards() {
               <button
                 type="button"
                 onClick={() => setSettingsTab('search')}
-                className={`pb-2.5 px-3 rounded-t-lg text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                className={`pb-2.5 px-3.5 rounded-t-lg text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
                   settingsTab === 'search'
                     ? 'border-purple-600 text-purple-600 dark:text-purple-400 bg-white/80 dark:bg-gray-800/90 shadow-2xs'
                     : 'border-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
@@ -909,15 +974,12 @@ export function TabAllCards() {
               >
                 <Search size={14} />
                 <span>Search &amp; Sort</span>
-                {((searchTargets.length !== 1 || searchTargets[0] !== 'word') || selectedTags.length > 0 || sortBy !== 'date_desc') && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-purple-600 shrink-0" />
-                )}
               </button>
 
               <button
                 type="button"
                 onClick={() => setSettingsTab('display')}
-                className={`pb-2.5 px-3 rounded-t-lg text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                className={`pb-2.5 px-3.5 rounded-t-lg text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
                   settingsTab === 'display'
                     ? 'border-purple-600 text-purple-600 dark:text-purple-400 bg-white/80 dark:bg-gray-800/90 shadow-2xs'
                     : 'border-transparent text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
@@ -925,238 +987,187 @@ export function TabAllCards() {
               >
                 <Layers size={14} />
                 <span>Display Filters</span>
-                {cardTypeFilter === 'sentence' ? (
-                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 font-semibold">
-                    Sentence
-                  </span>
-                ) : null}
               </button>
             </div>
 
             {/* Modal Body */}
             <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
-              
-              {/* Active Filters Summary Pills (Inside Settings Modal) */}
-              {((searchTargets.length !== 1 || searchTargets[0] !== 'word') || selectedTags.length > 0 || cardTypeFilter !== 'flashcard' || readingMode !== 'pagination' || sortBy !== 'date_desc' || viewMode !== 'list') && (
-                <div className="p-3 rounded-2xl bg-purple-50/70 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40 flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-1.5 flex-wrap text-xs">
-                    <span className="text-purple-700 dark:text-purple-300 font-bold">Active:</span>
-
-                    {cardTypeFilter === 'sentence' && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-200 font-medium">
-                        Sentences ({sentenceCount})
-                        <button type="button" onClick={() => setCardTypeFilter('flashcard')} className="hover:opacity-75 font-bold">×</button>
-                      </span>
-                    )}
-
-                    {(searchTargets.length !== 1 || searchTargets[0] !== 'word') && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-200 font-medium">
-                        Search: {searchTargets.map(t => {
-                          const opt = (cardTypeFilter === 'sentence' ? SENTENCE_SEARCH_TARGETS : FLASHCARD_SEARCH_TARGETS).find(o => o.value === t)
-                          return opt?.label || t
-                        }).join(', ')}
-                        <button type="button" onClick={() => setSearchTargets(['word'])} className="hover:opacity-75 font-bold">×</button>
-                      </span>
-                    )}
-
-                    {selectedTags.map(tag => (
-                      <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 font-medium">
-                        #{tag}
-                        <button type="button" onClick={() => setSelectedTags(prev => prev.filter(t => t !== tag))} className="hover:opacity-75 font-bold">×</button>
-                      </span>
-                    ))}
-
-                    {readingMode !== 'pagination' && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 font-medium">
-                        Mode: {readingMode === 'load_more' ? 'Load More' : 'Infinite Scroll'}
-                        <button type="button" onClick={() => setReadingMode('pagination')} className="hover:opacity-75 font-bold">×</button>
-                      </span>
-                    )}
-
-                    {sortBy !== 'date_desc' && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium">
-                        Sort: {SORT_OPTIONS.find(o => o.value === sortBy)?.label}
-                        <button type="button" onClick={() => setSortBy('date_desc')} className="hover:opacity-75 font-bold">×</button>
-                      </span>
-                    )}
-
-                    {viewMode !== 'list' && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium">
-                        Grid View
-                        <button type="button" onClick={() => setViewMode('list')} className="hover:opacity-75 font-bold">×</button>
-                      </span>
-                    )}
-                  </div>
-
-                  <button 
-                    type="button" 
-                    onClick={handleResetAll}
-                    className="text-xs text-purple-600 dark:text-purple-400 hover:underline font-semibold ml-auto"
-                  >
-                    Reset all
-                  </button>
-                </div>
-              )}
-
               {/* TAB 1: GENERAL & LAYOUT */}
               {settingsTab === 'layout' && (
                 <div className="space-y-6">
-                  {/* Card Type & View Layout */}
-                  <div className="space-y-3">
-                    <div className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                      Card Type &amp; View Layout
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {/* Card Type Selector */}
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-gray-600 dark:text-gray-300">Content Type</label>
-                        <div className="flex bg-gray-100 dark:bg-gray-900 p-1 rounded-xl border border-gray-200 dark:border-gray-700">
-                          <button
-                            type="button"
-                            onClick={() => setCardTypeFilter('flashcard')}
-                            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                              cardTypeFilter === 'flashcard'
-                                ? 'bg-white dark:bg-purple-600 text-purple-700 dark:text-white shadow-xs'
-                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                            }`}
-                          >
-                            <span>Flashcards</span>
-                            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-200">
-                              {flashcardCount}
-                            </span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setCardTypeFilter('sentence')}
-                            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                              cardTypeFilter === 'sentence'
-                                ? 'bg-white dark:bg-purple-600 text-purple-700 dark:text-white shadow-xs'
-                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                            }`}
-                          >
-                            <span>Sentences</span>
-                            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-200">
-                              {sentenceCount}
-                            </span>
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* View Mode (List vs Grid) */}
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-gray-600 dark:text-gray-300">Layout</label>
-                        <div className="flex bg-gray-100 dark:bg-gray-900 p-1 rounded-xl border border-gray-200 dark:border-gray-700">
-                          <button
-                            type="button"
-                            onClick={() => setViewMode('list')}
-                            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                              viewMode === 'list'
-                                ? 'bg-white dark:bg-purple-600 text-purple-700 dark:text-white shadow-xs'
-                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                            }`}
-                          >
-                            <List size={15} />
-                            <span>List View</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setViewMode('grid')}
-                            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all ${
-                              viewMode === 'grid'
-                                ? 'bg-white dark:bg-purple-600 text-purple-700 dark:text-white shadow-xs'
-                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                            }`}
-                          >
-                            <LayoutGrid size={15} />
-                            <span>Grid View</span>
-                          </button>
-                        </div>
-                      </div>
+                  {/* Content Type Selector */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                      Content Type
+                    </label>
+                    <div className="grid grid-cols-2 gap-2 bg-gray-100 dark:bg-gray-900/80 p-1.5 rounded-2xl border border-gray-200 dark:border-gray-700/80">
+                      <button
+                        type="button"
+                        onClick={() => setCardTypeFilter('flashcard')}
+                        className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all ${
+                          cardTypeFilter === 'flashcard'
+                            ? 'bg-white dark:bg-purple-600 text-purple-700 dark:text-white shadow-xs'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                        }`}
+                      >
+                        <BookOpen size={16} />
+                        <span>Flashcards</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCardTypeFilter('sentence')}
+                        className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all ${
+                          cardTypeFilter === 'sentence'
+                            ? 'bg-white dark:bg-purple-600 text-purple-700 dark:text-white shadow-xs'
+                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                        }`}
+                      >
+                        <Sparkles size={16} />
+                        <span>Sentences</span>
+                      </button>
                     </div>
                   </div>
 
-                  {/* Reading & Loading Mode */}
-                  <div className="space-y-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                        Reading Mode (List Loading)
-                      </div>
-                      <span className="text-[11px] text-purple-600 dark:text-purple-400 font-semibold">
-                        {readingMode === 'pagination' ? 'Pagination (Default / Lightest)' : readingMode === 'load_more' ? 'Load More' : 'Infinite Scroll'}
-                      </span>
-                    </div>
+                  {/* Card Layout View (List vs Grid) */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                      Card Layout View
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setViewMode('list')}
+                        className={`p-3.5 rounded-2xl border text-left transition-all flex items-start gap-3 ${
+                          viewMode === 'list'
+                            ? 'border-2 border-purple-500 dark:border-purple-400 bg-purple-50/70 dark:bg-purple-950/40 shadow-xs'
+                            : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750'
+                        }`}
+                      >
+                        <div className={`p-2 rounded-xl shrink-0 ${viewMode === 'list' ? 'bg-purple-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
+                          <List size={18} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className={`text-xs font-bold ${viewMode === 'list' ? 'text-purple-900 dark:text-purple-200' : 'text-gray-900 dark:text-white'}`}>
+                              List View
+                            </span>
+                            {viewMode === 'list' && <Check size={14} className="text-purple-600 dark:text-purple-400" />}
+                          </div>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
+                            Detailed row layout with full definitions, examples, and pronunciation.
+                          </p>
+                        </div>
+                      </button>
 
+                      <button
+                        type="button"
+                        onClick={() => setViewMode('grid')}
+                        className={`p-3.5 rounded-2xl border text-left transition-all flex items-start gap-3 ${
+                          viewMode === 'grid'
+                            ? 'border-2 border-purple-500 dark:border-purple-400 bg-purple-50/70 dark:bg-purple-950/40 shadow-xs'
+                            : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750'
+                        }`}
+                      >
+                        <div className={`p-2 rounded-xl shrink-0 ${viewMode === 'grid' ? 'bg-purple-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
+                          <LayoutGrid size={18} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className={`text-xs font-bold ${viewMode === 'grid' ? 'text-purple-900 dark:text-purple-200' : 'text-gray-900 dark:text-white'}`}>
+                              Grid View
+                            </span>
+                            {viewMode === 'grid' && <Check size={14} className="text-purple-600 dark:text-purple-400" />}
+                          </div>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
+                            Compact card grid for quick multi-column browsing and scanning.
+                          </p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Reading Mode (Loading) */}
+                  <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                    <label className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                      Reading &amp; Loading Mode
+                    </label>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                       <button
                         type="button"
                         onClick={() => setReadingMode('pagination')}
-                        className={`p-3.5 rounded-2xl border text-left transition-all ${
+                        className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between ${
                           readingMode === 'pagination'
-                            ? 'border-2 border-purple-500 dark:border-purple-400 bg-purple-50/80 dark:bg-purple-950/40 ring-1 ring-purple-300 dark:ring-purple-700 shadow-xs'
-                            : 'border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/60 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+                            ? 'border-2 border-purple-500 dark:border-purple-400 bg-purple-50/70 dark:bg-purple-950/40 shadow-xs'
+                            : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750'
                         }`}
                       >
-                        <div className="flex items-center justify-between mb-1.5">
-                          <div className="flex items-center gap-1.5 font-bold text-xs text-gray-900 dark:text-white">
-                            <Layers size={16} className="text-purple-600 dark:text-purple-400" />
-                            <span>Pagination</span>
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-1.5 font-bold text-xs text-gray-900 dark:text-white">
+                              <Layers size={16} className="text-purple-600 dark:text-purple-400" />
+                              <span>Pagination</span>
+                            </div>
+                            {readingMode === 'pagination' && <Check size={14} className="text-purple-600 dark:text-purple-400" />}
                           </div>
-                          <span className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-green-100 dark:bg-green-950/50 text-green-700 dark:text-green-300">
-                            Default
-                          </span>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
+                            Fixed cards per page with page numbers. Lightest &amp; fastest.
+                          </p>
                         </div>
-                        <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
-                          Fixed items per page. Lightest and most responsive.
-                        </p>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setReadingMode('load_more')}
-                        className={`p-3.5 rounded-2xl border text-left transition-all ${
+                        className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between ${
                           readingMode === 'load_more'
-                            ? 'border-2 border-purple-500 dark:border-purple-400 bg-purple-50/80 dark:bg-purple-950/40 ring-1 ring-purple-300 dark:ring-purple-700 shadow-xs'
-                            : 'border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/60 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+                            ? 'border-2 border-purple-500 dark:border-purple-400 bg-purple-50/70 dark:bg-purple-950/40 shadow-xs'
+                            : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750'
                         }`}
                       >
-                        <div className="flex items-center justify-between mb-1.5">
-                          <div className="flex items-center gap-1.5 font-bold text-xs text-gray-900 dark:text-white">
-                            <ChevronDown size={16} className="text-purple-600 dark:text-purple-400" />
-                            <span>Load More</span>
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-1.5 font-bold text-xs text-gray-900 dark:text-white">
+                              <ChevronDown size={16} className="text-purple-600 dark:text-purple-400" />
+                              <span>Load More</span>
+                            </div>
+                            {readingMode === 'load_more' && <Check size={14} className="text-purple-600 dark:text-purple-400" />}
                           </div>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
+                            Displays a "Load More" button at the bottom of the list.
+                          </p>
                         </div>
-                        <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
-                          Click button to append more cards to bottom.
-                        </p>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setReadingMode('infinite_scroll')}
-                        className={`p-3.5 rounded-2xl border text-left transition-all ${
+                        className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between ${
                           readingMode === 'infinite_scroll'
-                            ? 'border-2 border-purple-500 dark:border-purple-400 bg-purple-50/80 dark:bg-purple-950/40 ring-1 ring-purple-300 dark:ring-purple-700 shadow-xs'
-                            : 'border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/60 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+                            ? 'border-2 border-purple-500 dark:border-purple-400 bg-purple-50/70 dark:bg-purple-950/40 shadow-xs'
+                            : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-750'
                         }`}
                       >
-                        <div className="flex items-center justify-between mb-1.5">
-                          <div className="flex items-center gap-1.5 font-bold text-xs text-gray-900 dark:text-white">
-                            <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
-                            <span>Infinite Scroll</span>
+                        <div>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-1.5 font-bold text-xs text-gray-900 dark:text-white">
+                              <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
+                              <span>Infinite Scroll</span>
+                            </div>
+                            {readingMode === 'infinite_scroll' && <Check size={14} className="text-purple-600 dark:text-purple-400" />}
                           </div>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
+                            Smoothly loads new cards automatically as you scroll down.
+                          </p>
                         </div>
-                        <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-snug">
-                          Auto-loads cards seamlessly as you scroll down.
-                        </p>
                       </button>
                     </div>
 
-                    {/* Page Size Selector */}
-                    <div className="flex items-center justify-between pt-1">
+                    {/* Cards per page */}
+                    <div className="flex items-center justify-between pt-2">
                       <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
                         Cards per page / load:
                       </span>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-900 p-1 rounded-xl border border-gray-200 dark:border-gray-700">
                         {PAGE_SIZE_OPTIONS.map(sz => (
                           <button
                             key={sz}
@@ -1165,7 +1176,7 @@ export function TabAllCards() {
                             className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
                               pageSize === sz
                                 ? 'bg-purple-600 text-white shadow-xs'
-                                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                             }`}
                           >
                             {sz} cards
@@ -1181,14 +1192,14 @@ export function TabAllCards() {
               {settingsTab === 'search' && (
                 <div className="space-y-6">
                   {/* Search Scope */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                        Search Target Scope (Multi-select)
-                      </div>
-                      <span className="text-[11px] text-gray-400 dark:text-gray-500">
-                        {searchTargets.length} selected
-                      </span>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
+                        Search Target Scope
+                      </label>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                        Select which card fields are searched when typing in the search bar
+                      </p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {(cardTypeFilter === 'sentence' ? SENTENCE_SEARCH_TARGETS : FLASHCARD_SEARCH_TARGETS).map(opt => {
@@ -1198,20 +1209,20 @@ export function TabAllCards() {
                             key={opt.value}
                             type="button"
                             onClick={() => toggleSearchTarget(opt.value)}
-                            className={`p-2.5 rounded-xl border text-left flex items-start justify-between gap-2 transition-all ${
+                            className={`p-3 rounded-xl border text-left flex items-start justify-between gap-2.5 transition-all ${
                               isSelected
-                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30 text-purple-900 dark:text-purple-200 font-bold'
-                                : 'border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/40 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                ? 'border-purple-400 bg-purple-50 dark:bg-purple-950/40 text-purple-900 dark:text-purple-200 shadow-2xs'
+                                : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750'
                             }`}
                           >
                             <div className="min-w-0">
-                              <div className="text-xs font-semibold leading-tight">{opt.label}</div>
-                              <div className="text-[10px] text-gray-500 dark:text-gray-400 font-normal mt-0.5">{opt.desc}</div>
+                              <div className="text-xs font-bold leading-tight">{opt.label}</div>
+                              <div className="text-[11px] text-gray-500 dark:text-gray-400 font-normal mt-0.5">{opt.desc}</div>
                             </div>
-                            <div className={`w-4 h-4 rounded mt-0.5 flex items-center justify-center shrink-0 transition-colors ${
+                            <div className={`w-4 h-4 rounded-md mt-0.5 flex items-center justify-center shrink-0 transition-colors ${
                               isSelected
                                 ? 'bg-purple-600 text-white'
-                                : 'border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800'
+                                : 'border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700'
                             }`}>
                               {isSelected && <Check size={12} strokeWidth={3} />}
                             </div>
@@ -1221,88 +1232,93 @@ export function TabAllCards() {
                     </div>
                   </div>
 
-                  {/* Sorting & Tags */}
-                  <div className="space-y-4 pt-3 border-t border-gray-100 dark:border-gray-700">
-                    <div className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                      Sorting &amp; Tag Filters
+                  {/* Sort Option */}
+                  <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 block">
+                        Sort Order
+                      </label>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                        Arrange cards in library
+                      </p>
                     </div>
-
-                    {/* Sort Option */}
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-gray-600 dark:text-gray-300">Sort By</label>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                        {SORT_OPTIONS.map(opt => (
-                          <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() => setSortBy(opt.value)}
-                            className={`py-2 px-2.5 rounded-xl text-xs font-semibold text-center transition-all ${
-                              sortBy === opt.value
-                                ? 'bg-purple-600 text-white shadow-xs'
-                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                            }`}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
-                      </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {SORT_OPTIONS.map(opt => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setSortBy(opt.value)}
+                          className={`py-2.5 px-3 rounded-xl text-xs font-semibold text-center transition-all ${
+                            sortBy === opt.value
+                              ? 'bg-purple-600 text-white shadow-xs font-bold'
+                              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
                     </div>
+                  </div>
 
-                    {/* Tags Filter */}
-                    <div className="space-y-1.5 pt-1">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 flex items-center gap-1.5">
-                          <TagIcon size={14} className="text-purple-500" />
+                  {/* Tags Filter */}
+                  <div className="space-y-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500 flex items-center gap-1.5">
+                          <TagIcon size={13} className="text-purple-500" />
                           <span>Filter by Tags</span>
                         </label>
-                        {selectedTags.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => setSelectedTags([])}
-                            className="text-[11px] text-purple-600 dark:text-purple-400 hover:underline"
-                          >
-                            Clear tags ({selectedTags.length})
-                          </button>
-                        )}
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                          Show cards tagged with selected tags
+                        </p>
                       </div>
-
-                      <div className="flex items-center gap-1.5 flex-wrap max-h-36 overflow-y-auto p-1.5 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
+                      {selectedTags.length > 0 && (
                         <button
                           type="button"
                           onClick={() => setSelectedTags([])}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-                            selectedTags.length === 0
-                              ? 'bg-purple-600 text-white shadow-xs'
-                              : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
-                          }`}
+                          className="text-xs text-purple-600 dark:text-purple-400 hover:underline font-semibold"
                         >
-                          All tags
+                          Clear all
                         </button>
-                        {allAvailableTags.map(tag => {
-                          const isSelected = selectedTags.includes(tag)
-                          return (
-                            <button
-                              key={tag}
-                              type="button"
-                              onClick={() => {
-                                if (isSelected) {
-                                  setSelectedTags(prev => prev.filter(t => t !== tag))
-                                } else {
-                                  setSelectedTags(prev => [...prev, tag])
-                                }
-                              }}
-                              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
-                                isSelected
-                                  ? 'bg-purple-600 text-white shadow-xs'
-                                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
-                              }`}
-                            >
-                              <span>#{tag}</span>
-                              {isSelected && <Check size={12} />}
-                            </button>
-                          )
-                        })}
-                      </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 flex-wrap max-h-36 overflow-y-auto p-2 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTags([])}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          selectedTags.length === 0
+                            ? 'bg-purple-600 text-white shadow-xs'
+                            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
+                        }`}
+                      >
+                        All tags
+                      </button>
+                      {allAvailableTags.map(tag => {
+                        const isSelected = selectedTags.includes(tag)
+                        return (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedTags(prev => prev.filter(t => t !== tag))
+                              } else {
+                                setSelectedTags(prev => [...prev, tag])
+                              }
+                            }}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                              isSelected
+                                ? 'bg-purple-600 text-white shadow-xs'
+                                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
+                            }`}
+                          >
+                            <span>#{tag}</span>
+                            {isSelected && <Check size={12} strokeWidth={3} />}
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
                 </div>
@@ -1311,13 +1327,19 @@ export function TabAllCards() {
               {/* TAB 3: DISPLAY FILTERS */}
               {settingsTab === 'display' && (
                 <div className="space-y-4">
-                  {cardTypeFilter === 'flashcard' ? (
-                    <>
-                      <div className="flex items-center justify-between">
-                        <div className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                          Flashcard Content Display Filters
-                        </div>
-                        <div className="flex items-center gap-2">
+                  {/* Header with Quick Actions */}
+                  <div className="flex items-center justify-between pb-1">
+                    <div>
+                      <div className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                        {cardTypeFilter === 'flashcard' ? 'Flashcard Display Filters' : 'Sentence Display Filters'}
+                      </div>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                        Control which card sections and details are visible
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {cardTypeFilter === 'flashcard' && (
+                        <>
                           <button
                             type="button"
                             onClick={selectAllDisplayFilter}
@@ -1326,338 +1348,205 @@ export function TabAllCards() {
                             Select All
                           </button>
                           <span className="text-gray-300 dark:text-gray-600">•</span>
+                        </>
+                      )}
+                      <button
+                        type="button"
+                        onClick={resetDefaultDisplayFilter}
+                        className="text-xs font-semibold text-gray-500 dark:text-gray-400 hover:underline"
+                      >
+                        Defaults
+                      </button>
+                    </div>
+                  </div>
+
+                  {cardTypeFilter === 'flashcard' ? (
+                    <div className="space-y-3.5">
+                      {/* 1. Core Fields */}
+                      <div className="p-3.5 bg-gray-50/80 dark:bg-gray-900/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 space-y-2">
+                        <span className="text-xs font-bold text-gray-700 dark:text-gray-200 block">Core Information</span>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <SettingCompactToggle
+                            checked={displayFilter.word}
+                            onChange={val => setDisplayFilter(prev => ({ ...prev, word: val }))}
+                            label="English Word"
+                          />
+                          <SettingCompactToggle
+                            checked={displayFilter.partOfSpeech}
+                            onChange={val => setDisplayFilter(prev => ({ ...prev, partOfSpeech: val }))}
+                            label="Part of Speech"
+                          />
+                          <SettingCompactToggle
+                            checked={displayFilter.phonetic}
+                            onChange={val => setDisplayFilter(prev => ({ ...prev, phonetic: val }))}
+                            label="Phonetics"
+                          />
+                        </div>
+                      </div>
+
+                      {/* 2. Meanings & Examples */}
+                      <div className="p-3.5 bg-gray-50/80 dark:bg-gray-900/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-gray-700 dark:text-gray-200">Definitions &amp; Examples</span>
                           <button
                             type="button"
-                            onClick={resetDefaultDisplayFilter}
-                            className="text-xs font-semibold text-gray-500 dark:text-gray-400 hover:underline"
+                            onClick={() => toggleAllMeanings(!allMeaningsChecked)}
+                            className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 hover:underline"
                           >
-                            Defaults
+                            {allMeaningsChecked ? 'Uncheck all' : 'Check all'}
                           </button>
                         </div>
-                      </div>
-
-                      <div className="space-y-3">
-                        {/* 1. Core Fields (Usage Notes removed) */}
-                        <div className="p-3.5 bg-gray-50/80 dark:bg-gray-900/50 rounded-2xl border border-gray-200/80 dark:border-gray-700/80">
-                          <span className="text-xs font-bold text-gray-700 dark:text-gray-200 block mb-2">Core Fields</span>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-                            <label className="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 cursor-pointer">
-                              <span className="text-gray-700 dark:text-gray-300 font-medium">English Word</span>
-                              <input
-                                type="checkbox"
-                                checked={displayFilter.word}
-                                onChange={e => setDisplayFilter(prev => ({ ...prev, word: e.target.checked }))}
-                                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-                              />
-                            </label>
-                            <label className="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 cursor-pointer">
-                              <span className="text-gray-700 dark:text-gray-300 font-medium">Part of Speech</span>
-                              <input
-                                type="checkbox"
-                                checked={displayFilter.partOfSpeech}
-                                onChange={e => setDisplayFilter(prev => ({ ...prev, partOfSpeech: e.target.checked }))}
-                                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-                              />
-                            </label>
-                            <label className="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 cursor-pointer">
-                              <span className="text-gray-700 dark:text-gray-300 font-medium">Phonetics</span>
-                              <input
-                                type="checkbox"
-                                checked={displayFilter.phonetic}
-                                onChange={e => setDisplayFilter(prev => ({ ...prev, phonetic: e.target.checked }))}
-                                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-                              />
-                            </label>
-                          </div>
-                        </div>
-
-                        {/* 2. Meanings & Examples */}
-                        <div className="p-3.5 bg-gray-50/80 dark:bg-gray-900/50 rounded-2xl border border-gray-200/80 dark:border-gray-700/80">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-bold text-gray-700 dark:text-gray-200">Meanings &amp; Examples</span>
-                            <button
-                              type="button"
-                              onClick={() => toggleAllMeanings(!allMeaningsChecked)}
-                              className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 hover:underline"
-                            >
-                              {allMeaningsChecked ? 'Uncheck all' : 'Check all'}
-                            </button>
-                          </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                            <label className="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 cursor-pointer">
-                              <span className="text-gray-700 dark:text-gray-300">Definition Text</span>
-                              <input
-                                type="checkbox"
-                                checked={displayFilter.meanings.meaningText}
-                                onChange={e => setDisplayFilter(prev => ({ ...prev, meanings: { ...prev.meanings, meaningText: e.target.checked } }))}
-                                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-                              />
-                            </label>
-                            <label className="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 cursor-pointer">
-                              <span className="text-gray-700 dark:text-gray-300">Usage Notes of Definition</span>
-                              <input
-                                type="checkbox"
-                                checked={displayFilter.meanings.meaningNotes}
-                                onChange={e => setDisplayFilter(prev => ({ ...prev, meanings: { ...prev.meanings, meaningNotes: e.target.checked } }))}
-                                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-                              />
-                            </label>
-                            <label className="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 cursor-pointer">
-                              <span className="text-gray-700 dark:text-gray-300">Example Sentences</span>
-                              <input
-                                type="checkbox"
-                                checked={displayFilter.meanings.exampleSentence}
-                                onChange={e => setDisplayFilter(prev => ({ ...prev, meanings: { ...prev.meanings, exampleSentence: e.target.checked } }))}
-                                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-                              />
-                            </label>
-                            <label className="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 cursor-pointer">
-                              <span className="text-gray-700 dark:text-gray-300">Translation of Examples</span>
-                              <input
-                                type="checkbox"
-                                checked={displayFilter.meanings.exampleTranslation}
-                                onChange={e => setDisplayFilter(prev => ({ ...prev, meanings: { ...prev.meanings, exampleTranslation: e.target.checked } }))}
-                                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-                              />
-                            </label>
-                          </div>
-                        </div>
-
-                        {/* 3. Phrases & Idioms */}
-                        <div className="p-3.5 bg-gray-50/80 dark:bg-gray-900/50 rounded-2xl border border-gray-200/80 dark:border-gray-700/80">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-bold text-gray-700 dark:text-gray-200">Phrases &amp; Idioms</span>
-                            <button
-                              type="button"
-                              onClick={() => toggleAllPhrases(!allPhrasesChecked)}
-                              className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 hover:underline"
-                            >
-                              {allPhrasesChecked ? 'Uncheck all' : 'Check all'}
-                            </button>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <label className="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 cursor-pointer">
-                              <span className="text-gray-700 dark:text-gray-300">Phrases &amp; Idioms</span>
-                              <input
-                                type="checkbox"
-                                checked={displayFilter.phrasesAndIdioms.phrase}
-                                onChange={e => setDisplayFilter(prev => ({ ...prev, phrasesAndIdioms: { ...prev.phrasesAndIdioms, phrase: e.target.checked } }))}
-                                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-                              />
-                            </label>
-                            <label className="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 cursor-pointer">
-                              <span className="text-gray-700 dark:text-gray-300">Translation</span>
-                              <input
-                                type="checkbox"
-                                checked={displayFilter.phrasesAndIdioms.translation}
-                                onChange={e => setDisplayFilter(prev => ({ ...prev, phrasesAndIdioms: { ...prev.phrasesAndIdioms, translation: e.target.checked } }))}
-                                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-                              />
-                            </label>
-                          </div>
-
-                          {/* Expansion Mode Toggle */}
-                          <div className="mt-2.5 pt-2 border-t border-gray-200/60 dark:border-gray-700/60 flex items-center justify-between text-xs">
-                            <span className="text-gray-600 dark:text-gray-400 font-medium">Expansion mode:</span>
-                            <label className="flex items-center gap-2 cursor-pointer text-xs">
-                              <input
-                                type="checkbox"
-                                checked={displayFilter.autoExpandPhrases ?? false}
-                                onChange={e => setDisplayFilter(prev => ({ ...prev, autoExpandPhrases: e.target.checked }))}
-                                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-                              />
-                              <span className="text-gray-700 dark:text-gray-300 font-medium">Always show by default</span>
-                            </label>
-                          </div>
-                        </div>
-
-                        {/* 4. Usage Notes (Dedicated section directly under Phrases & Idioms) */}
-                        <div className="p-3.5 bg-gray-50/80 dark:bg-gray-900/50 rounded-2xl border border-gray-200/80 dark:border-gray-700/80">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-bold text-gray-700 dark:text-gray-200">Usage Notes</span>
-                            <label className="flex items-center gap-1.5 cursor-pointer text-xs">
-                              <input
-                                type="checkbox"
-                                checked={displayFilter.usageNotes}
-                                onChange={e => setDisplayFilter(prev => ({ ...prev, usageNotes: e.target.checked }))}
-                                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-                              />
-                              <span className="text-gray-700 dark:text-gray-300 font-medium">Show Usage Notes</span>
-                            </label>
-                          </div>
-
-                          {/* Expansion Mode Toggle */}
-                          <div className="mt-2.5 pt-2 border-t border-gray-200/60 dark:border-gray-700/60 flex items-center justify-between text-xs">
-                            <span className="text-gray-600 dark:text-gray-400 font-medium">Expansion mode:</span>
-                            <label className="flex items-center gap-2 cursor-pointer text-xs">
-                              <input
-                                type="checkbox"
-                                checked={displayFilter.autoExpandUsage ?? false}
-                                onChange={e => setDisplayFilter(prev => ({ ...prev, autoExpandUsage: e.target.checked }))}
-                                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-                              />
-                              <span className="text-gray-700 dark:text-gray-300 font-medium">Always show by default</span>
-                            </label>
-                          </div>
-                        </div>
-
-                        {/* 5. Related Words */}
-                        <div className="p-3.5 bg-gray-50/80 dark:bg-gray-900/50 rounded-2xl border border-gray-200/80 dark:border-gray-700/80">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-bold text-gray-700 dark:text-gray-200">Related Words</span>
-                            <button
-                              type="button"
-                              onClick={() => toggleAllRelated(!allRelatedChecked)}
-                              className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 hover:underline"
-                            >
-                              {allRelatedChecked ? 'Uncheck all' : 'Check all'}
-                            </button>
-                          </div>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-                            <label className="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 cursor-pointer">
-                              <span className="text-gray-700 dark:text-gray-300">Synonyms</span>
-                              <input
-                                type="checkbox"
-                                checked={displayFilter.relatedWords.synonyms}
-                                onChange={e => setDisplayFilter(prev => ({ ...prev, relatedWords: { ...prev.relatedWords, synonyms: e.target.checked } }))}
-                                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-                              />
-                            </label>
-                            <label className="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 cursor-pointer">
-                              <span className="text-gray-700 dark:text-gray-300">Antonyms</span>
-                              <input
-                                type="checkbox"
-                                checked={displayFilter.relatedWords.antonyms}
-                                onChange={e => setDisplayFilter(prev => ({ ...prev, relatedWords: { ...prev.relatedWords, antonyms: e.target.checked } }))}
-                                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-                              />
-                            </label>
-                            <label className="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 cursor-pointer">
-                              <span className="text-gray-700 dark:text-gray-300">Similar Words</span>
-                              <input
-                                type="checkbox"
-                                checked={displayFilter.relatedWords.similarWords}
-                                onChange={e => setDisplayFilter(prev => ({ ...prev, relatedWords: { ...prev.relatedWords, similarWords: e.target.checked } }))}
-                                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-                              />
-                            </label>
-                            <label className="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 cursor-pointer">
-                              <span className="text-gray-700 dark:text-gray-300">Similar Spellings</span>
-                              <input
-                                type="checkbox"
-                                checked={displayFilter.relatedWords.similarSpellings}
-                                onChange={e => setDisplayFilter(prev => ({ ...prev, relatedWords: { ...prev.relatedWords, similarSpellings: e.target.checked } }))}
-                                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-                              />
-                            </label>
-                            <label className="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 cursor-pointer">
-                              <span className="text-gray-700 dark:text-gray-300">Words Containing</span>
-                              <input
-                                type="checkbox"
-                                checked={displayFilter.relatedWords.wordsContaining}
-                                onChange={e => setDisplayFilter(prev => ({ ...prev, relatedWords: { ...prev.relatedWords, wordsContaining: e.target.checked } }))}
-                                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-                              />
-                            </label>
-                            <label className="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200/60 dark:border-gray-700/60 cursor-pointer">
-                              <span className="text-gray-700 dark:text-gray-300">Words Mentioning</span>
-                              <input
-                                type="checkbox"
-                                checked={displayFilter.relatedWords.wordsMentioning}
-                                onChange={e => setDisplayFilter(prev => ({ ...prev, relatedWords: { ...prev.relatedWords, wordsMentioning: e.target.checked } }))}
-                                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-                              />
-                            </label>
-                          </div>
-                        </div>
-
-                        {/* 6. Click Words to Open Flashcard Popup */}
-                        <div className="p-3.5 bg-gray-50/80 dark:bg-gray-900/50 rounded-2xl border border-gray-200/80 dark:border-gray-700/80">
-                          <label className="flex items-center justify-between cursor-pointer">
-                            <div className="pr-4">
-                              <span className="text-xs font-bold text-gray-700 dark:text-gray-200 block">
-                                Click Words to Open Flashcard Popup
-                              </span>
-                              <span className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 block">
-                                Click any English word that exists as a flashcard to open its popup
-                              </span>
-                            </div>
-                            <input
-                              type="checkbox"
-                              checked={displayFilter.clickWordToPopupCard !== false}
-                              onChange={e => setDisplayFilter(prev => ({ ...prev, clickWordToPopupCard: e.target.checked }))}
-                              className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500 shrink-0"
-                            />
-                          </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <SettingCompactToggle
+                            checked={displayFilter.meanings.meaningText}
+                            onChange={val => setDisplayFilter(prev => ({ ...prev, meanings: { ...prev.meanings, meaningText: val } }))}
+                            label="Definition Text"
+                          />
+                          <SettingCompactToggle
+                            checked={displayFilter.meanings.meaningNotes}
+                            onChange={val => setDisplayFilter(prev => ({ ...prev, meanings: { ...prev.meanings, meaningNotes: val } }))}
+                            label="Usage Notes of Definition"
+                          />
+                          <SettingCompactToggle
+                            checked={displayFilter.meanings.exampleSentence}
+                            onChange={val => setDisplayFilter(prev => ({ ...prev, meanings: { ...prev.meanings, exampleSentence: val } }))}
+                            label="Example Sentences"
+                          />
+                          <SettingCompactToggle
+                            checked={displayFilter.meanings.exampleTranslation}
+                            onChange={val => setDisplayFilter(prev => ({ ...prev, meanings: { ...prev.meanings, exampleTranslation: val } }))}
+                            label="Translation of Examples"
+                          />
                         </div>
                       </div>
-                    </>
+
+                      {/* 3. Phrases & Idioms */}
+                      <div className="p-3.5 bg-gray-50/80 dark:bg-gray-900/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-gray-700 dark:text-gray-200">Phrases &amp; Idioms</span>
+                          <button
+                            type="button"
+                            onClick={() => toggleAllPhrases(!allPhrasesChecked)}
+                            className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 hover:underline"
+                          >
+                            {allPhrasesChecked ? 'Uncheck all' : 'Check all'}
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <SettingCompactToggle
+                            checked={displayFilter.phrasesAndIdioms.phrase}
+                            onChange={val => setDisplayFilter(prev => ({ ...prev, phrasesAndIdioms: { ...prev.phrasesAndIdioms, phrase: val } }))}
+                            label="Phrases & Idioms"
+                          />
+                          <SettingCompactToggle
+                            checked={displayFilter.phrasesAndIdioms.translation}
+                            onChange={val => setDisplayFilter(prev => ({ ...prev, phrasesAndIdioms: { ...prev.phrasesAndIdioms, translation: val } }))}
+                            label="Translation"
+                          />
+                        </div>
+                        <SettingToggleSwitch
+                          checked={displayFilter.autoExpandPhrases ?? false}
+                          onChange={val => setDisplayFilter(prev => ({ ...prev, autoExpandPhrases: val }))}
+                          label="Always show phrases by default"
+                          description="Automatically display phrases and idioms without needing to click to expand"
+                        />
+                      </div>
+
+                      {/* 4. Usage Notes */}
+                      <div className="p-3.5 bg-gray-50/80 dark:bg-gray-900/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 space-y-2.5">
+                        <span className="text-xs font-bold text-gray-700 dark:text-gray-200 block">Usage Notes</span>
+                        <SettingToggleSwitch
+                          checked={displayFilter.usageNotes}
+                          onChange={val => setDisplayFilter(prev => ({ ...prev, usageNotes: val }))}
+                          label="Show Usage Notes"
+                          description="Display general word usage notes and tips"
+                        />
+                        <SettingToggleSwitch
+                          checked={displayFilter.autoExpandUsage ?? false}
+                          onChange={val => setDisplayFilter(prev => ({ ...prev, autoExpandUsage: val }))}
+                          label="Always show usage notes by default"
+                          description="Automatically display usage notes without needing to click to expand"
+                        />
+                      </div>
+
+                      {/* 5. Related Words */}
+                      <div className="p-3.5 bg-gray-50/80 dark:bg-gray-900/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-gray-700 dark:text-gray-200">Related Words</span>
+                          <button
+                            type="button"
+                            onClick={() => toggleAllRelated(!allRelatedChecked)}
+                            className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 hover:underline"
+                          >
+                            {allRelatedChecked ? 'Uncheck all' : 'Check all'}
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          <SettingCompactToggle
+                            checked={displayFilter.relatedWords.synonyms}
+                            onChange={val => setDisplayFilter(prev => ({ ...prev, relatedWords: { ...prev.relatedWords, synonyms: val } }))}
+                            label="Synonyms"
+                          />
+                          <SettingCompactToggle
+                            checked={displayFilter.relatedWords.antonyms}
+                            onChange={val => setDisplayFilter(prev => ({ ...prev, relatedWords: { ...prev.relatedWords, antonyms: val } }))}
+                            label="Antonyms"
+                          />
+                          <SettingCompactToggle
+                            checked={displayFilter.relatedWords.similarWords}
+                            onChange={val => setDisplayFilter(prev => ({ ...prev, relatedWords: { ...prev.relatedWords, similarWords: val } }))}
+                            label="Similar Words"
+                          />
+                          <SettingCompactToggle
+                            checked={displayFilter.relatedWords.similarSpellings}
+                            onChange={val => setDisplayFilter(prev => ({ ...prev, relatedWords: { ...prev.relatedWords, similarSpellings: val } }))}
+                            label="Similar Spellings"
+                          />
+                          <SettingCompactToggle
+                            checked={displayFilter.relatedWords.wordsContaining}
+                            onChange={val => setDisplayFilter(prev => ({ ...prev, relatedWords: { ...prev.relatedWords, wordsContaining: val } }))}
+                            label="Words Containing"
+                          />
+                          <SettingCompactToggle
+                            checked={displayFilter.relatedWords.wordsMentioning}
+                            onChange={val => setDisplayFilter(prev => ({ ...prev, relatedWords: { ...prev.relatedWords, wordsMentioning: val } }))}
+                            label="Words Mentioning"
+                          />
+                        </div>
+                      </div>
+
+                      {/* 6. Interactivity */}
+                      <div className="p-3.5 bg-gray-50/80 dark:bg-gray-900/60 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 space-y-2">
+                        <span className="text-xs font-bold text-gray-700 dark:text-gray-200 block">Card Interactivity</span>
+                        <SettingToggleSwitch
+                          checked={displayFilter.clickWordToPopupCard !== false}
+                          onChange={val => setDisplayFilter(prev => ({ ...prev, clickWordToPopupCard: val }))}
+                          label="Click Words to Open Flashcard Popup"
+                          description="Click any English word in sentences and notes to view its full flashcard popup"
+                        />
+                      </div>
+                    </div>
                   ) : (
-                    <>
-                      {/* Sentence Mode Display Filters */}
-                      <div className="flex items-center justify-between">
-                        <div className="text-xs font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-                          Sentence Content Display Filters
-                        </div>
-                        <button
-                          type="button"
-                          onClick={resetDefaultDisplayFilter}
-                          className="text-xs font-semibold text-gray-500 dark:text-gray-400 hover:underline"
-                        >
-                          Defaults
-                        </button>
-                      </div>
-
-                      <div className="space-y-3">
-                        {/* 1. Sentence Meaning / Translation */}
-                        <label className="flex items-center justify-between p-3.5 bg-gray-50/80 dark:bg-gray-900/50 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 cursor-pointer hover:bg-gray-100/70 dark:hover:bg-gray-800/60 transition-colors">
-                          <div className="pr-4">
-                            <div className="text-xs font-bold text-gray-800 dark:text-gray-100">
-                              Sentence Translation / Meaning
-                            </div>
-                          </div>
-                          <input
-                            type="checkbox"
-                            checked={displayFilter.sentenceTranslation !== false}
-                            onChange={e => setDisplayFilter(prev => ({ ...prev, sentenceTranslation: e.target.checked }))}
-                            className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500 shrink-0"
-                          />
-                        </label>
-
-                        {/* 2. Hover Tooltip on Word Notes */}
-                        <label className="flex items-center justify-between p-3.5 bg-gray-50/80 dark:bg-gray-900/50 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 cursor-pointer hover:bg-gray-100/70 dark:hover:bg-gray-800/60 transition-colors">
-                          <div className="pr-4">
-                            <div className="text-xs font-bold text-gray-800 dark:text-gray-100">
-                              Hover Tooltip on Word Notes
-                            </div>
-                          </div>
-                          <input
-                            type="checkbox"
-                            checked={displayFilter.sentenceHoverTooltip !== false}
-                            onChange={e => setDisplayFilter(prev => ({ ...prev, sentenceHoverTooltip: e.target.checked }))}
-                            className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500 shrink-0"
-                          />
-                        </label>
-
-                        {/* 3. Click Words to Open Flashcard Popup */}
-                        <label className="flex items-center justify-between p-3.5 bg-gray-50/80 dark:bg-gray-900/50 rounded-2xl border border-gray-200/80 dark:border-gray-700/80 cursor-pointer hover:bg-gray-100/70 dark:hover:bg-gray-800/60 transition-colors">
-                          <div className="pr-4">
-                            <div className="text-xs font-bold text-gray-800 dark:text-gray-100">
-                              Click Words to Open Flashcard Popup
-                            </div>
-                            <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-                              Click any English word that exists as a flashcard to open its popup
-                            </div>
-                          </div>
-                          <input
-                            type="checkbox"
-                            checked={displayFilter.clickWordToPopupCard !== false}
-                            onChange={e => setDisplayFilter(prev => ({ ...prev, clickWordToPopupCard: e.target.checked }))}
-                            className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500 shrink-0"
-                          />
-                        </label>
-                      </div>
-                    </>
+                    <div className="space-y-3">
+                      <SettingToggleSwitch
+                        checked={displayFilter.sentenceTranslation !== false}
+                        onChange={val => setDisplayFilter(prev => ({ ...prev, sentenceTranslation: val }))}
+                        label="Sentence Translation / Meaning"
+                        description="Display Vietnamese translation below the English sentence"
+                      />
+                      <SettingToggleSwitch
+                        checked={displayFilter.sentenceHoverTooltip !== false}
+                        onChange={val => setDisplayFilter(prev => ({ ...prev, sentenceHoverTooltip: val }))}
+                        label="Hover Tooltip on Word Notes"
+                        description="Display definition tooltip when hovering over annotated words in sentences"
+                      />
+                      <SettingToggleSwitch
+                        checked={displayFilter.clickWordToPopupCard !== false}
+                        onChange={val => setDisplayFilter(prev => ({ ...prev, clickWordToPopupCard: val }))}
+                        label="Click Words to Open Flashcard Popup"
+                        description="Click any English word in the sentence to view its full flashcard popup"
+                      />
+                    </div>
                   )}
                 </div>
               )}
@@ -1673,7 +1562,7 @@ export function TabAllCards() {
                 onClick={() => setIsSettingsOpen(false)}
                 className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md hover:shadow-lg transition-all"
               >
-                Apply &amp; Done
+                Done
               </button>
             </div>
           </div>

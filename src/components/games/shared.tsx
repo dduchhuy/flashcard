@@ -99,7 +99,7 @@ export function ResultScreen({
   correct,
   wrong,
   skipped,
-  title = "Practice Complete!"
+  title = "Game Complete!"
 }: {
   lines?: ReactNode
   onExit: () => void

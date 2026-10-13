@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { Flashcard, useFlashcardStore, getCardTags, isWordCard as checkIsWordCard, normalizePhraseItem, CardDisplayFilter, defaultDisplayFilter } from '../store'
-import { MoreVertical, Trash2, Edit2, Check, Tag, ChevronRight, Plus, Volume2 } from 'lucide-react'
+import { MoreVertical, Trash2, Edit2, Check, Tag, ChevronRight, Plus, Volume2, Highlighter } from 'lucide-react'
 import { speakEnglish } from '../utils'
 import { WordCardEditModal } from './WordCardEditModal'
 import { CardDetailModal } from './CardDetailModal'
@@ -98,6 +98,7 @@ interface Props {
   showPhonetic?: boolean
   isLocked?: boolean
   displayFilter?: CardDisplayFilter
+  initialEditingSentence?: boolean
 }
 
 type Segment = {
@@ -115,7 +116,8 @@ export function FlashcardItem({
   showPartOfSpeech = true,
   showPhonetic = true,
   isLocked = false,
-  displayFilter = defaultDisplayFilter
+  displayFilter = defaultDisplayFilter,
+  initialEditingSentence = false
 }: Props) {
   const { deleteFlashcard, updateFlashcard, updateFlashcardTag, saveHighlight, removeHighlight, settings, flashcards } = useFlashcardStore()
 
@@ -138,7 +140,15 @@ export function FlashcardItem({
     setActivePosIdx(0)
     setUserToggledPhrases(null)
     setUserToggledUsage(null)
-  }, [flashcard.id])
+    if (initialEditingSentence) {
+      setIsEditingSentence(true)
+      setEditSentenceValue(flashcard.sentence)
+      setEditTranslationValue(flashcard.translation || '')
+      setEditPhoneticValue(flashcard.phonetic || '')
+      setEditPartOfSpeechValue(flashcard.partOfSpeech || '')
+      setEditUsageValue(flashcard.usageNotes?.[0] || '')
+    }
+  }, [flashcard.id, initialEditingSentence])
 
   const currentCard = allVariants.find(c => c.id === activeCardId) || flashcard
 
@@ -258,7 +268,7 @@ export function FlashcardItem({
   const [baseIndices, setBaseIndices] = useState<number[]>([])
 
   const [showMenu, setShowMenu] = useState(false)
-  const [isEditingSentence, setIsEditingSentence] = useState(false)
+  const [isEditingSentence, setIsEditingSentence] = useState(Boolean(initialEditingSentence))
   const [editSentenceValue, setEditSentenceValue] = useState(flashcard.sentence)
   const [editTranslationValue, setEditTranslationValue] = useState(flashcard.translation || '')
   const [editPhoneticValue, setEditPhoneticValue] = useState(flashcard.phonetic || '')
@@ -344,7 +354,8 @@ export function FlashcardItem({
     }
   }, [editingIndices, editingHighlightId, meaningInput, flashcard.id, isEditingSentence])
 
-  const parts = flashcard.sentence.trim().split(/(\s+)/)
+  const sentenceToTokenize = isEditingSentence ? editSentenceValue : flashcard.sentence
+  const parts = sentenceToTokenize.trim().split(/(\s+)/)
   const words: string[] = []
   const spaces: string[] = []
   let initialSpace = ""
@@ -411,7 +422,7 @@ export function FlashcardItem({
 
 
   const handlePointerDown = (e: React.PointerEvent) => {
-    if (isEditingSentence || viewMode === 'grid') return
+    if (viewMode === 'grid') return
 
     const target = e.target as HTMLElement
     try { target.releasePointerCapture(e.pointerId) } catch (err) {}
@@ -809,24 +820,62 @@ export function FlashcardItem({
                 <div className="space-y-1.5 pt-1">
                   <div className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">Notes on this sentence:</div>
                   <div className="space-y-1 max-h-36 overflow-y-auto">
-                    {flashcard.highlights.map(h => (
-                      <div key={h.id} className="flex items-center justify-between gap-2 text-xs bg-white dark:bg-gray-800 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700">
-                        <div className="min-w-0 truncate">
-                          <span className="font-semibold text-purple-700 dark:text-purple-300">
-                            {h.wordIndices.map(i => words[i]).join(' ')}:
-                          </span>{' '}
-                          <span className="text-gray-600 dark:text-gray-300 italic">{h.meaning}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeHighlight(flashcard.id, h.id)}
-                          className="text-gray-400 hover:text-red-600 p-1 rounded transition-colors shrink-0"
-                          title="Delete note"
+                    {flashcard.highlights.map(h => {
+                      const noteText = h.wordIndices.map(i => words[i] || '').filter(Boolean).join(' ') || 'Note'
+                      const isCurrentEditing = editingHighlightId === h.id
+                      return (
+                        <div
+                          key={h.id}
+                          className={`flex items-center justify-between gap-2 text-xs px-2.5 py-1.5 rounded-lg border transition-all ${
+                            isCurrentEditing
+                              ? 'bg-purple-100/70 dark:bg-purple-900/40 border-purple-300 dark:border-purple-600'
+                              : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                          }`}
                         >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    ))}
+                          <div
+                            className="min-w-0 truncate flex-1 cursor-pointer"
+                            onClick={() => {
+                              setEditingIndices(h.wordIndices)
+                              setEditingHighlightId(h.id)
+                              setMeaningInput(h.meaning)
+                            }}
+                            title="Click to edit this note"
+                          >
+                            <span className="font-semibold text-purple-700 dark:text-purple-300">
+                              {noteText}:
+                            </span>{' '}
+                            <span className="text-gray-600 dark:text-gray-300 italic">{h.meaning}</span>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingIndices(h.wordIndices)
+                                setEditingHighlightId(h.id)
+                                setMeaningInput(h.meaning)
+                              }}
+                              className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-300 p-1 rounded hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
+                              title="Edit note"
+                            >
+                              <Edit2 size={13} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (editingHighlightId === h.id) {
+                                  handleCloseEditing()
+                                }
+                                removeHighlight(flashcard.id, h.id)
+                              }}
+                              className="text-gray-400 hover:text-red-600 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                              title="Delete note"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -962,6 +1011,24 @@ export function FlashcardItem({
               >
                 <Volume2 size={18} />
               </button>
+              {!isWordCard && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setEditSentenceValue(flashcard.sentence)
+                    setEditTranslationValue(flashcard.translation || '')
+                    setEditPhoneticValue(flashcard.phonetic || '')
+                    setEditPartOfSpeechValue(flashcard.partOfSpeech || '')
+                    setEditUsageValue(flashcard.usageNotes?.[0] || '')
+                    setIsEditingSentence(true)
+                  }}
+                  className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors shrink-0"
+                  title="Add / Edit notes on words"
+                >
+                  <Highlighter size={16} />
+                </button>
+              )}
             </div>
             {((effectiveShowPos && posList.length > 0) || (effectiveShowPhonetic && (phoneticGroups.length > 0 || displayPhonetic))) && (
               <div className="mt-1.5 flex flex-col gap-1 break-words overflow-hidden">

@@ -1,7 +1,7 @@
 import { useRef, useState, useMemo } from 'react'
 import { useFlashcardStore, getCardTags, migrateFlashcard, Flashcard } from '../store'
 import { SelectDropdown } from './SelectDropdown'
-import { Download, Upload, RotateCcw, Moon, Sun, Palette, CheckCircle2, Trash2 } from 'lucide-react'
+import { Download, Upload, RotateCcw, Moon, Sun, Palette, CheckCircle2, Trash2, Home } from 'lucide-react'
 
 // Convert hex to rgb
 function hexToRgb(hex: string) {
@@ -626,6 +626,74 @@ export function TabSettings() {
                 />
               </div>
             </>
+          )}
+        </div>
+      </div>
+
+      {/* Home Tab Settings Section */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 space-y-5 transition-colors">
+        <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+          <Home size={20} className="text-purple-600 dark:text-purple-400" />
+          Home Tab Settings
+        </h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Customize the random flashcard featured on the Home screen.
+        </p>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
+            <div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">Random Content Type</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Choose what types of cards appear on Home</div>
+            </div>
+            <SelectDropdown
+              value={settings.homeRandomType || 'all'}
+              onChange={(v) => updateSettings({ homeRandomType: v as 'all' | 'words' | 'phrases' })}
+              options={[
+                { value: 'all', label: 'Words & Phrases (Both)' },
+                { value: 'words', label: 'Words Only' },
+                { value: 'phrases', label: 'Phrases & Idioms Only' }
+              ]}
+              className="min-w-[180px]"
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-700">
+            <div>
+              <div className="font-medium text-gray-800 dark:text-gray-200">Update Trigger</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">When should the card change?</div>
+            </div>
+            <SelectDropdown
+              value={settings.homeUpdateTrigger || 'reload'}
+              onChange={(v) => updateSettings({ homeUpdateTrigger: v as 'reload' | 'timer' })}
+              options={[
+                { value: 'reload', label: 'On Page Reload' },
+                { value: 'timer', label: 'By Timer Interval' }
+              ]}
+              className="min-w-[180px]"
+            />
+          </div>
+
+          {settings.homeUpdateTrigger === 'timer' && (
+            <div className="flex items-center justify-between p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-100 dark:border-purple-800 animate-in fade-in">
+              <div>
+                <div className="font-medium text-purple-800 dark:text-purple-200">Timer Interval</div>
+                <div className="text-xs text-purple-600/70 dark:text-purple-300/70">Minutes between card rotation</div>
+              </div>
+              <SelectDropdown
+                value={String(settings.homeTimerMinutes || 10)}
+                onChange={(v) => updateSettings({ homeTimerMinutes: Number(v) })}
+                options={[
+                  { value: '1', label: 'Every 1 minute' },
+                  { value: '5', label: 'Every 5 minutes' },
+                  { value: '10', label: 'Every 10 minutes' },
+                  { value: '15', label: 'Every 15 minutes' },
+                  { value: '30', label: 'Every 30 minutes' },
+                  { value: '60', label: 'Every 1 hour' }
+                ]}
+                className="min-w-[180px]"
+              />
+            </div>
           )}
         </div>
       </div>

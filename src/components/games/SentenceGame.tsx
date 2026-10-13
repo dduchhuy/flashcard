@@ -187,7 +187,7 @@ export function SentenceGame({ onExit }: { onExit: () => void }) {
           onClick={() => {
             if (item?.card) setShowModalCard(item.card)
           }}
-          className="absolute top-3 left-3"
+          className="absolute bottom-3 left-3"
         />
 
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Tap words in order or type the sentence</p>

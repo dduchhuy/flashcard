@@ -382,6 +382,9 @@ export interface AppSettings {
   voiceGender: 'Male' | 'Female' | 'Random'
   isSpecialAccent?: boolean
   specialAccent?: 'Indian' | 'Irish' | 'French'
+  homeRandomType?: 'all' | 'words' | 'phrases'
+  homeUpdateTrigger?: 'reload' | 'timer'
+  homeTimerMinutes?: number
 }
 
 export const defaultSettings: AppSettings = {
@@ -395,7 +398,10 @@ export const defaultSettings: AppSettings = {
   voiceAccent: 'Random',
   voiceGender: 'Random',
   isSpecialAccent: false,
-  specialAccent: 'Indian'
+  specialAccent: 'Indian',
+  homeRandomType: 'all',
+  homeUpdateTrigger: 'reload',
+  homeTimerMinutes: 10,
 }
 
 interface FlashcardState {
@@ -405,8 +411,8 @@ interface FlashcardState {
   setActiveTags: (tags: string[]) => void
   updateSettings: (newSettings: Partial<AppSettings>) => void
   resetSettings: () => void
-  addFlashcard: (sentence: string, tags?: string[] | string, highlights?: Omit<Highlight, 'id'>[], phonetic?: string, partOfSpeech?: string, usageNotes?: string[], translation?: string) => void
-  addWordCard: (word: string, posEntries: PosEntry[], phrasesAndIdioms?: PhraseIdiom[], tags?: string[] | string, phonetic?: string, usageNotes?: string[]) => void
+  addFlashcard: (sentence: string, tags?: string[] | string, highlights?: Omit<Highlight, 'id'>[], phonetic?: string, partOfSpeech?: string, usageNotes?: string[], translation?: string) => string
+  addWordCard: (word: string, posEntries: PosEntry[], phrasesAndIdioms?: PhraseIdiom[], tags?: string[] | string, phonetic?: string, usageNotes?: string[]) => string
   deleteFlashcard: (id: string) => void
   updateFlashcard: (id: string, newSentence: string, newPhonetic?: string, newPartOfSpeech?: string, usageNotes?: string[], translation?: string) => void
   updateWordCard: (id: string, word: string, posEntries: PosEntry[], phrasesAndIdioms?: PhraseIdiom[], tags?: string[] | string, phonetic?: string, usageNotes?: string[]) => void
@@ -451,14 +457,15 @@ export const useFlashcardStore = create<FlashcardState>()(
       setActiveTags: (tags) => set({ activeTags: tags }),
       updateSettings: (newSettings) => set((state) => ({ settings: { ...state.settings, ...newSettings } })),
       resetSettings: () => set((state) => ({ settings: { ...defaultSettings, isDarkMode: state.settings.isDarkMode } })),
-      addFlashcard: (sentence, tags, highlights, phonetic, partOfSpeech, usageNotes, translation) =>
+      addFlashcard: (sentence, tags, highlights, phonetic, partOfSpeech, usageNotes, translation) => {
+        const id = uuidv4()
         set((state) => {
           const parsedTags = parseTagsInput(tags)
           return {
             flashcards: [
               ...state.flashcards,
               {
-                id: uuidv4(),
+                id,
                 sentence: sentence.trim(),
                 translation: translation?.trim() || undefined,
                 phonetic: phonetic?.trim(),
@@ -470,12 +477,15 @@ export const useFlashcardStore = create<FlashcardState>()(
               },
             ],
           }
-        }),
-      addWordCard: (word, posEntries, phrasesAndIdioms, tags, phonetic, usageNotes) =>
+        })
+        return id
+      },
+      addWordCard: (word, posEntries, phrasesAndIdioms, tags, phonetic, usageNotes) => {
+        const id = uuidv4()
         set((state) => {
           const parsedTags = parseTagsInput(tags)
           const newCard = migrateFlashcard({
-            id: uuidv4(),
+            id,
             sentence: word.trim(),
             phonetic: phonetic?.trim() || posEntries[0]?.phonetic?.trim(),
             posEntries,
@@ -487,7 +497,9 @@ export const useFlashcardStore = create<FlashcardState>()(
           return {
             flashcards: [...state.flashcards, newCard],
           }
-        }),
+        })
+        return id
+      },
       deleteFlashcard: (id) =>
         set((state) => ({
           flashcards: state.flashcards.filter((f) => f.id !== id),

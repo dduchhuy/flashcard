@@ -242,7 +242,7 @@ export function SpeedGame({ onExit }: { onExit: () => void }) {
           onClick={() => {
             if (currentCard) setShowModalCard(currentCard)
           }}
-          className="absolute top-3 left-3"
+          className="absolute bottom-3 left-3"
         />
 
         <button

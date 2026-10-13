@@ -343,6 +343,22 @@ export function CardDetailModal({
               >
                 <Volume2 size={20} />
               </button>
+
+              {/* Inline collapsed preview: Tag & Active POS */}
+              {!isHeaderPinned && isDetailsHidden && (
+                <div className="flex items-center gap-1.5 flex-wrap ml-1 animate-in fade-in">
+                  {activePosName && (
+                    <span className="text-xs italic px-2.5 py-0.5 rounded-lg font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/30 border border-purple-200/60 dark:border-purple-800/60">
+                      {activePosName}
+                    </span>
+                  )}
+                  {getCardTags(currentCard).map(t => (
+                    <span key={t} className="text-[11px] px-2 py-0.5 rounded-md font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Right Action Controls: Pin + Close */}

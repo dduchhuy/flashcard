@@ -277,7 +277,7 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
           return rootCard ? (
             <RootCardButton 
               onClick={() => setShowModalCard(rootCard)}
-              className="absolute top-3 left-3"
+              className="absolute bottom-3 left-3"
             />
           ) : null
         })()}
