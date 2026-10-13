@@ -141,6 +141,8 @@ export function calculateNextSRS(
       easeFactor: newEase,
       reps: newReps,
       step: inReview ? 3 : (rating === 'easy' || (rating === 'good' && newReps >= 2) ? 3 : srs.step),
+      lastRating: rating,
+      lastReviewedAt: now,
     },
     label: formatMs(dueMs),
   }

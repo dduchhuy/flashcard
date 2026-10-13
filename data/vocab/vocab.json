@@ -325,14 +325,7 @@
           0
         ],
         "meaning": "hồ sơ ; biên bản ; bản ghi chép ; sổ sách",
-        "example": "Please keep a record of all your expenses .",
-        "srs": {
-          "due": 1791910830919,
-          "interval": 0,
-          "easeFactor": 2.5,
-          "reps": 0,
-          "step": 0
-        }
+        "example": "Please keep a record of all your expenses ."
       },
       {
         "id": "99230cf1-d2c1-4799-9b7c-694956fcc4b9",
@@ -1620,7 +1613,7 @@
             "id": "0552d7b2-5d52-455f-9316-131f55aa6f0c",
             "meaning": "nhẹ",
             "notes": [
-              "Có trọng lượng ít , không nặng ; cũng dùng cho đồ ăn dễ tiêu , hình phạt hay công việc không nặng nề ."
+              "Có trọng lượng ít , không nặng ; cũng dùng cho đồ ăn dễ ti��u , hình phạt hay công việc không nặng nề ."
             ],
             "labels": [],
             "examples": [
@@ -3248,7 +3241,7 @@
             "id": "80f49789-eccc-4c8f-84e1-21d42b8cb5ec",
             "meaning": "ăn ảnh",
             "notes": [
-              "Lên ảnh đẹp hay không đ���p ."
+              "Lên ảnh đẹp hay không đẹp ."
             ],
             "labels": [
               "nội động từ"
@@ -8312,7 +8305,7 @@
           },
           {
             "id": "72c0698f-af6d-454f-88a9-fcd99b7e1abe",
-            "meaning": "vẻ ; dáng vẻ ; thái độ ; khí sắc",
+            "meaning": "vẻ ; dáng vẻ ; thái đ��� ; khí sắc",
             "notes": [],
             "labels": [],
             "examples": [
@@ -44207,7 +44200,7 @@
               {
                 "id": "c126e37f-88a0-41b7-aa99-5859ce91ea33",
                 "sentence": "Don't be such a chicken ! Just ask her out .",
-                "translation": "Đừng nhát gan thế ! Cứ mời cô ấy đi chơi đi ."
+                "translation": "Đừng nhát gan thế ! Cứ mời cô ���y đi chơi đi ."
               }
             ]
           }
@@ -45903,7 +45896,7 @@
         "meanings": [
           {
             "id": "2630ba36-6e19-409d-ba8e-4946d617cfa2",
-            "meaning": "bóng tối ; chỗ tối ; lúc trời tối",
+            "meaning": "bóng t���i ; chỗ tối ; lúc trời tối",
             "notes": [],
             "labels": [],
             "examples": [
@@ -49219,7 +49212,7 @@
       }
     ],
     "usageNotes": [
-      "Động từ die là nội động từ , quá khứ là died ; phân biệt với danh từ die (con súc sắc , khuôn ) có hai dạng số nhiều : dice cho súc sắc , dies cho khuôn .",
+      "Động từ die là nội động từ , qu�� khứ là died ; phân biệt với danh từ die (con súc sắc , khuôn ) có hai dạng số nhiều : dice cho súc sắc , dies cho khuôn .",
       "Be dying for / to + danh từ / động từ diễn tả khao khát mãnh liệt , không chỉ cái chết ."
     ],
     "relatedWords": {
@@ -107643,7 +107636,7 @@
         "belittled"
       ],
       "wordsMentioning": [
-        "ấm cúng",
+        "��m cúng",
         "ban nãy",
         "bày biện",
         "bất trị",
@@ -131609,7 +131602,7 @@
         "bỏ mẹ",
         "bồi dưỡng",
         "bội tinh",
-        "cao đẳng"
+        "cao đ���ng"
       ]
     },
     "illustrations": [
@@ -150338,7 +150331,7 @@
         "wordIndices": [
           0
         ],
-        "meaning": "biết được qua đọc",
+        "meaning": "biết đư��c qua đọc",
         "example": "I read about the accident in the news ."
       },
       {
@@ -165468,7 +165461,7 @@
               {
                 "id": "e876fffd-8df0-4386-bc9b-add4c33ef799",
                 "sentence": "Communication is an essential skill for a leader .",
-                "translation": "Giao tiếp là một kỹ năng thiết yếu đối với một nhà lãnh đạo ."
+                "translation": "Giao ti���p là một kỹ năng thiết yếu đối với một nhà lãnh đạo ."
               }
             ]
           },
@@ -201415,7 +201408,7 @@
               {
                 "id": "d0b9f363-12fd-4877-bacc-9660a1774774",
                 "sentence": "white water",
-                "translation": "nước trong"
+                "translation": "nư��c trong"
               }
             ]
           }

@@ -26,6 +26,7 @@ export interface ParagraphProgress {
   durationMs: number
   chars: number
   completedAt: number
+  mistakeIndices?: number[]
 }
 
 export interface SentenceLink {

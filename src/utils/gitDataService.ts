@@ -200,14 +200,43 @@ export async function loadAllFromGitData(options?: {
       const currentMap = new Map<string, Flashcard>()
       state.flashcards.forEach(c => currentMap.set(c.sentence.trim().toLowerCase(), c))
 
+      const mergeCardData = (existing: Flashcard, incoming: Flashcard): Flashcard => {
+        const mergedTags = Array.from(new Set([...getCardTags(existing), ...getCardTags(incoming)]))
+        const srs = (incoming.srs?.lastReviewedAt ?? 0) > (existing.srs?.lastReviewedAt ?? 0)
+          ? (incoming.srs || existing.srs)
+          : (existing.srs || incoming.srs)
+
+        const mergedHighlights = (existing.highlights || []).map(eh => {
+          const ch = (incoming.highlights || []).find(h => h.id === eh.id)
+          if (!ch || !ch.srs) return eh
+          if (!eh.srs) return { ...eh, srs: ch.srs }
+          return (ch.srs.lastReviewedAt ?? 0) > (eh.srs.lastReviewedAt ?? 0) ? { ...eh, srs: ch.srs } : eh
+        })
+
+        const mergedPhrases = (existing.phrasesAndIdioms || []).map(ep => {
+          const cp = (incoming.phrasesAndIdioms || []).find(p => p.phrase.toLowerCase() === ep.phrase.toLowerCase())
+          if (!cp || !cp.srs) return ep
+          if (!ep.srs) return { ...ep, srs: cp.srs }
+          return (cp.srs.lastReviewedAt ?? 0) > (ep.srs.lastReviewedAt ?? 0) ? { ...ep, srs: cp.srs } : ep
+        })
+
+        return {
+          ...incoming,
+          ...existing,
+          id: existing.id,
+          tags: mergedTags,
+          srs,
+          highlights: mergedHighlights.length > 0 ? mergedHighlights : (incoming.highlights || existing.highlights),
+          phrasesAndIdioms: mergedPhrases.length > 0 ? mergedPhrases : (incoming.phrasesAndIdioms || existing.phrasesAndIdioms),
+        }
+      }
+
       // Merge word cards
       for (const card of importedWordCards) {
         const key = card.sentence.trim().toLowerCase()
         const existing = currentMap.get(key)
         if (existing) {
-          // Merge tags
-          const mergedTags = Array.from(new Set([...getCardTags(existing), ...getCardTags(card)]))
-          currentMap.set(key, { ...card, ...existing, id: existing.id, tags: mergedTags })
+          currentMap.set(key, mergeCardData(existing, card))
         } else {
           currentMap.set(key, card)
         }
@@ -219,8 +248,7 @@ export async function loadAllFromGitData(options?: {
         const key = card.sentence.trim().toLowerCase()
         const existing = currentMap.get(key)
         if (existing) {
-          const mergedTags = Array.from(new Set([...getCardTags(existing), ...getCardTags(card)]))
-          currentMap.set(key, { ...card, ...existing, id: existing.id, tags: mergedTags })
+          currentMap.set(key, mergeCardData(existing, card))
         } else {
           currentMap.set(key, card)
         }

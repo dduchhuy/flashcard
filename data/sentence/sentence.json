@@ -16,7 +16,6 @@
     },
     "illustrations": [],
     "wordForms": [],
-    "tags": [],
     "createdAt": 1791825450508,
     "highlights": []
   },
@@ -37,7 +36,6 @@
     },
     "illustrations": [],
     "wordForms": [],
-    "tags": [],
     "createdAt": 1791825447260,
     "highlights": []
   },
@@ -58,7 +56,6 @@
     },
     "illustrations": [],
     "wordForms": [],
-    "tags": [],
     "createdAt": 1791825740719,
     "highlights": [
       {
@@ -76,7 +73,16 @@
         ],
         "meaning": "c"
       }
-    ]
+    ],
+    "srs": {
+      "due": 1791912450622,
+      "interval": 0,
+      "easeFactor": 2.5,
+      "reps": 0,
+      "step": 0,
+      "lastRating": "again",
+      "lastReviewedAt": 1791912390622
+    }
   },
   {
     "id": "66accd3f-379c-431a-9f0a-958b3e4d645b",
@@ -95,7 +101,6 @@
     },
     "illustrations": [],
     "wordForms": [],
-    "tags": [],
     "createdAt": 1791867711281,
     "highlights": []
   },
@@ -139,7 +144,6 @@
     },
     "illustrations": [],
     "wordForms": [],
-    "tags": [],
     "createdAt": 1791867759645,
     "highlights": []
   },
@@ -160,7 +164,6 @@
     },
     "illustrations": [],
     "wordForms": [],
-    "tags": [],
     "createdAt": 1791890464361,
     "highlights": []
   },
@@ -181,7 +184,6 @@
     },
     "illustrations": [],
     "wordForms": [],
-    "tags": [],
     "createdAt": 1791890483832,
     "highlights": []
   },

@@ -169,12 +169,22 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
     const correctChars = typed.reduce((acc, ch, i) => acc + (isCharMatch(target[i], ch) ? 1 : 0), 0)
     const wpm = Math.round((correctChars / 5) / minutes)
     const accuracy = keystrokes > 0 ? Math.max(0, Math.min(100, Math.round(((keystrokes - errors) / keystrokes) * 100))) : 100
+
+    // Capture indices of mistaken characters
+    const mistakeIndices: number[] = []
+    for (let k = 0; k < Math.min(typed.length, target.length); k++) {
+      if (!isCharMatch(target[k], typed[k])) {
+        mistakeIndices.push(k)
+      }
+    }
+
     markParagraphComplete(book.id, chapter.id, activeIdx, {
       wpm,
       accuracy,
       durationMs,
       chars: target.length,
       completedAt: Date.now(),
+      mistakeIndices,
     })
     advanceToNext(activeIdx)
   }
@@ -584,6 +594,30 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
     )
   }
 
+  const renderCompletedParagraph = (text: string, prog?: { mistakeIndices?: number[] }) => {
+    const mistakeSet = new Set(prog?.mistakeIndices || [])
+    if (mistakeSet.size === 0) {
+      return <span style={{ color: settings.correctColor }}>{text}</span>
+    }
+    return (
+      <span>
+        {text.split("").map((char, idx) => {
+          const isError = mistakeSet.has(idx)
+          return (
+            <span
+              key={idx}
+              style={{
+                color: isError ? settings.errorColor : settings.correctColor,
+              }}
+            >
+              {char}
+            </span>
+          )
+        })}
+      </span>
+    )
+  }
+
   const containerStyle: React.CSSProperties = {
     fontFamily: getEffectiveFontFamily(settings.fontFamily),
     fontSize: `${settings.fontSize}px`,
@@ -709,11 +743,20 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
                 isActive
                   ? "cursor-text"
                   : done
-                  ? "text-gray-700 dark:text-gray-300 cursor-default opacity-85"
-                  : "text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-400"
+                  ? "cursor-default"
+                  : "cursor-pointer"
               }`}
+              style={
+                !isActive && !done
+                  ? { color: settings.untypedColor, opacity: settings.untypedOpacity }
+                  : undefined
+              }
             >
-              {isActive ? renderActive() : p}
+              {isActive
+                ? renderActive()
+                : done
+                ? renderCompletedParagraph(p, done)
+                : p}
 
               {/* Completed stats badge (can be hidden in settings) */}
               {done && !isActive && !settings.hideParagraphStats && (

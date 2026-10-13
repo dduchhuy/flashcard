@@ -9,6 +9,8 @@ export interface SRSData {
   easeFactor: number
   reps: number
   step: number // 0=New, 1=Learning step 1, 2=Learning step 2, 3=Review
+  lastRating?: 'again' | 'hard' | 'good' | 'easy'
+  lastReviewedAt?: number
 }
 
 export interface Highlight {
@@ -46,6 +48,7 @@ export interface PhraseIdiom {
   translation: string
   labels?: string[]
   type?: 'phrase' | 'idiom' | string
+  srs?: SRSData
 }
 
 export interface PhoneticItem {
@@ -277,6 +280,7 @@ export function migrateFlashcard(card: any): Flashcard {
       translation: norm.translation || '',
       labels: Array.isArray(norm.labels) ? norm.labels : [],
       type: norm.type || 'phrase',
+      srs: pi.srs || norm.srs,
     }
   })
 
@@ -323,6 +327,15 @@ export function migrateFlashcard(card: any): Flashcard {
   let highlights: Highlight[] = []
   if (posEntries && posEntries.length > 0) {
     highlights = syncHighlightsFromPosEntries(posEntries)
+    if (Array.isArray(card.highlights) && card.highlights.length > 0) {
+      const oldSrsMap = new Map<string, SRSData | undefined>(
+        card.highlights.map((h: any) => [h.id, h.srs as SRSData | undefined])
+      )
+      highlights = highlights.map(h => ({
+        ...h,
+        srs: oldSrsMap.get(h.id) ?? h.srs,
+      }))
+    }
   } else if (Array.isArray(card.highlights) && card.highlights.length > 0) {
     highlights = card.highlights
   }
@@ -426,6 +439,7 @@ interface FlashcardState {
   removeHighlight: (flashcardId: string, highlightId: string) => void
   updateHighlightSRS: (flashcardId: string, highlightId: string, srsData: SRSData) => void
   updateFlashcardSRS: (flashcardId: string, srsData: SRSData) => void
+  updatePhraseSRS: (flashcardId: string, phraseTextOrId: string, srsData: SRSData) => void
   gameInputMode: 'sentence' | 'word'
   setGameInputMode: (mode: 'sentence' | 'word') => void
 }
@@ -632,6 +646,22 @@ export const useFlashcardStore = create<FlashcardState>()(
           flashcards: state.flashcards.map((f) =>
             f.id === flashcardId ? { ...f, srs: srsData } : f
           ),
+        })),
+      updatePhraseSRS: (flashcardId, phraseTextOrId, srsData) =>
+        set((state) => ({
+          flashcards: state.flashcards.map((f) => {
+            if (f.id === flashcardId && f.phrasesAndIdioms) {
+              return {
+                ...f,
+                phrasesAndIdioms: f.phrasesAndIdioms.map((p) =>
+                  p.phrase === phraseTextOrId || p.id === phraseTextOrId
+                    ? { ...p, srs: srsData }
+                    : p
+                ),
+              }
+            }
+            return f
+          }),
         })),
     }),
     {

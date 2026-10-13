@@ -21,7 +21,8 @@ import {
   Flashcard,
   Highlight,
   PhraseIdiom,
-  normalizePhraseItem
+  normalizePhraseItem,
+  SRSData
 } from "../store"
 import { speakEnglish, extractWordText } from "../utils"
 import {
@@ -92,7 +93,8 @@ function buildQueue(
   tags: string[],
   gameInputMode: "word" | "sentence",
   mode: LearnCardMode,
-  isRandom: boolean
+  isRandom: boolean,
+  forceAll: boolean = false
 ): QueueItem[] {
   let filtered = tags.length > 0
     ? flashcards.filter(f => getCardTags(f).some(t => tags.includes(t)))
@@ -106,7 +108,8 @@ function buildQueue(
     filtered.forEach(card => {
       (card.highlights || []).forEach(highlight => {
         const srs = highlight.srs
-        if (srs && srs.due > now) return
+        // Keep cards with 'again' or 'hard' so user is reminded across reloads; skip good/easy not due yet
+        if (!forceAll && srs && (srs.lastRating === "good" || srs.lastRating === "easy") && srs.due > now) return
         const word = extractWordText(card.sentence, highlight.wordIndices) || card.sentence
         items.push({ type: "meaning", card, highlight, word })
       })
@@ -115,13 +118,15 @@ function buildQueue(
     filtered.forEach(card => {
       if ((card.highlights || []).length === 0 && (!card.posEntries || card.posEntries.length === 0)) return
       const srs = card.srs
-      if (srs && srs.due > now) return
+      if (!forceAll && srs && (srs.lastRating === "good" || srs.lastRating === "easy") && srs.due > now) return
       items.push({ type: "word", card })
     })
   } else if (mode === "phrases" || mode === "phrase_meanings") {
     filtered.forEach(card => {
       const phrases = (card.phrasesAndIdioms || []).map(normalizePhraseItem).filter(p => p.phrase && p.translation)
       phrases.forEach(phrase => {
+        const srs = phrase.srs
+        if (!forceAll && srs && (srs.lastRating === "good" || srs.lastRating === "easy") && srs.due > now) return
         if (mode === "phrases") {
           items.push({ type: "phrase", card, phrase })
         } else {
@@ -133,13 +138,30 @@ function buildQueue(
 
   if (isRandom) return shuffleArr(items)
 
-  // Sort by interval ascending: new (no srs) → again (small interval) → hard → good → easy
+  // Sort prioritizing cards that need reminding ("nhắc lại"):
+  // 1) again (highest priority)
+  // 2) hard
+  // 3) due now
+  // 4) new (no srs yet)
+  // 5) others
   items.sort((a, b) => {
-    const getInterval = (item: QueueItem) => {
-      if (item.type === "meaning") return item.highlight.srs?.interval ?? 0
-      return item.card.srs?.interval ?? 0
+    const getSrs = (item: QueueItem) => {
+      if (item.type === "meaning") return item.highlight.srs
+      if (item.type === "phrase" || item.type === "phrase_meaning") return item.phrase.srs
+      return item.card.srs
     }
-    return getInterval(a) - getInterval(b)
+    const srsA = getSrs(a)
+    const srsB = getSrs(b)
+    const getScore = (srs?: SRSData) => {
+      if (!srs) return 3 // new card
+      if (srs.lastRating === "again") return 0
+      if (srs.lastRating === "hard") return 1
+      if (srs.due <= now) return 2
+      return 4
+    }
+    const diff = getScore(srsA) - getScore(srsB)
+    if (diff !== 0) return diff
+    return (srsA?.due ?? 0) - (srsB?.due ?? 0)
   })
   return items
 }
@@ -367,15 +389,30 @@ function TagSelector({ allTags, selected, onChange }: {
 
 // ── Main component ────────────────────────────────────────────────
 export function TabLearn() {
-  const { flashcards, gameInputMode, updateHighlightSRS, updateFlashcardSRS } = useFlashcardStore()
+  const { flashcards, gameInputMode, updateHighlightSRS, updateFlashcardSRS, updatePhraseSRS } = useFlashcardStore()
   const [settings, setSettings] = useState<LearnSettings>(loadSettings)
   const [showSettings, setShowSettings] = useState(false)
   const [showStatsModal, setShowStatsModal] = useState(false)
   const [popupCard, setPopupCard] = useState<Flashcard | null>(null)
-  const [learnMode, setLearnMode] = useState<LearnCardMode>("meanings")
+  const [learnMode, setLearnMode] = useState<LearnCardMode>(() => {
+    try {
+      const saved = localStorage.getItem("learn_mode") as LearnCardMode
+      if (saved && ["meanings", "words", "phrases", "phrase_meanings"].includes(saved)) return saved
+    } catch {}
+    return "words"
+  })
   const [modeDropdownOpen, setModeDropdownOpen] = useState(false)
   const [isRandom, setIsRandom] = useState(false)
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [selectedTags, setSelectedTags] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem("learn_selected_tags")
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) return parsed
+      }
+    } catch {}
+    return []
+  })
   const [showAnswer, setShowAnswer] = useState(false)
   const [meaningIdx, setMeaningIdx] = useState(0)
   const [stats, setStats] = useState({ again: 0, hard: 0, good: 0, easy: 0 })
@@ -414,11 +451,11 @@ export function TabLearn() {
 
   // Initialize queue once flashcards are loaded
   useEffect(() => {
-    if (!isQueueInit && flashcards.length > 0) {
+    if (flashcards.length > 0 && !isQueueInit) {
       setQueue(buildQueue(flashcards, selectedTags, gameInputMode, learnMode, isRandom))
       setIsQueueInit(true)
     }
-  }, [flashcards.length, isQueueInit, selectedTags, gameInputMode, learnMode, isRandom])
+  }, [flashcards, gameInputMode, isQueueInit, selectedTags, learnMode, isRandom])
 
   const current = queue[0]
 
@@ -428,9 +465,13 @@ export function TabLearn() {
   }
 
   // Synchronous reset helper
-  const resetSession = (newTags: string[], newMode: LearnCardMode, newRandom: boolean) => {
+  const resetSession = (newTags: string[], newMode: LearnCardMode, newRandom: boolean, forceAll = false) => {
+    try {
+      localStorage.setItem("learn_selected_tags", JSON.stringify(newTags))
+      localStorage.setItem("learn_mode", newMode)
+    } catch {}
     clearPendingTimers()
-    setQueue(buildQueue(flashcards, newTags, gameInputMode, newMode, newRandom))
+    setQueue(buildQueue(flashcards, newTags, gameInputMode, newMode, newRandom, forceAll))
     setCompletedCount(0)
     setShowAnswer(false)
     setMeaningIdx(0)
@@ -442,12 +483,16 @@ export function TabLearn() {
     let currentSrs = current.card.srs
     if (current.type === "meaning") {
       currentSrs = current.highlight.srs
+    } else if (current.type === "phrase" || current.type === "phrase_meaning") {
+      currentSrs = current.phrase.srs
     }
 
     const { srsData } = calculateNextSRS(rating, currentSrs, settings)
 
     if (current.type === "meaning") {
       updateHighlightSRS(current.card.id, current.highlight.id, srsData)
+    } else if (current.type === "phrase" || current.type === "phrase_meaning") {
+      updatePhraseSRS(current.card.id, current.phrase.phrase, srsData)
     } else {
       updateFlashcardSRS(current.card.id, srsData)
     }
@@ -482,11 +527,11 @@ export function TabLearn() {
       if (existing) clearTimeout(existing)
       pendingTimers.current.set(captured.card.id, timerId)
     }
-  }, [current, settings, updateHighlightSRS, updateFlashcardSRS])
+  }, [current, settings, updateHighlightSRS, updateFlashcardSRS, updatePhraseSRS])
 
   const handleRestart = () => {
     setStats({ again: 0, hard: 0, good: 0, easy: 0 })
-    resetSession(selectedTags, learnMode, isRandom)
+    resetSession(selectedTags, learnMode, isRandom, true)
   }
 
   // Keyboard shortcuts (Space/Enter to flip, 1-4 to rate)
@@ -534,8 +579,8 @@ export function TabLearn() {
       <div className="max-w-3xl mx-auto py-8 flex flex-col gap-4 animate-in fade-in">
         {/* Toolbar */}
         <div className="flex items-center gap-2 flex-wrap">
-          <TagSelector allTags={allTags} selected={selectedTags} onChange={setSelectedTags} />
-          <button onClick={() => setIsRandom(r => !r)} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border transition-colors ${isRandom ? "bg-purple-100 border-purple-200 text-purple-700 dark:bg-purple-900/40 dark:border-purple-800 dark:text-purple-300" : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"}`}>
+          <TagSelector allTags={allTags} selected={selectedTags} onChange={tags => { setSelectedTags(tags); resetSession(tags, learnMode, isRandom) }} />
+          <button onClick={() => { const r = !isRandom; setIsRandom(r); resetSession(selectedTags, learnMode, r) }} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border transition-colors ${isRandom ? "bg-purple-100 border-purple-200 text-purple-700 dark:bg-purple-900/40 dark:border-purple-800 dark:text-purple-300" : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300"}`}>
             <Shuffle size={15} /> Random
           </button>
           
@@ -601,7 +646,9 @@ export function TabLearn() {
     )
   }
 
-  const currentSrs = current.type === "meaning" ? current.highlight.srs : current.card.srs
+  const currentSrs = current.type === "meaning" ? current.highlight.srs
+    : current.type === "phrase" || current.type === "phrase_meaning" ? current.phrase.srs
+    : current.card.srs
   const previews = previewIntervals(currentSrs, settings)
 
   // Word mode: navigate meanings
@@ -711,7 +758,19 @@ export function TabLearn() {
       <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden relative">
         {/* Badge */}
         <div className="px-6 pt-5 flex items-center justify-between">
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${badge.cls}`}>{badge.label}</span>
+          <div className="flex items-center gap-2">
+            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${badge.cls}`}>{badge.label}</span>
+            {currentSrs?.lastRating && (
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                currentSrs.lastRating === 'again' ? 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300' :
+                currentSrs.lastRating === 'hard' ? 'bg-orange-100 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300' :
+                currentSrs.lastRating === 'good' ? 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-300' :
+                'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300'
+              }`}>
+                Last: {currentSrs.lastRating.toUpperCase()}
+              </span>
+            )}
+          </div>
           <span className="text-xs text-gray-400 dark:text-gray-500">{completedCount + 1} / {completedCount + queue.length}</span>
         </div>
 
