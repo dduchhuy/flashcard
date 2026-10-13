@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useFlashcardStore, getCardTags, getCardsForMode, Flashcard } from '../../store'
-import { ArrowLeft, RefreshCcw, Volume2, Lightbulb } from 'lucide-react'
+import { Volume2, Lightbulb } from 'lucide-react'
 import { extractWordText, fuzzyMatch, speakEnglish } from '../../utils'
 import { LetterInput, letterIndices, buildGuess } from './LetterInput'
-import { CardDetailModal, RootCardButton, GameStatsBar } from './shared'
+import { CardDetailModal, RootCardButton, GameStatsBar, EmptyState, GameHeader, ResultScreen } from './shared'
 
 export function ListenGame({ onExit }: { onExit: () => void }) {
   const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
@@ -78,42 +78,26 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
 
 
   if (allQuestions.length === 0) {
-    return (
-      <div className="text-center text-gray-500 py-20">
-        <p>No notes found. Highlight words first!</p>
-        <button onClick={onExit} className="mt-4 text-purple-600">Go back</button>
-      </div>
-    )
+    return <EmptyState onExit={onExit} text="No notes found. Highlight words first!" />
   }
 
   if (currentIndex >= allQuestions.length) {
-    const total = allQuestions.length
-    const percentage = total > 0 ? Math.round((correct / total) * 100) : 0
     return (
-      <div className="text-center py-20 animate-in fade-in flex flex-col items-center">
-        <div className="text-6xl mb-6">🏆</div>
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Practice Complete!</h2>
-        <div className="flex gap-4 my-6">
-          <div className="px-4 py-2 bg-green-50 dark:bg-green-900/30 rounded-xl text-green-600 dark:text-green-400 font-medium">
-            Correct: {correct}
-          </div>
-          <div className="px-4 py-2 bg-red-50 dark:bg-red-900/30 rounded-xl text-red-600 dark:text-red-400 font-medium">
-            Wrong: {wrong}
-          </div>
-          <div className="px-4 py-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-600 dark:text-orange-400 font-medium">
-            Skipped: {skipped}
-          </div>
-        </div>
-        <p className="text-lg text-gray-500 dark:text-gray-400 mb-6">
-          Score: <span className="font-bold text-blue-600">{percentage}%</span>
-        </p>
-        <div className="flex gap-4 mt-2">
-          <button onClick={onExit} className="bg-gray-200 dark:bg-gray-700 px-6 py-2 rounded-lg font-medium">Back</button>
-          <button onClick={() => { setSeed(s => s + 1); setCurrentIndex(0); setCorrect(0); setWrong(0); setSkipped(0); setStatus('playing') }} className="bg-blue-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium">
-            <RefreshCcw size={18} /> Play Again
-          </button>
-        </div>
-      </div>
+      <ResultScreen
+        title="Dictation Complete!"
+        correct={correct}
+        wrong={wrong}
+        skipped={skipped}
+        onExit={onExit}
+        onAgain={() => {
+          setSeed(s => s + 1)
+          setCurrentIndex(0)
+          setCorrect(0)
+          setWrong(0)
+          setSkipped(0)
+          setStatus('playing')
+        }}
+      />
     )
   }
 
@@ -159,52 +143,62 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
   const showFullSentence = hinted.length >= letterIndices(currentQ.word).length || status === 'correct' || status === 'skipped' || status === 'wrong'
 
   return (
-    <div className="max-w-2xl mx-auto py-6 animate-in fade-in flex flex-col h-full">
-      <div className="flex justify-between items-center mb-8">
-        <button onClick={onExit} className="text-gray-500 hover:text-gray-700 dark:text-gray-400">
-          <ArrowLeft size={24} />
-        </button>
-      </div>
+    <div className="max-w-2xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full">
+      <GameHeader
+        onExit={onExit}
+        title="Dictation"
+        current={currentIndex + 1}
+        total={allQuestions.length}
+        right={
+          <button
+            onClick={() => playAudio()}
+            className="p-1.5 rounded-lg flex items-center justify-center border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+            title="Replay Audio"
+          >
+            <Volume2 size={16} />
+          </button>
+        }
+      />
 
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-6 text-center max-w-xl mx-auto w-full relative">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700 p-4 sm:p-5 mb-2 text-center max-w-xl mx-auto w-full relative">
         <RootCardButton
           onClick={() => {
             const c = flashcards.find(f => f.id === currentQ.cardId)
             if (c) setShowModalCard(c)
           }}
-          className="absolute top-4 left-4"
+          className="absolute top-3 left-3"
         />
         
         {showFullSentence ? (
-          <p className="text-lg text-gray-800 dark:text-gray-200 mb-8 leading-relaxed whitespace-pre-wrap px-4">
+          <p className="text-base sm:text-lg text-gray-800 dark:text-gray-200 mb-3 leading-relaxed whitespace-pre-wrap px-2">
             {currentQ.sentence}
           </p>
         ) : (
-          <div className="text-gray-400 dark:text-gray-500 mb-8 px-4 flex items-center justify-center gap-2">
-            <Volume2 size={18} className="animate-pulse" />
-            <span className="text-sm font-medium">Listen and type the word</span>
+          <div className="text-gray-400 dark:text-gray-500 mb-3 px-2 flex items-center justify-center gap-1.5">
+            <Volume2 size={16} className="animate-pulse" />
+            <span className="text-xs font-medium">Listen and type the word</span>
           </div>
         )}
 
         <button
           onClick={() => playAudio()}
-          className="mx-auto w-24 h-24 bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 rounded-full flex items-center justify-center hover:scale-105 hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-all shadow-sm mb-6"
+          className="mx-auto w-14 sm:w-16 h-14 sm:h-16 bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 rounded-full flex items-center justify-center hover:scale-105 hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-all shadow-2xs mb-3 cursor-pointer"
         >
-          <Volume2 size={48} />
+          <Volume2 size={28} />
         </button>
         
-        <div className="bg-blue-50 dark:bg-gray-900 rounded-xl p-4 mb-8 border border-blue-100 dark:border-gray-700">
+        <div className="bg-blue-50 dark:bg-gray-900 rounded-xl p-2.5 sm:p-3 mb-3 border border-blue-100 dark:border-gray-700">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500 dark:text-gray-400">Meaning</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">Meaning</span>
             <button 
               onClick={() => setHideMeaning(!hideMeaning)}
-              className="text-xs px-2.5 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium flex items-center gap-1"
+              className="text-xs px-2 py-0.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-md shadow-2xs hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium flex items-center gap-1"
             >
               {hideMeaning ? 'Show' : 'Hide'}
             </button>
           </div>
           {!hideMeaning && (
-            <div className="mt-3 font-medium text-blue-700 dark:text-blue-300 text-lg break-words whitespace-pre-wrap block">
+            <div className="mt-1.5 font-medium text-blue-700 dark:text-blue-300 text-sm sm:text-base break-words whitespace-pre-wrap block">
               {currentQ.meaning}
             </div>
           )}
@@ -231,11 +225,11 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
           />
         </div>
         
-        <div className="mt-6 flex flex-wrap gap-3 justify-center">
+        <div className="mt-3 flex flex-wrap gap-2 justify-center">
           <button
             onClick={handleSkip}
             disabled={status !== 'playing'}
-            className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-5 py-3 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+            className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-4 py-2 text-xs sm:text-sm rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors cursor-pointer"
           >
             Skip
           </button>
@@ -244,25 +238,22 @@ export function ListenGame({ onExit }: { onExit: () => void }) {
             onClick={handleHint}
             disabled={status !== 'playing' || hinted.length >= letterIndices(currentQ.word).length}
             title="Hint"
-            className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-5 py-3 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors flex items-center justify-center"
+            className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-3.5 py-2 text-xs sm:text-sm rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors flex items-center justify-center cursor-pointer"
           >
-            <Lightbulb size={20} />
+            <Lightbulb size={18} />
           </button>
           
           <button
             onClick={checkAnswer}
             disabled={status !== 'playing' || !inputValue.trim()}
-            className="bg-blue-600 text-white px-8 py-3 rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors flex-1 min-w-[140px]"
+            className="bg-blue-600 text-white px-5 py-2 text-xs sm:text-sm rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors flex-1 min-w-[120px] cursor-pointer"
           >
             Submit Answer
           </button>
         </div>
       </div>
       
-      <div className="mt-4 flex flex-col items-center gap-2">
-        <p className="text-center text-sm font-medium text-gray-500 dark:text-gray-400">
-          {currentIndex + 1} / {allQuestions.length}
-        </p>
+      <div className="mt-1 flex flex-col items-center gap-1">
         <GameStatsBar correct={correct} wrong={wrong} skipped={skipped} />
       </div>
 

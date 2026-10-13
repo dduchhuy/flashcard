@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Zap, Volume2 } from 'lucide-react'
-import { shuffle, useNotes, EmptyState, BackBar, RootCardButton, GameStatsBar, CardDetailModal } from './shared'
+import { shuffle, useNotes, EmptyState, RootCardButton, GameStatsBar, CardDetailModal, GameHeader, ResultScreen } from './shared'
 import { useFlashcardStore, Flashcard } from '../../store'
 import { speakEnglish } from '../../utils'
 
@@ -9,7 +9,8 @@ const BEST_KEY = 'flashcard_speed_best'
 export function SpeedGame({ onExit }: { onExit: () => void }) {
   const { flashcards } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
-  const notes = useNotes(seed)
+  const [srcMode, setSrcMode] = useState<'highlights' | 'phrases'>('highlights')
+  const notes = useNotes(seed, false, srcMode)
   const [stage, setStage] = useState<'ready' | 'playing' | 'done'>('ready')
   const [customDuration, setCustomDuration] = useState(60)
   const [timeLeft, setTimeLeft] = useState(60)
@@ -120,7 +121,7 @@ export function SpeedGame({ onExit }: { onExit: () => void }) {
   if (stage === 'ready') {
     return (
       <div className="max-w-xl mx-auto py-6 animate-in fade-in">
-        <BackBar onExit={onExit} />
+        <GameHeader onExit={onExit} title="Speed Match" />
         <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-10 text-center">
           <div className="inline-flex bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600 dark:text-yellow-400 p-4 rounded-full mb-4"><Zap size={36} /></div>
           <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Speed Match</h2>
@@ -154,87 +155,127 @@ export function SpeedGame({ onExit }: { onExit: () => void }) {
             </div>
           </div>
 
-          <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">Best score: <span className="font-bold text-yellow-600 dark:text-yellow-400">{best}</span></p>
-          <button onClick={start} className="bg-yellow-500 hover:bg-yellow-600 text-white px-10 py-3 rounded-xl font-bold shadow-sm transition-colors">Start</button>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">Best score: <span className="font-bold text-yellow-600 dark:text-yellow-400">{best}</span></p>
+          
+          {/* Source mode toggle */}
+          <div className="flex bg-gray-100 dark:bg-gray-900 rounded-lg p-0.5 mb-8 inline-flex self-center mx-auto w-fit">
+            <button
+              onClick={() => setSrcMode('highlights')}
+              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${srcMode === 'highlights' ? 'bg-white dark:bg-gray-700 shadow-sm text-yellow-600 dark:text-yellow-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+            >Words</button>
+            <button
+              onClick={() => setSrcMode('phrases')}
+              className={`px-4 py-1.5 text-xs font-medium rounded-md transition-colors ${srcMode === 'phrases' ? 'bg-white dark:bg-gray-700 shadow-sm text-yellow-600 dark:text-yellow-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+            >Phrases</button>
+          </div>
+
+          <div>
+            <button onClick={start} className="bg-yellow-500 hover:bg-yellow-600 text-white px-10 py-3 rounded-xl font-bold shadow-sm transition-colors">Start</button>
+          </div>
         </div>
       </div>
     )
   }
 
   if (stage === 'done') {
-    const total = correct + wrong + skipped
     return (
-      <div className="text-center py-20 animate-in fade-in flex flex-col items-center">
-        <div className="text-6xl mb-6">⚡</div>
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-1">Time's up!</h2>
-        {newRecord && <p className="text-yellow-600 dark:text-yellow-400 font-bold mb-2">🎉 New record!</p>}
-        <div className="flex gap-4 my-6">
-          <div className="px-4 py-2 bg-green-50 dark:bg-green-900/30 rounded-xl text-green-600 dark:text-green-400 font-medium">
-            Correct: {correct}
+      <ResultScreen
+        title={newRecord ? "🎉 New High Score!" : "Time's Up!"}
+        correct={correct}
+        wrong={wrong}
+        skipped={skipped}
+        lines={
+          <div className="flex flex-col items-center gap-1">
+            <span className="text-xl font-extrabold text-yellow-600 dark:text-yellow-400">
+              Score: {score} pts
+            </span>
+            <span className="text-xs text-gray-500">
+              Best: {best} pts · Best Streak: {bestCombo}🔥
+            </span>
           </div>
-          <div className="px-4 py-2 bg-red-50 dark:bg-red-900/30 rounded-xl text-red-600 dark:text-red-400 font-medium">
-            Wrong: {wrong}
-          </div>
-          <div className="px-4 py-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-600 dark:text-orange-400 font-medium">
-            Skipped: {skipped}
-          </div>
-        </div>
-        <p className="text-gray-500 dark:text-gray-400 mb-6">Accuracy: {total > 0 ? Math.round((correct / total) * 100) : 0}% · Best streak: {bestCombo}</p>
-        <div className="flex gap-4">
-          <button onClick={onExit} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-6 py-2 rounded-lg font-medium">Back</button>
-          <button onClick={start} className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700">Play Again</button>
-        </div>
-      </div>
+        }
+        onExit={onExit}
+        onAgain={start}
+      />
     )
   }
 
   return (
-    <div className="max-w-xl mx-auto py-6 animate-in fade-in flex flex-col h-full">
-      <BackBar onExit={() => { setStage('ready') ; onExit() }} />
+    <div className="max-w-xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full">
+      <GameHeader
+        onExit={() => { setStage('ready'); onExit() }}
+        center={
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-yellow-50 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800 text-xs font-bold">
+              <Zap size={14} className="fill-yellow-500" />
+              <span>{score} pts</span>
+            </div>
+            {combo > 1 && (
+              <span className="px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 text-xs font-bold animate-bounce">
+                {combo}x Streak 🔥
+              </span>
+            )}
+          </div>
+        }
+        right={
+          <div className={`px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold border transition-colors ${
+            timeLeft <= 10
+              ? 'bg-rose-50 text-rose-600 border-rose-300 animate-pulse'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700'
+          }`}>
+            ⏱️ {timeLeft}s
+          </div>
+        }
+      />
 
-      <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-6">
-        <div className={`h-full transition-all duration-1000 ease-linear ${timeLeft <= 10 ? 'bg-red-500' : 'bg-yellow-500'}`} style={{ width: `${(timeLeft / customDuration) * 100}%` }} />
+      <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mb-2.5">
+        <div 
+          className={`h-full transition-all duration-1000 ease-linear rounded-full ${
+            timeLeft <= 10 ? 'bg-rose-500' : timeLeft <= 25 ? 'bg-amber-500' : 'bg-emerald-500'
+          }`} 
+          style={{ width: `${(timeLeft / customDuration) * 100}%` }} 
+        />
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-6 text-center relative min-h-[10rem] flex flex-col items-center justify-center">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-200/80 dark:border-gray-700/80 p-4 sm:p-5 mb-2.5 text-center relative min-h-[6.5rem] flex flex-col items-center justify-center">
         <RootCardButton
           onClick={() => {
             if (currentCard) setShowModalCard(currentCard)
           }}
-          className="absolute top-4 left-4"
+          className="absolute top-3 left-3"
         />
 
         <button
           onClick={() => setMode(m => m === 'word' ? 'meaning' : 'word')}
-          className="absolute top-4 right-4 text-xs font-bold px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+          className="absolute top-3 right-3 text-[11px] font-bold px-2.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors cursor-pointer"
         >
           {mode === 'word' ? 'EN → VI' : 'VI → EN'}
         </button>
 
         {mode === 'word' ? (
           <div className="text-center px-4">
-            <h3 className="text-3xl font-bold text-gray-800 dark:text-gray-100 break-words whitespace-pre-wrap">{note!.word}</h3>
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 break-words whitespace-pre-wrap">{note!.word}</h3>
             {(currentCard?.posEntries ? currentCard.posEntries.map(p => p.partOfSpeech).filter(Boolean).join(', ') : currentCard?.partOfSpeech) && (
-              <span className="text-sm font-normal text-gray-500 dark:text-gray-400 block mt-1 break-words">{currentCard?.posEntries ? currentCard.posEntries.map(p => p.partOfSpeech).filter(Boolean).join(', ') : currentCard?.partOfSpeech}</span>
+              <span className="text-xs font-normal text-gray-500 dark:text-gray-400 block mt-0.5 break-words">{currentCard?.posEntries ? currentCard.posEntries.map(p => p.partOfSpeech).filter(Boolean).join(', ') : currentCard?.partOfSpeech}</span>
             )}
             {currentCard?.phonetic && (
-              <span className="text-sm font-normal text-gray-400 dark:text-gray-500 block font-mono mt-0.5 break-words">{currentCard.phonetic}</span>
+              <span className="text-xs font-normal text-gray-400 dark:text-gray-500 block font-mono mt-0.5 break-words">{currentCard.phonetic}</span>
             )}
           </div>
         ) : (
-          <h3 className="text-3xl font-bold text-gray-800 dark:text-gray-100 break-words whitespace-pre-wrap px-4">{note!.meaning}</h3>
+          <h3 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 break-words whitespace-pre-wrap px-4">{note!.meaning}</h3>
         )}
 
         {mode === 'word' && (
           <button
             onClick={() => speakEnglish(note!.word)}
             title="Listen"
-            className="absolute bottom-4 right-4 p-2 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
-          ><Volume2 size={22} /></button>
+            className="absolute bottom-3 right-3 p-1.5 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors cursor-pointer"
+          ><Volume2 size={20} /></button>
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {options.map((opt, i) => {
           const target = mode === 'word' ? note!.meaning : note!.word
           const isCorrect = opt === target
@@ -245,25 +286,27 @@ export function SpeedGame({ onExit }: { onExit: () => void }) {
             else cls = 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-400 dark:text-gray-600 opacity-50'
           }
           return (
-            <button key={`${note!.id}-${i}`} onClick={() => choose(opt)} disabled={selected !== null} className={`h-24 p-4 rounded-xl border-2 text-center font-medium transition-colors flex items-center justify-center ${cls}`}>
-              <span className="line-clamp-2 whitespace-pre-wrap break-all">{opt}</span>
+            <button key={`${note!.id}-${i}`} onClick={() => choose(opt)} disabled={selected !== null} className={`min-h-[2.75rem] p-2.5 rounded-xl border text-center font-medium transition-all relative flex items-center justify-center cursor-pointer ${cls}`}>
+              <span className="absolute top-1.5 left-2 text-[10px] font-bold text-gray-400 bg-gray-100 dark:bg-gray-700 px-1 py-0.2 rounded">
+                {i + 1}
+              </span>
+              <span className="line-clamp-2 whitespace-pre-wrap break-words px-3 text-xs sm:text-sm">{opt}</span>
             </button>
           )
         })}
       </div>
 
-      <div className="mt-4 flex justify-center">
+      <div className="mt-1 flex justify-center">
         <button
           onClick={handleSkip}
           disabled={selected !== null}
-          className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-8 py-2.5 rounded-xl font-medium transition-colors"
+          className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-6 py-1.5 text-xs sm:text-sm rounded-lg font-medium transition-colors cursor-pointer"
         >
           Skip
         </button>
       </div>
 
-      <div className="mt-4 flex flex-col items-center gap-1">
-        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{timeLeft}s remaining{combo > 1 ? ` · 🔥 x${combo}` : ''}</span>
+      <div className="mt-1 flex flex-col items-center gap-1">
         <GameStatsBar correct={correct} wrong={wrong} skipped={skipped} />
       </div>
 

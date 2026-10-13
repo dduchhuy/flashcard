@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Lightbulb, Shuffle, Volume2, RefreshCcw } from 'lucide-react'
-import { shuffle, useNotes, EmptyState, BackBar, softBtn, RootCardButton, GameStatsBar, CardDetailModal } from './shared'
+import { Lightbulb, Shuffle, Volume2 } from 'lucide-react'
+import { shuffle, useNotes, EmptyState, softBtn, RootCardButton, GameStatsBar, CardDetailModal, GameHeader, ResultScreen } from './shared'
 import { useFlashcardStore, Flashcard } from '../../store'
 import { speakEnglish } from '../../utils'
 
@@ -145,33 +145,24 @@ export function ScrambleGame({ onExit }: { onExit: () => void }) {
 
   if (notes.length === 0) return <EmptyState onExit={onExit} />
   if (index >= notes.length) {
-    const total = notes.length
-    const percentage = total > 0 ? Math.round((correct / total) * 100) : 0
     return (
-      <div className="text-center py-20 animate-in fade-in flex flex-col items-center">
-        <div className="text-6xl mb-6">🏆</div>
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Practice Complete!</h2>
-        <div className="flex gap-4 my-6">
-          <div className="px-4 py-2 bg-green-50 dark:bg-green-900/30 rounded-xl text-green-600 dark:text-green-400 font-medium">
-            Correct: {correct}
-          </div>
-          <div className="px-4 py-2 bg-red-50 dark:bg-red-900/30 rounded-xl text-red-600 dark:text-red-400 font-medium">
-            Wrong: {wrong}
-          </div>
-          <div className="px-4 py-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-600 dark:text-orange-400 font-medium">
-            Skipped: {skipped}
-          </div>
-        </div>
-        <p className="text-lg text-gray-500 dark:text-gray-400 mb-6">
-          Score: <span className="font-bold text-purple-600">{percentage}%</span>
-        </p>
-        <div className="flex gap-4 mt-2">
-          <button onClick={onExit} className="bg-gray-200 dark:bg-gray-700 px-6 py-2 rounded-lg font-medium">Back</button>
-          <button onClick={() => { setSeed(s => s + 1); setIndex(0); setCorrect(0); setWrong(0); setSkipped(0); setSlots([]); setHintedSlots([]); setStatus('playing') }} className="bg-purple-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium hover:bg-purple-700">
-            <RefreshCcw size={18} /> Play Again
-          </button>
-        </div>
-      </div>
+      <ResultScreen
+        title="Word Scramble Complete!"
+        correct={correct}
+        wrong={wrong}
+        skipped={skipped}
+        onExit={onExit}
+        onAgain={() => {
+          setSeed(s => s + 1)
+          setIndex(0)
+          setCorrect(0)
+          setWrong(0)
+          setSkipped(0)
+          setSlots([])
+          setHintedSlots([])
+          setStatus('playing')
+        }}
+      />
     )
   }
 
@@ -188,7 +179,7 @@ export function ScrambleGame({ onExit }: { onExit: () => void }) {
       <button
         key={i}
         onClick={() => tileId !== null && removeAt(pos)}
-        className={`w-10 h-12 rounded-lg border-2 text-xl font-bold flex items-center justify-center transition-colors ${
+        className={`w-8 sm:w-9 h-10 sm:h-11 rounded-lg border-2 text-base sm:text-lg font-bold flex items-center justify-center transition-colors cursor-pointer ${
           status === 'correct' ? 'bg-green-100 border-green-500 text-green-700 dark:bg-green-900/40 dark:text-green-300' :
           status === 'wrong' ? 'bg-red-100 border-red-500 text-red-700 dark:bg-red-900/40 dark:text-red-300' :
           status === 'skipped' ? 'bg-orange-100 border-orange-500 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' :
@@ -201,34 +192,63 @@ export function ScrambleGame({ onExit }: { onExit: () => void }) {
   })
 
   return (
-    <div className="max-w-2xl mx-auto py-6 animate-in fade-in flex flex-col h-full">
-      <BackBar onExit={onExit} />
+    <div className="max-w-2xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full">
+      <GameHeader
+        onExit={onExit}
+        title="Word Scramble"
+        current={index + 1}
+        total={notes.length}
+        right={
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => {
+                const reset = slots.map((s, i) => (hintedSlots.includes(i) ? s : null))
+                setSlots(reset)
+                setShuffleKey(x => x + 1)
+              }}
+              disabled={status !== 'playing'}
+              title="Shuffle letters"
+              className="p-1.5 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 transition-colors disabled:opacity-40"
+            >
+              <Shuffle size={16} />
+            </button>
+            <button
+              onClick={hint}
+              disabled={status !== 'playing'}
+              title="Hint next letter"
+              className="p-1.5 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-600 hover:bg-amber-100 transition-colors disabled:opacity-40"
+            >
+              <Lightbulb size={16} />
+            </button>
+          </div>
+        }
+      />
 
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 pt-14 text-center max-w-xl mx-auto w-full relative">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700 p-4 sm:p-5 pt-8 sm:pt-10 text-center max-w-xl mx-auto w-full relative mb-2">
         <RootCardButton
           onClick={() => {
             const c = flashcards.find(f => f.id === note.cardId)
             if (c) setShowModalCard(c)
           }}
-          className="absolute top-4 left-4"
+          className="absolute top-3 left-3"
         />
 
         <button
           onClick={() => speakEnglish(note.word)}
           title="Listen"
-          className="absolute bottom-4 right-4 p-2 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
+          className="absolute bottom-3 right-3 p-1.5 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
         >
-          <Volume2 size={22} />
+          <Volume2 size={20} />
         </button>
 
-        <div className="bg-purple-50 dark:bg-gray-900 rounded-xl p-4 mb-8 border border-purple-100 dark:border-gray-700">
-          <span className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Meaning</span>
-          <span className="font-medium text-purple-700 dark:text-purple-300 text-lg break-words whitespace-pre-wrap">{note.meaning}</span>
+        <div className="bg-purple-50 dark:bg-gray-900 rounded-xl p-2.5 sm:p-3 mb-3 mt-1 border border-purple-100 dark:border-gray-700">
+          <span className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Meaning</span>
+          <span className="font-medium text-purple-700 dark:text-purple-300 text-sm sm:text-base break-words whitespace-pre-wrap">{note.meaning}</span>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-2 mb-8">{renderedSlots}</div>
+        <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 mb-3">{renderedSlots}</div>
 
-        <div className="flex flex-wrap justify-center gap-2 mb-8 min-h-[3rem]">
+        <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 mb-3 min-h-[2.5rem]">
           {tiles.map(t => {
             const isUsed = slots.includes(t.id)
             return (
@@ -236,17 +256,17 @@ export function ScrambleGame({ onExit }: { onExit: () => void }) {
                 key={t.id}
                 onClick={() => addTile(t.id)}
                 disabled={isUsed || status !== 'playing'}
-                className={`w-10 h-12 rounded-lg text-xl font-bold transition-all ${
+                className={`w-8 sm:w-9 h-10 sm:h-11 rounded-lg text-base sm:text-lg font-bold transition-all cursor-pointer ${
                   isUsed
-                    ? 'bg-transparent border-2 border-dashed border-gray-200 dark:border-gray-700 text-transparent'
-                    : 'bg-purple-600 text-white hover:bg-purple-700 hover:-translate-y-0.5 shadow-sm'
+                    ? 'bg-transparent border-2 border-dashed border-gray-200 dark:border-gray-700 text-transparent cursor-default'
+                    : 'bg-purple-600 text-white hover:bg-purple-700 hover:-translate-y-0.5 shadow-2xs'
                 }`}
               >{t.ch}</button>
             )
           })}
         </div>
 
-        <div className="flex flex-wrap gap-3 justify-center">
+        <div className="flex flex-wrap gap-2 justify-center">
           <button
             onClick={() => {
               const reset = slots.map((s, i) => hintedSlots.includes(i) ? s : null)
@@ -257,17 +277,14 @@ export function ScrambleGame({ onExit }: { onExit: () => void }) {
             title="Shuffle letters"
             className={softBtn}
           >
-            <Shuffle size={20} />
+            <Shuffle size={16} />
           </button>
-          <button onClick={hint} disabled={status !== 'playing'} title="Hint" className={softBtn}><Lightbulb size={20} /></button>
-          <button onClick={handleSkip} disabled={status !== 'playing'} className={softBtn}>Skip</button>
+          <button onClick={hint} disabled={status !== 'playing'} title="Hint" className={softBtn}><Lightbulb size={16} /></button>
+          <button onClick={handleSkip} disabled={status !== 'playing'} className={`${softBtn} text-xs sm:text-sm`}>Skip</button>
         </div>
       </div>
 
-      <div className="mt-4 flex flex-col items-center gap-2">
-        <p className="text-center text-sm font-medium text-gray-500 dark:text-gray-400">
-          {index + 1} / {notes.length}
-        </p>
+      <div className="mt-1 flex flex-col items-center gap-1">
         <GameStatsBar correct={correct} wrong={wrong} skipped={skipped} />
       </div>
 

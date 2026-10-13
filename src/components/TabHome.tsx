@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo } from 'react'
 import { useFlashcardStore, getCardTags, isWordCard } from '../store'
 import { FlashcardItem } from './FlashcardItem'
-import { Plus, Sparkles, Tag, X, Check, BookOpen, Command, Lock, Unlock, Type, FileText } from 'lucide-react'
+import { Plus, Sparkles, Tag, X, Check, BookOpen, Command, Lock, Unlock, Type, FileText, ArrowLeftRight } from 'lucide-react'
 
 interface FormExample {
   sentence: string
@@ -37,6 +37,7 @@ export function TabHome() {
   // Word mode state
   const [posFormEntries, setPosFormEntries] = useState<FormPosEntry[]>([emptyPosEntry()])
   const [phrasesForm, setPhrasesForm] = useState<{ phrase: string, translation: string }[]>([])
+  const [usageNotesForm, setUsageNotesForm] = useState<string[]>([])
   
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -76,8 +77,10 @@ export function TabHome() {
     }
 
     if (newSentence.trim()) {
+      const validUsageNotes = usageNotesForm.map(u => u.trim()).filter(Boolean)
+
       if (inputMode === 'sentence') {
-        addFlashcard(newSentence, finalTags, undefined, phoneticInput, partOfSpeechInput)
+        addFlashcard(newSentence, finalTags, undefined, phoneticInput, partOfSpeechInput, validUsageNotes.length > 0 ? validUsageNotes : undefined)
       } else {
         const validPosEntries = posFormEntries
           .map(pos => ({
@@ -98,14 +101,16 @@ export function TabHome() {
           .filter(p => p.phrase.trim() !== '')
           .map(p => ({ phrase: p.phrase.trim(), translation: p.translation.trim() }))
 
-        addWordCard(newSentence, validPosEntries, validPhrases, finalTags, phoneticInput)
+        addWordCard(newSentence, validPosEntries, validPhrases, finalTags, phoneticInput, validUsageNotes.length > 0 ? validUsageNotes : undefined)
         setPosFormEntries([emptyPosEntry()])
         setPhrasesForm([])
+        setUsageNotesForm([])
       }
 
       setNewSentence('')
       setPhoneticInput('')
       setPartOfSpeechInput('')
+      setUsageNotesForm([])
       if (!isTagsLocked) {
         setTagInput('')
         setSelectedTags([])
@@ -129,16 +134,16 @@ export function TabHome() {
       if (!seenWords.has(key)) {
         seenWords.add(key)
         list.push(card)
-        if (list.length >= 5) break
+        if (list.length >= 10) break
       }
     }
     return list
   }, [sortedRecent])
 
   return (
-    <div className="space-y-8 animate-in fade-in max-w-4xl mx-auto">
+    <div className="animate-in fade-in max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
       {/* Main Add Card Box */}
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700/80 p-6 sm:p-7 transition-all">
+      <div className="lg:col-span-7 xl:col-span-8 bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700/80 p-6 sm:p-7 transition-all lg:sticky lg:top-20 lg:max-h-[calc(100vh-6.5rem)] lg:overflow-y-auto overscroll-contain custom-scrollbar">
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
@@ -208,6 +213,12 @@ export function TabHome() {
                   value={phoneticInput}
                   onChange={(e) => setPhoneticInput(e.target.value)}
                   placeholder="Phonetic (optional)"
+                  className="w-full sm:w-1/3 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 text-sm italic focus:outline-none sm:border-l sm:border-gray-100 sm:dark:border-gray-700/60 sm:pl-3"
+                />
+                <input
+                  value={usageNotesForm[0] || ''}
+                  onChange={(e) => setUsageNotesForm(e.target.value ? [e.target.value] : [])}
+                  placeholder="Usage note (optional)"
                   className="w-full sm:w-1/3 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 text-sm italic focus:outline-none sm:border-l sm:border-gray-100 sm:dark:border-gray-700/60 sm:pl-3"
                 />
               </div>
@@ -425,6 +436,20 @@ export function TabHome() {
                           }}
                           className="flex-1 bg-transparent text-xs font-medium text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none w-full"
                         />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = [...phrasesForm]
+                            const tmp = updated[pIdx].phrase
+                            updated[pIdx].phrase = updated[pIdx].translation
+                            updated[pIdx].translation = tmp
+                            setPhrasesForm(updated)
+                          }}
+                          title="Hoán đổi cụm từ tiếng Anh và câu dịch"
+                          className="p-1 text-gray-400 hover:text-purple-600 transition-colors shrink-0"
+                        >
+                          <ArrowLeftRight size={13} />
+                        </button>
                         <input
                           placeholder="Translation (e.g. bắt đầu hành động, bắt đầu chiến đấu)"
                           value={item.translation}
@@ -438,7 +463,53 @@ export function TabHome() {
                         <button
                           type="button"
                           onClick={() => setPhrasesForm(phrasesForm.filter((_, idx) => idx !== pIdx))}
-                          className="p-1 text-red-400 hover:text-red-600 transition-colors"
+                          className="p-1 text-red-400 hover:text-red-600 transition-colors shrink-0"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Usage Notes section */}
+              <div className="bg-amber-50/40 dark:bg-amber-950/20 rounded-2xl p-4 border border-amber-200/60 dark:border-amber-900/40 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                    <span>💡 Usage Notes (optional)</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setUsageNotesForm([...usageNotesForm, ''])}
+                    className="text-xs text-amber-700 dark:text-amber-400 hover:text-amber-800 font-medium flex items-center gap-1 bg-amber-100/60 dark:bg-amber-900/30 px-2.5 py-1.5 rounded-lg transition-colors"
+                  >
+                    <Plus size={12} /> Add usage note
+                  </button>
+                </div>
+
+                {usageNotesForm.length === 0 ? (
+                  <p className="text-xs text-gray-400 italic">No usage notes added yet. Click above to add grammar or usage tips (e.g. "Khi là danh từ, trọng âm rơi vào âm tiết thứ nhất...").</p>
+                ) : (
+                  <div className="space-y-2">
+                    {usageNotesForm.map((note, nIdx) => (
+                      <div key={nIdx} className="flex gap-2 items-start bg-white dark:bg-gray-800/80 p-2.5 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <textarea
+                          rows={2}
+                          placeholder="Usage note, grammar tip, or distinction (e.g. Thường dùng trong thể thao hoặc hành chính...)"
+                          value={note}
+                          onChange={e => {
+                            const updated = [...usageNotesForm]
+                            updated[nIdx] = e.target.value
+                            setUsageNotesForm(updated)
+                          }}
+                          className="flex-1 bg-transparent text-xs font-medium text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none resize-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setUsageNotesForm(usageNotesForm.filter((_, idx) => idx !== nIdx))}
+                          className="p-1 text-red-400 hover:text-red-600 transition-colors shrink-0"
+                          title="Remove usage note"
                         >
                           <X size={14} />
                         </button>
@@ -550,8 +621,8 @@ export function TabHome() {
       </div>
 
       {/* Recently Added Section */}
-      <div>
-        <div className="flex items-center justify-between mb-4 px-1">
+      <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-20 flex flex-col lg:max-h-[calc(100vh-6.5rem)]">
+        <div className="flex items-center justify-between mb-3 px-1 shrink-0">
           <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
             <BookOpen size={20} className="text-purple-600 dark:text-purple-400" />
             <span>Recently Added</span>
@@ -567,7 +638,7 @@ export function TabHome() {
             <p className="text-xs text-gray-400 mt-1">Add your first sentence above to start creating flashcard notes!</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="flex-1 lg:overflow-y-auto overscroll-contain pr-1 space-y-3.5 custom-scrollbar">
             {recentFlashcards.map((flashcard) => (
               <FlashcardItem key={flashcard.id} flashcard={flashcard} viewMode="list" />
             ))}

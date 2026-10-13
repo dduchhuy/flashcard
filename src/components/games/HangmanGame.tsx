@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Lightbulb, Volume2, RefreshCcw } from 'lucide-react'
-import { useNotes, EmptyState, BackBar, softBtn, RootCardButton, GameStatsBar, CardDetailModal } from './shared'
+import { Lightbulb, Volume2 } from 'lucide-react'
+import { useNotes, EmptyState, softBtn, RootCardButton, GameStatsBar, CardDetailModal, GameHeader, ResultScreen } from './shared'
 import { useFlashcardStore, Flashcard } from '../../store'
 import { speakEnglish } from '../../utils'
 
@@ -10,7 +10,7 @@ const ALPHABET = 'abcdefghijklmnopqrstuvwxyz'.split('')
 function Gallows({ misses }: { misses: number }) {
   const stroke = 'currentColor'
   return (
-    <svg viewBox="0 0 120 130" className="w-32 h-36 text-gray-700 dark:text-gray-300" fill="none" stroke={stroke} strokeWidth="4" strokeLinecap="round">
+    <svg viewBox="0 0 120 130" className="w-20 sm:w-24 h-24 sm:h-28 text-gray-700 dark:text-gray-300" fill="none" stroke={stroke} strokeWidth="4" strokeLinecap="round">
       <line x1="10" y1="125" x2="80" y2="125" />
       <line x1="30" y1="125" x2="30" y2="10" />
       <line x1="30" y1="10" x2="80" y2="10" />
@@ -100,64 +100,65 @@ export function HangmanGame({ onExit }: { onExit: () => void }) {
 
   if (notes.length === 0) return <EmptyState onExit={onExit} />
   if (index >= notes.length) {
-    const total = notes.length
-    const percentage = total > 0 ? Math.round((correct / total) * 100) : 0
     return (
-      <div className="text-center py-20 animate-in fade-in flex flex-col items-center">
-        <div className="text-6xl mb-6">🏆</div>
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Practice Complete!</h2>
-        <div className="flex gap-4 my-6">
-          <div className="px-4 py-2 bg-green-50 dark:bg-green-900/30 rounded-xl text-green-600 dark:text-green-400 font-medium">
-            Correct: {correct}
-          </div>
-          <div className="px-4 py-2 bg-red-50 dark:bg-red-900/30 rounded-xl text-red-600 dark:text-red-400 font-medium">
-            Wrong: {wrong}
-          </div>
-          <div className="px-4 py-2 bg-orange-50 dark:bg-orange-900/30 rounded-xl text-orange-600 dark:text-orange-400 font-medium">
-            Skipped: {skipped}
-          </div>
-        </div>
-        <p className="text-lg text-gray-500 dark:text-gray-400 mb-6">
-          Score: <span className="font-bold text-purple-600">{percentage}%</span>
-        </p>
-        <div className="flex gap-4 mt-2">
-          <button onClick={onExit} className="bg-gray-200 dark:bg-gray-700 px-6 py-2 rounded-lg font-medium">Back</button>
-          <button onClick={() => { setSeed(s => s + 1); setIndex(0); setCorrect(0); setWrong(0); setSkipped(0); setGuessed([]); setHints(0) }} className="bg-purple-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium hover:bg-purple-700">
-            <RefreshCcw size={18} /> Play Again
-          </button>
-        </div>
-      </div>
+      <ResultScreen
+        title="Hangman Complete!"
+        correct={correct}
+        wrong={wrong}
+        skipped={skipped}
+        onExit={onExit}
+        onAgain={() => {
+          setSeed(s => s + 1)
+          setIndex(0)
+          setCorrect(0)
+          setWrong(0)
+          setSkipped(0)
+          setGuessed([])
+          setHints(0)
+        }}
+      />
     )
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-6 animate-in fade-in flex flex-col h-full">
-      <BackBar onExit={onExit} />
+    <div className="max-w-2xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full">
+      <GameHeader
+        onExit={onExit}
+        title="Hangman"
+        current={index + 1}
+        total={notes.length}
+        right={
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 text-xs font-semibold text-red-600 dark:text-red-400">
+            <span>Lives:</span>
+            <span>{MAX_MISSES - misses} / {MAX_MISSES}</span>
+          </div>
+        }
+      />
 
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 text-center max-w-xl mx-auto w-full relative">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700 p-3.5 sm:p-4 text-center max-w-xl mx-auto w-full relative mb-2">
         <RootCardButton
           onClick={() => {
             const c = flashcards.find(f => f.id === note.cardId)
             if (c) setShowModalCard(c)
           }}
-          className="absolute top-4 left-4"
+          className="absolute top-3 left-3"
         />
 
-        <div className="flex justify-center mb-4"><Gallows misses={misses} /></div>
+        <div className="flex justify-center mb-2"><Gallows misses={misses} /></div>
 
-        <div className="bg-purple-50 dark:bg-gray-900 rounded-xl p-4 mb-6 border border-purple-100 dark:border-gray-700">
-          <span className="text-sm text-gray-500 dark:text-gray-400 block mb-1">Meaning</span>
-          <span className="font-medium text-purple-700 dark:text-purple-300 text-lg break-words whitespace-pre-wrap">{note.meaning}</span>
+        <div className="bg-purple-50 dark:bg-gray-900 rounded-xl p-2 sm:p-2.5 mb-2.5 border border-purple-100 dark:border-gray-700">
+          <span className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">Meaning</span>
+          <span className="font-medium text-purple-700 dark:text-purple-300 text-xs sm:text-sm break-words whitespace-pre-wrap">{note.meaning}</span>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-x-2 gap-y-2 mb-6">
+        <div className="flex flex-wrap justify-center gap-x-1.5 gap-y-1.5 mb-2.5">
           {note.word.split('').map((ch, i) => {
-            if (ch === ' ') return <span key={i} className="w-4" />
+            if (ch === ' ') return <span key={i} className="w-3" />
             const lower = ch.toLowerCase()
             const isLetter = /[a-z]/.test(lower)
             const show = !isLetter || guessed.includes(lower) || lost
             return (
-              <span key={i} className={`w-8 h-10 flex items-end justify-center text-2xl font-bold border-b-4 ${
+              <span key={i} className={`w-6 sm:w-7 h-7 sm:h-8 flex items-end justify-center text-lg sm:text-xl font-bold border-b-2 sm:border-b-4 ${
                 lost && isLetter && !guessed.includes(lower) ? 'text-red-500 border-red-400' :
                 won ? 'text-green-600 dark:text-green-400 border-green-500' : 'text-gray-800 dark:text-gray-100 border-gray-400 dark:border-gray-500'
               }`}>{show ? ch : ''}</span>
@@ -165,7 +166,7 @@ export function HangmanGame({ onExit }: { onExit: () => void }) {
           })}
         </div>
 
-        <div className="flex flex-wrap justify-center gap-1.5 mb-6">
+        <div className="flex flex-wrap justify-center gap-1 mb-2.5">
           {ALPHABET.map(l => {
             const used = guessed.includes(l)
             const hit = used && targetLetters.includes(l)
@@ -174,9 +175,9 @@ export function HangmanGame({ onExit }: { onExit: () => void }) {
                 key={l}
                 onClick={() => guess(l)}
                 disabled={used || over}
-                className={`w-9 h-10 rounded-lg font-bold uppercase text-sm transition-colors ${
+                className={`w-7 sm:w-8 h-7 sm:h-8 rounded-lg font-bold uppercase text-xs transition-colors cursor-pointer ${
                   hit ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' :
-                  used ? 'bg-red-100 dark:bg-red-900/30 text-red-400 dark:text-red-400/70 line-through' :
+                  used ? 'bg-red-100 dark:bg-red-900/30 text-red-400 dark:text-red-400/70 line-through cursor-default' :
                   'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-purple-100 dark:hover:bg-purple-900/40'
                 }`}
               >{l}</button>
@@ -184,28 +185,25 @@ export function HangmanGame({ onExit }: { onExit: () => void }) {
           })}
         </div>
 
-        <div className="flex flex-wrap gap-3 justify-center items-center">
+        <div className="flex flex-wrap gap-2 justify-center items-center">
           {over ? (
-            <button onClick={next} className="bg-purple-600 text-white px-8 py-3 rounded-xl font-medium hover:bg-purple-700 transition-colors">
+            <button onClick={next} className="bg-purple-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors cursor-pointer">
               {won ? 'Nice! Next ↵' : 'Next ↵'}
             </button>
           ) : (
             <>
-              <button onClick={hint} disabled={misses >= MAX_MISSES - 1} title="Reveal a letter (costs a life)" className={softBtn}><Lightbulb size={20} /></button>
-              <button onClick={handleSkip} className={softBtn}>Skip</button>
+              <button onClick={hint} disabled={misses >= MAX_MISSES - 1} title="Reveal a letter (costs a life)" className={softBtn}><Lightbulb size={16} /></button>
+              <button onClick={handleSkip} className={`${softBtn} text-xs sm:text-sm`}>Skip</button>
             </>
           )}
         </div>
 
-        <button onClick={() => speakEnglish(note.word)} title="Listen" className="absolute bottom-4 right-4 p-2 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors">
-          <Volume2 size={22} />
+        <button onClick={() => speakEnglish(note.word)} title="Listen" className="absolute bottom-3 right-3 p-1.5 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors cursor-pointer">
+          <Volume2 size={20} />
         </button>
       </div>
 
-      <div className="mt-4 flex flex-col items-center gap-2">
-        <p className="text-center text-sm font-medium text-gray-500 dark:text-gray-400">
-          {index + 1} / {notes.length}
-        </p>
+      <div className="mt-1 flex flex-col items-center gap-1">
         <GameStatsBar correct={correct} wrong={wrong} skipped={skipped} />
       </div>
 

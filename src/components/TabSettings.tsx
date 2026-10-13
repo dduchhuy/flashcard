@@ -1,5 +1,5 @@
 import { useRef, useState, useMemo } from 'react'
-import { useFlashcardStore, getCardTags, migrateFlashcard } from '../store'
+import { useFlashcardStore, getCardTags, migrateFlashcard, Flashcard } from '../store'
 import { SelectDropdown } from './SelectDropdown'
 import { Download, Upload, RotateCcw, Moon, Sun, Palette, CheckCircle2, Trash2 } from 'lucide-react'
 
@@ -44,6 +44,46 @@ export function TabSettings() {
     setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
+  const formatCardForExport = (card: Flashcard) => {
+    return {
+      phonetics: card.phonetics || [],
+      sentence: card.sentence,
+      partOfSpeech: card.partOfSpeech || (card.posEntries?.map(p => p.partOfSpeech).join(' / ') || ''),
+      posEntries: (card.posEntries || []).map(p => ({
+        partOfSpeech: p.partOfSpeech,
+        meanings: (p.meanings || []).map(m => ({
+          meaning: m.meaning,
+          notes: m.notes || [],
+          labels: m.labels || [],
+          examples: (m.examples || []).map(ex => ({
+            sentence: ex.sentence,
+            translation: ex.translation || ''
+          }))
+        }))
+      })),
+      phrasesAndIdioms: (card.phrasesAndIdioms || []).map(pi => ({
+        phrase: pi.phrase,
+        translation: pi.translation,
+        labels: pi.labels || [],
+        type: pi.type || 'phrase'
+      })),
+      usageNotes: card.usageNotes || [],
+      relatedWords: {
+        synonyms: card.relatedWords?.synonyms || [],
+        antonyms: card.relatedWords?.antonyms || [],
+        similarWords: card.relatedWords?.similarWords || [],
+        similarSpellings: card.relatedWords?.similarSpellings || [],
+        wordsContaining: card.relatedWords?.wordsContaining || [],
+        wordsMentioning: card.relatedWords?.wordsMentioning || []
+      },
+      illustrations: card.illustrations || [],
+      wordForms: card.wordForms || [],
+      tags: getCardTags(card),
+      id: card.id,
+      createdAt: card.createdAt
+    }
+  }
+
   const handleExport = async () => {
     if (flashcards.length === 0) {
       alert('Không có thẻ nào để export (No cards to export).')
@@ -72,7 +112,7 @@ export function TabSettings() {
       
       Object.entries(tagGroups).forEach(([tag, cards], index) => {
         setTimeout(() => {
-          downloadJSON({ state: { flashcards: cards }, version: 0 }, `${tag}_${dateStr}.json`)
+          downloadJSON({ state: { flashcards: cards.map(formatCardForExport) }, version: 0 }, `${tag}_${dateStr}.json`)
         }, index * 500)
       })
       return
@@ -89,7 +129,7 @@ export function TabSettings() {
       return
     }
 
-    downloadJSON({ state: { flashcards: cardsToExport }, version: 0 }, `${exportTag}_${dateStr}.json`)
+    downloadJSON({ state: { flashcards: cardsToExport.map(formatCardForExport) }, version: 0 }, `${exportTag}_${dateStr}.json`)
   }
 
   const handleDelete = () => {
@@ -202,46 +242,120 @@ export function TabSettings() {
             const newCardTags = getCardTags(newCard)
             const mergedTags = Array.from(new Set([...existingTags, ...newCardTags]))
             
-            // Merge highlights
-            const mergedHighlights = [...existingCard.highlights]
-            if (newCard.highlights && Array.isArray(newCard.highlights)) {
-              newCard.highlights.forEach((nh: any) => {
-                if (!mergedHighlights.some(eh => eh.wordIndices.join(',') === nh.wordIndices.join(','))) {
-                  mergedHighlights.push(nh)
+            // Merge phonetics
+            const mergedPhonetics = [...(existingCard.phonetics || [])]
+            if (newCard.phonetics && Array.isArray(newCard.phonetics)) {
+              newCard.phonetics.forEach(np => {
+                if (!mergedPhonetics.some(ep => ep.ipa === np.ipa && (ep.dialect || '') === (np.dialect || ''))) {
+                  mergedPhonetics.push(np)
                 }
               })
             }
 
-            // Merge posEntries if any
+            // Merge posEntries
             const mergedPosEntries = [...(existingCard.posEntries || [])]
             if (newCard.posEntries && Array.isArray(newCard.posEntries)) {
-              newCard.posEntries.forEach((np: any) => {
-                const existingPos = mergedPosEntries.find(p => p.partOfSpeech.toLowerCase().trim() === np.partOfSpeech.toLowerCase().trim())
-                if (!existingPos) {
+              newCard.posEntries.forEach(np => {
+                const existingPosIdx = mergedPosEntries.findIndex(
+                  p => p.partOfSpeech.toLowerCase().trim() === np.partOfSpeech.toLowerCase().trim()
+                )
+                if (existingPosIdx >= 0) {
+                  // Merge meanings
+                  const existingMeanings = [...mergedPosEntries[existingPosIdx].meanings]
+                  np.meanings.forEach(nm => {
+                    const existingMIdx = existingMeanings.findIndex(
+                      em => em.meaning.toLowerCase().trim() === nm.meaning.toLowerCase().trim()
+                    )
+                    if (existingMIdx >= 0) {
+                      // Merge examples, notes, labels
+                      const existingEx = [...(existingMeanings[existingMIdx].examples || [])]
+                      ;(nm.examples || []).forEach(nex => {
+                        if (!existingEx.some(ex => ex.sentence.toLowerCase().trim() === nex.sentence.toLowerCase().trim())) {
+                          existingEx.push(nex)
+                        }
+                      })
+                      existingMeanings[existingMIdx] = {
+                        ...existingMeanings[existingMIdx],
+                        notes: Array.from(new Set([...(existingMeanings[existingMIdx].notes || []), ...(nm.notes || [])])),
+                        labels: Array.from(new Set([...(existingMeanings[existingMIdx].labels || []), ...(nm.labels || [])])),
+                        examples: existingEx
+                      }
+                    } else {
+                      existingMeanings.push(nm)
+                    }
+                  })
+                  mergedPosEntries[existingPosIdx] = {
+                    ...mergedPosEntries[existingPosIdx],
+                    meanings: existingMeanings
+                  }
+                } else {
                   mergedPosEntries.push(np)
                 }
               })
             }
 
-            // Merge phrasesAndIdioms if any
+            // Merge phrasesAndIdioms
             const mergedPhrases = [...(existingCard.phrasesAndIdioms || [])]
             if (newCard.phrasesAndIdioms && Array.isArray(newCard.phrasesAndIdioms)) {
-              newCard.phrasesAndIdioms.forEach((np: any) => {
+              newCard.phrasesAndIdioms.forEach(np => {
                 if (!mergedPhrases.some(ep => ep.phrase.toLowerCase().trim() === np.phrase.toLowerCase().trim())) {
                   mergedPhrases.push(np)
                 }
               })
             }
+
+            // Merge usageNotes
+            const mergedUsageNotes = Array.from(new Set([
+              ...(existingCard.usageNotes || []),
+              ...(newCard.usageNotes || [])
+            ]))
+
+            // Merge relatedWords
+            const mergeArray = (a?: string[], b?: string[]) => Array.from(new Set([...(a || []), ...(b || [])]))
+            const mergedRelatedWords = {
+              synonyms: mergeArray(existingCard.relatedWords?.synonyms, newCard.relatedWords?.synonyms),
+              antonyms: mergeArray(existingCard.relatedWords?.antonyms, newCard.relatedWords?.antonyms),
+              similarWords: mergeArray(existingCard.relatedWords?.similarWords, newCard.relatedWords?.similarWords),
+              similarSpellings: mergeArray(existingCard.relatedWords?.similarSpellings, newCard.relatedWords?.similarSpellings),
+              wordsContaining: mergeArray(existingCard.relatedWords?.wordsContaining, newCard.relatedWords?.wordsContaining),
+              wordsMentioning: mergeArray(existingCard.relatedWords?.wordsMentioning, newCard.relatedWords?.wordsMentioning),
+            }
+
+            // Merge wordForms
+            const mergedWordForms = [...(existingCard.wordForms || [])]
+            if (newCard.wordForms && Array.isArray(newCard.wordForms)) {
+              newCard.wordForms.forEach(nwf => {
+                if (!mergedWordForms.some(ewf => ewf.form.toLowerCase().trim() === nwf.form.toLowerCase().trim())) {
+                  mergedWordForms.push(nwf)
+                }
+              })
+            }
+
+            // Merge illustrations
+            const mergedIllustrations = [...(existingCard.illustrations || [])]
+            if (newCard.illustrations && Array.isArray(newCard.illustrations)) {
+              newCard.illustrations.forEach(ni => {
+                if (!mergedIllustrations.some(ei => ei.imageUrl === ni.imageUrl && ei.alt === ni.alt)) {
+                  mergedIllustrations.push(ni)
+                }
+              })
+            }
             
-            existingMap.set(existingCard.id, {
+            const mergedCard = migrateFlashcard({
               ...existingCard,
               tags: mergedTags,
-              highlights: mergedHighlights,
+              phonetics: mergedPhonetics.length > 0 ? mergedPhonetics : existingCard.phonetics,
               posEntries: mergedPosEntries.length > 0 ? mergedPosEntries : undefined,
               phrasesAndIdioms: mergedPhrases.length > 0 ? mergedPhrases : undefined,
+              usageNotes: mergedUsageNotes.length > 0 ? mergedUsageNotes : undefined,
+              relatedWords: mergedRelatedWords,
+              wordForms: mergedWordForms.length > 0 ? mergedWordForms : undefined,
+              illustrations: mergedIllustrations.length > 0 ? mergedIllustrations : undefined,
             })
+            existingMap.set(existingCard.id, mergedCard)
           } else {
-            existingMap.set(newCard.id, newCard)
+            const normalizedCard = migrateFlashcard(newCard)
+            existingMap.set(normalizedCard.id, normalizedCard)
           }
         })
         return { flashcards: Array.from(existingMap.values()) }
@@ -253,10 +367,11 @@ export function TabSettings() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in">
-      
-      {/* Appearance Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 space-y-5 transition-colors">
+    <div className="max-w-6xl mx-auto animate-in fade-in grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      {/* Column 1: Appearance & Voice */}
+      <div className="space-y-6">
+        {/* Appearance Section */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 space-y-5 transition-colors">
         <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
           <Palette size={20} className="text-purple-600 dark:text-purple-400" />
           Appearance
@@ -514,99 +629,102 @@ export function TabSettings() {
           )}
         </div>
       </div>
+    </div>
 
-      {/* Data Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 space-y-4 transition-colors">
-        <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-          Data Management
-        </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          Export your flashcards by tag, or import multiple files to merge them.
-        </p>
+    {/* Column 2: Data Management & Danger Zone */}
+    <div className="space-y-6">
+        {/* Data Section */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 space-y-4 transition-colors">
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+            Data Management
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            Export your flashcards by tag, or import multiple files to merge them.
+          </p>
 
-        <div className="flex flex-col gap-3">
-          <SelectDropdown
-            value={exportTag}
-            onChange={setExportTag}
-            options={[
-              { value: 'all', label: 'Export: All Tags' },
-              ...allTags.map(t => ({ value: t, label: `Export: ${t}` }))
-            ]}
-          />
-          
-          <div className="flex gap-3">
-            <button 
-              onClick={handleExport}
-              className="flex-1 flex justify-center items-center gap-2 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 py-2.5 rounded-lg font-medium transition-colors"
-            >
-              <Download size={18} /> Export
-            </button>
-            
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              className="flex-1 flex justify-center items-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 py-2.5 rounded-lg font-medium transition-colors"
-            >
-              <Upload size={18} /> Import Backup
-            </button>
-          </div>
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleImport} 
-            accept=".json" 
-            multiple
-            className="hidden" 
-          />
-        </div>
-
-        {importedTags.length > 0 && (
-          <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-lg animate-in fade-in slide-in-from-top-2">
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="text-green-500 mt-0.5" size={20} />
-              <div>
-                <h4 className="text-sm font-medium text-green-800 dark:text-green-300">Import Successful!</h4>
-                <p className="text-sm text-green-700 dark:text-green-400 mt-1">
-                  Đã nhập dữ liệu cho các tag: <span className="font-bold">{importedTags.join(', ')}</span>
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Danger Zone Section */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 space-y-4 transition-colors border-2 border-red-100 dark:border-red-900/30">
-        <h2 className="text-lg font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
-          <Trash2 size={20} />
-          Remove card
-        </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Permanently delete flashcards by specific tags or wipe all data.
-        </p>
-
-        <div className="flex flex-col sm:flex-row items-center gap-3 p-4 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/30">
-          <div className="w-full sm:flex-1">
-            <label className="text-xs font-semibold text-red-800 dark:text-red-300 uppercase tracking-wider block mb-1.5 ml-1">Select tag</label>
+          <div className="flex flex-col gap-3">
             <SelectDropdown
-              value={deleteTag}
-              onChange={setDeleteTag}
+              value={exportTag}
+              onChange={setExportTag}
               options={[
-                { value: 'all', label: 'All' },
-                ...allTags.map(t => ({ value: t, label: t }))
+                { value: 'all', label: 'Export: All Tags' },
+                ...allTags.map(t => ({ value: t, label: `Export: ${t}` }))
               ]}
-              buttonClassName="border-red-200 dark:border-red-800/50 bg-white dark:bg-gray-800 text-red-900 dark:text-red-100 ring-red-500"
+            />
+            
+            <div className="flex gap-3">
+              <button 
+                onClick={handleExport}
+                className="flex-1 flex justify-center items-center gap-2 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 py-2.5 rounded-lg font-medium transition-colors"
+              >
+                <Download size={18} /> Export
+              </button>
+              
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-1 flex justify-center items-center gap-2 bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 py-2.5 rounded-lg font-medium transition-colors"
+              >
+                <Upload size={18} /> Import Backup
+              </button>
+            </div>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleImport} 
+              accept=".json" 
+              multiple
+              className="hidden" 
             />
           </div>
-          
-          <button 
-            onClick={handleDelete}
-            className="w-full sm:w-auto sm:mt-5 flex justify-center items-center gap-2 bg-red-600 text-white hover:bg-red-700 px-6 py-2.5 rounded-lg font-medium transition-colors shadow-sm focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 whitespace-nowrap"
-          >
-            <Trash2 size={16} /> Remove
-          </button>
+
+          {importedTags.length > 0 && (
+            <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-lg animate-in fade-in slide-in-from-top-2">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="text-green-500 mt-0.5" size={20} />
+                <div>
+                  <h4 className="text-sm font-medium text-green-800 dark:text-green-300">Import Successful!</h4>
+                  <p className="text-sm text-green-700 dark:text-green-400 mt-1">
+                    Đã nhập dữ liệu cho các tag: <span className="font-bold">{importedTags.join(', ')}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Danger Zone Section */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 space-y-4 transition-colors border-2 border-red-100 dark:border-red-900/30">
+          <h2 className="text-lg font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
+            <Trash2 size={20} />
+            Remove card
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Permanently delete flashcards by specific tags or wipe all data.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3 p-4 bg-red-50 dark:bg-red-900/10 rounded-xl border border-red-100 dark:border-red-900/30">
+            <div className="w-full sm:flex-1">
+              <label className="text-xs font-semibold text-red-800 dark:text-red-300 uppercase tracking-wider block mb-1.5 ml-1">Select tag</label>
+              <SelectDropdown
+                value={deleteTag}
+                onChange={setDeleteTag}
+                options={[
+                  { value: 'all', label: 'All' },
+                  ...allTags.map(t => ({ value: t, label: t }))
+                ]}
+                buttonClassName="border-red-200 dark:border-red-800/50 bg-white dark:bg-gray-800 text-red-900 dark:text-red-100 ring-red-500"
+              />
+            </div>
+            
+            <button 
+              onClick={handleDelete}
+              className="w-full sm:w-auto sm:mt-5 flex justify-center items-center gap-2 bg-red-600 text-white hover:bg-red-700 px-6 py-2.5 rounded-lg font-medium transition-colors shadow-sm focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 whitespace-nowrap"
+            >
+              <Trash2 size={16} /> Remove
+            </button>
+          </div>
         </div>
       </div>
-
     </div>
   )
 }

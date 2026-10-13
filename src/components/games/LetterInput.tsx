@@ -60,7 +60,7 @@ export function LetterInput({
 
   return (
     <div
-      className={`relative w-full py-4 px-12 rounded-xl border-2 text-center text-2xl font-medium transition-colors cursor-text ${boxClass}`}
+      className={`relative w-full py-2.5 sm:py-3 px-8 sm:px-12 rounded-xl border-2 text-center text-xl sm:text-2xl font-medium transition-colors cursor-text ${boxClass}`}
       onClick={() => inputRef.current?.focus()}
     >
       <div className="flex flex-wrap justify-center gap-y-1 font-mono tracking-wider">

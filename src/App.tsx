@@ -64,11 +64,77 @@ function App() {
   return (
     <div className={`min-h-screen flex flex-col overflow-x-clip transition-colors ${settings.isDarkMode ? 'dark bg-gray-900 text-white' : 'bg-gray-50'}`}>
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-30 transition-colors">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400">Flashcards</h1>
+      <header className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md shadow-xs sticky top-0 z-30 transition-colors border-b border-gray-100 dark:border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+              Flashcards
+            </h1>
           </div>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-1 bg-gray-100/80 dark:bg-gray-900/60 p-1 rounded-2xl border border-gray-200/50 dark:border-gray-700/50">
+            <button
+              onClick={() => changeTab('home')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                activeTab === 'home'
+                  ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-xs'
+                  : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
+              }`}
+            >
+              <PlusCircle size={17} strokeWidth={activeTab === 'home' ? 2.5 : 2} />
+              <span>Add</span>
+            </button>
+
+            <button
+              onClick={() => changeTab('all')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                activeTab === 'all'
+                  ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-xs'
+                  : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
+              }`}
+            >
+              <Library size={17} strokeWidth={activeTab === 'all' ? 2.5 : 2} />
+              <span>Library</span>
+            </button>
+
+            <button
+              onClick={() => changeTab('game')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                activeTab === 'game'
+                  ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-xs'
+                  : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
+              }`}
+            >
+              <Gamepad2 size={17} strokeWidth={activeTab === 'game' ? 2.5 : 2} />
+              <span>Practice</span>
+            </button>
+
+            <button
+              onClick={() => changeTab('learn')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                activeTab === 'learn'
+                  ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-xs'
+                  : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
+              }`}
+            >
+              <GraduationCap size={17} strokeWidth={activeTab === 'learn' ? 2.5 : 2} />
+              <span>Learn</span>
+            </button>
+
+            <button
+              onClick={() => changeTab('settings')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
+                activeTab === 'settings'
+                  ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-xs'
+                  : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
+              }`}
+            >
+              <SettingsIcon size={17} strokeWidth={activeTab === 'settings' ? 2.5 : 2} />
+              <span>Settings</span>
+            </button>
+          </nav>
+
           <div>
             {isLoading ? (
               <span className="text-sm text-gray-500">Đang tải...</span>
@@ -94,7 +160,7 @@ function App() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-6 mb-20">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 mb-20 md:mb-8">
         {activeTab === 'home' && <TabHome />}
         {activeTab === 'all' && <TabAllCards />}
         {activeTab === 'game' && <TabGame />}
@@ -102,8 +168,8 @@ function App() {
         {activeTab === 'settings' && <TabSettings />}
       </main>
 
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 pb-safe z-40 transition-colors">
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-700 pb-safe z-40 transition-colors">
         <div className="max-w-3xl mx-auto flex justify-around">
           <button
             onClick={() => changeTab('home')}

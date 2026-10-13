@@ -1,7 +1,7 @@
-import { useMemo, useState, useEffect, ReactNode } from 'react'
-import { ArrowLeft, RefreshCcw, BookOpen, X, Volume2 } from 'lucide-react'
-import { useFlashcardStore, getCardTags, getCardsForMode, Flashcard } from '../../store'
-import { extractWordText, speakEnglish } from '../../utils'
+import { useMemo, ReactNode } from 'react'
+import { ArrowLeft, RefreshCcw, BookOpen } from 'lucide-react'
+import { useFlashcardStore, getCardTags, getCardsForMode, normalizePhraseItem } from '../../store'
+import { extractWordText } from '../../utils'
 
 export type Note = {
   id: string
@@ -33,12 +33,13 @@ export function useNotes(seed: number, allHighlights?: boolean, sourceMode?: 'hi
       if (sourceMode === 'phrases') {
         const phrases = card.phrasesAndIdioms || []
         phrases.forEach((p, idx) => {
-          if (!p.phrase) return
+          const norm = normalizePhraseItem(p)
+          if (!norm.phrase) return
           notes.push({
-            id: p.id || `${card.id}-pi-${idx}`,
-            word: p.phrase,
-            meaning: p.translation || p.phrase,
-            sentence: p.phrase,
+            id: norm.id || `${card.id}-pi-${idx}`,
+            word: norm.phrase,
+            meaning: norm.translation || norm.phrase,
+            sentence: norm.phrase,
             cardId: card.id,
           })
         })
@@ -91,27 +92,145 @@ export function EmptyState({ onExit, text }: { onExit: () => void, text?: string
   )
 }
 
-export function ResultScreen({ lines, onExit, onAgain }: { lines: ReactNode, onExit: () => void, onAgain: () => void }) {
+export function ResultScreen({
+  lines,
+  onExit,
+  onAgain,
+  correct,
+  wrong,
+  skipped,
+  title = "Practice Complete!"
+}: {
+  lines?: ReactNode
+  onExit: () => void
+  onAgain: () => void
+  correct?: number
+  wrong?: number
+  skipped?: number
+  title?: string
+}) {
+  const total = (correct ?? 0) + (wrong ?? 0) + (skipped ?? 0)
+  const accuracy = total > 0 ? Math.round(((correct ?? 0) / total) * 100) : null
+
   return (
-    <div className="text-center py-20 animate-in fade-in flex flex-col items-center">
-      <div className="text-6xl mb-6">🏆</div>
-      <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Practice Complete!</h2>
-      <div className="text-lg text-gray-500 dark:text-gray-400 mb-6">{lines}</div>
-      <div className="flex gap-4 mt-2">
-        <button onClick={onExit} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-6 py-2 rounded-lg font-medium">Back</button>
-        <button onClick={onAgain} className="bg-purple-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium hover:bg-purple-700">
-          <RefreshCcw size={18} /> Play Again
+    <div className="max-w-md mx-auto py-12 px-4 animate-in fade-in flex flex-col items-center text-center">
+      <div className="relative mb-6">
+        <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-purple-100 to-indigo-100 dark:from-purple-900/40 dark:to-indigo-900/40 flex items-center justify-center shadow-inner">
+          <span className="text-4xl">🏆</span>
+        </div>
+        {accuracy !== null && (
+          <div className="absolute -bottom-2 -right-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-md">
+            {accuracy}%
+          </div>
+        )}
+      </div>
+
+      <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">{title}</h2>
+      {lines && <div className="text-gray-500 dark:text-gray-400 text-sm mb-4">{lines}</div>}
+
+      {(correct !== undefined || wrong !== undefined || skipped !== undefined) && (
+        <div className="grid grid-cols-3 gap-3 w-full my-6">
+          <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 rounded-2xl p-3 flex flex-col items-center">
+            <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{correct ?? 0}</span>
+            <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300 mt-0.5">Correct</span>
+          </div>
+          <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40 rounded-2xl p-3 flex flex-col items-center">
+            <span className="text-2xl font-bold text-rose-600 dark:text-rose-400">{wrong ?? 0}</span>
+            <span className="text-xs font-medium text-rose-700 dark:text-rose-300 mt-0.5">Wrong</span>
+          </div>
+          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-2xl p-3 flex flex-col items-center">
+            <span className="text-2xl font-bold text-amber-600 dark:text-amber-400">{skipped ?? 0}</span>
+            <span className="text-xs font-medium text-amber-700 dark:text-amber-300 mt-0.5">Skipped</span>
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center gap-3 w-full mt-2">
+        <button
+          onClick={onExit}
+          className="flex-1 py-3 px-4 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 font-semibold transition-colors text-sm"
+        >
+          Menu
+        </button>
+        <button
+          onClick={onAgain}
+          className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold shadow-md shadow-purple-500/20 transition-all text-sm flex items-center justify-center gap-2"
+        >
+          <RefreshCcw size={16} /> Play Again
         </button>
       </div>
     </div>
   )
 }
 
+export interface GameHeaderProps {
+  onExit: () => void
+  title?: string
+  center?: ReactNode
+  right?: ReactNode
+  current?: number
+  total?: number
+  progress?: number
+  className?: string
+}
+
+export function GameHeader({
+  onExit,
+  title,
+  center,
+  right,
+  current,
+  total,
+  progress,
+  className = ''
+}: GameHeaderProps) {
+  const calcProgress = progress !== undefined
+    ? progress
+    : (current !== undefined && total && total > 0 ? Math.min(100, Math.round(((current + 1) / total) * 100)) : undefined)
+
+  return (
+    <div className={`w-full mb-3 sm:mb-4 ${className}`}>
+      <div className="flex items-center justify-between gap-3">
+        <button
+          onClick={onExit}
+          title="Back to games menu"
+          className="p-1.5 sm:p-2 rounded-xl text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5 flex-shrink-0"
+        >
+          <ArrowLeft size={18} />
+          <span className="text-xs font-semibold hidden sm:inline">Exit</span>
+        </button>
+
+        <div className="flex items-center justify-center flex-1 min-w-0">
+          {center ? center : title ? (
+            <h2 className="text-sm sm:text-base font-bold text-gray-800 dark:text-gray-100 truncate text-center">
+              {title}
+            </h2>
+          ) : null}
+        </div>
+
+        <div className="flex items-center gap-1.5 justify-end flex-shrink-0">
+          {right}
+        </div>
+      </div>
+
+      {calcProgress !== undefined && (
+        <div className="w-full bg-gray-100 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden mt-2">
+          <div
+            className="h-full bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full transition-all duration-300 ease-out"
+            style={{ width: `${calcProgress}%` }}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function BackBar({ onExit, right }: { onExit: () => void, right?: ReactNode }) {
   return (
-    <div className="flex justify-between items-center mb-8">
-      <button onClick={onExit} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-        <ArrowLeft size={24} />
+    <div className="flex justify-between items-center mb-6">
+      <button onClick={onExit} className="p-2 rounded-xl text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5">
+        <ArrowLeft size={20} />
+        <span className="text-xs font-semibold hidden sm:inline">Exit</span>
       </button>
       {right ?? <div className="w-6" />}
     </div>
@@ -129,7 +248,7 @@ export function RootCardButton({ onClick, className = '' }: { onClick: () => voi
     <button
       onClick={(e) => { e.stopPropagation(); onClick() }}
       title="View original flashcard"
-      className={`p-1.5 rounded-lg text-gray-400 hover:text-purple-600 dark:hover:text-purple-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors z-10 ${className}`}
+      className={`p-2 rounded-xl text-gray-400 hover:text-purple-600 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/40 border border-transparent hover:border-purple-200 dark:hover:border-purple-800 transition-colors z-10 ${className}`}
     >
       <BookOpen size={18} />
     </button>
@@ -152,236 +271,28 @@ export function GameStatsBar({
   className?: string
 }) {
   return (
-    <div className={`flex items-center justify-center gap-6 mt-3 px-1 text-sm font-medium text-gray-500 dark:text-gray-400 ${className}`}>
-      <span>{correct} correct</span>
-      <span>{wrong} wrong</span>
-      <span>{skipped} skip</span>
+    <div className={`flex items-center justify-center gap-4 sm:gap-6 mt-4 px-2 text-xs sm:text-sm font-medium ${className}`}>
+      <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2.5 py-1 rounded-lg">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+        {correct} correct
+      </span>
+      <span className="inline-flex items-center gap-1.5 text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 px-2.5 py-1 rounded-lg">
+        <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+        {wrong} wrong
+      </span>
+      <span className="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 px-2.5 py-1 rounded-lg">
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+        {skipped} skip
+      </span>
       {total !== undefined && (
-        <>
-          <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
-          <span className="tabular-nums">
-            {current !== undefined ? current : 0} / {total}
-          </span>
-        </>
+        <span className="tabular-nums text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-lg">
+          {current !== undefined ? current : 0} / {total}
+        </span>
       )}
     </div>
   )
 }
 
-export function CardDetailModal({
-  card,
-  isOpen = true,
-  onClose
-}: {
-  card?: Flashcard | null
-  isOpen?: boolean
-  onClose: () => void
-}) {
-  const { flashcards } = useFlashcardStore()
-  const [activeCardId, setActiveCardId] = useState<string | null>(null)
-  const [activePosIdx, setActivePosIdx] = useState<number>(0)
-
-  useEffect(() => {
-    if (card) {
-      setActiveCardId(card.id)
-      setActivePosIdx(0)
-    }
-  }, [card])
-
-  if (!isOpen || !card) return null
-
-  // Find all sibling cards that share the same word
-  const wordKey = card.sentence.trim().toLowerCase()
-  const siblings = flashcards.filter(f => f.sentence.trim().toLowerCase() === wordKey)
-  const currentCard = siblings.find(s => s.id === activeCardId) || card
-
-  const hasPosEntries = Boolean(currentCard.posEntries && currentCard.posEntries.length > 0)
-  const posList = hasPosEntries
-    ? currentCard.posEntries!.map((p, idx) => ({
-        key: p.id || String(idx),
-        label: p.partOfSpeech,
-        isActive: idx === activePosIdx,
-        onClick: () => setActivePosIdx(idx),
-      }))
-    : siblings
-        .filter(s => s.partOfSpeech)
-        .map(sib => ({
-          key: sib.id,
-          label: sib.partOfSpeech!,
-          isActive: sib.id === currentCard.id,
-          onClick: () => setActiveCardId(sib.id),
-        }))
-
-  const activePosEntry = hasPosEntries ? (currentCard.posEntries![activePosIdx] || currentCard.posEntries![0]) : null
-  const displayPhonetic = activePosEntry?.phonetic || currentCard.phonetic
-
-  return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-in fade-in"
-      onPointerDown={onClose}
-    >
-      <div 
-        className="bg-white dark:bg-gray-800 p-6 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl"
-        onPointerDown={e => e.stopPropagation()}
-      >
-        <div className="flex justify-between items-start mb-4">
-          <div className="flex flex-col gap-1 flex-1 pr-4">
-            {/* Line 1: Word */}
-            <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white capitalize break-words">
-                {currentCard.sentence}
-              </h2>
-              <button
-                onClick={() => speakEnglish(currentCard.sentence)}
-                className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 p-1 rounded-full transition-colors"
-                title="Listen"
-              >
-                <Volume2 size={20} />
-              </button>
-            </div>
-
-            {/* Line 2: Parts of speech (clickable to switch between POS) */}
-            {posList.length > 0 && (
-              <div className="flex items-center gap-2 flex-wrap mt-0.5">
-                {posList.map(p => {
-                  if (!p.label) return null
-                  return (
-                    <button
-                      key={p.key}
-                      onClick={p.onClick}
-                      className={`text-sm italic px-2 py-0.5 rounded transition-all ${
-                        p.isActive
-                          ? 'font-bold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 ring-1 ring-gray-300 dark:ring-gray-600'
-                          : 'font-normal text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-
-            {/* Line 3: Phonetic */}
-            {displayPhonetic && (
-              <div className="text-base italic text-gray-400 dark:text-gray-500 font-normal">
-                {displayPhonetic}
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={onClose}
-            onPointerDown={(e) => { e.stopPropagation(); onClose() }}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            title="Close"
-          >
-            <X size={22} />
-          </button>
-        </div>
-
-        {/* Highlights / Meanings / Examples */}
-        <div className="space-y-3 mt-4">
-          {hasPosEntries && activePosEntry ? (
-            activePosEntry.meanings.length === 0 ? (
-              <p className="text-sm text-gray-400 italic">No notes or meanings added.</p>
-            ) : (
-              activePosEntry.meanings.map((m, mIdx) => (
-                <div key={m.id || mIdx} className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3.5 border border-gray-100 dark:border-gray-700">
-                  <div className="font-semibold text-gray-800 dark:text-gray-200 text-base mb-1">
-                    {m.meaning}
-                  </div>
-                  {m.examples && m.examples.length > 0 && (
-                    <div className="space-y-2 mt-2">
-                      {m.examples.map((ex, exIdx) => (
-                        <div key={ex.id || exIdx} className="bg-white/60 dark:bg-gray-800/40 p-2.5 rounded-lg border border-gray-100/80 dark:border-gray-600/40">
-                          <div className="text-sm text-gray-700 dark:text-gray-200 italic flex items-start justify-between gap-2">
-                            <span>"{ex.sentence}"</span>
-                            <button
-                              onClick={() => speakEnglish(ex.sentence)}
-                              className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 p-0.5 rounded transition-colors shrink-0"
-                              title="Listen"
-                            >
-                              <Volume2 size={15} />
-                            </button>
-                          </div>
-                          {ex.translation && (
-                            <div className="text-sm text-gray-500 dark:text-gray-400 mt-1 pl-1">
-                              {ex.translation}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))
-            )
-          ) : (currentCard.highlights || []).length === 0 ? (
-            <p className="text-sm text-gray-400 italic">No notes or meanings added.</p>
-          ) : (
-            (currentCard.highlights || []).map(h => (
-              <div key={h.id} className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3.5 border border-gray-100 dark:border-gray-700">
-                <div className="font-semibold text-gray-800 dark:text-gray-200 text-base mb-1">
-                  {h.meaning}
-                </div>
-                {h.example && (
-                  <div className="text-sm text-gray-600 dark:text-gray-300 italic flex items-start gap-2 mt-1">
-                    "{h.example}"
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* Phrases & Idioms Section */}
-        {currentCard.phrasesAndIdioms && currentCard.phrasesAndIdioms.length > 0 && (
-          <div className="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700">
-            <div className="font-bold text-gray-800 dark:text-gray-200 text-base mb-2.5 flex items-center gap-2">
-              <span>Phrases &amp; Idioms</span>
-              <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full font-normal">
-                {currentCard.phrasesAndIdioms.length}
-              </span>
-            </div>
-            <div className="space-y-2">
-              {currentCard.phrasesAndIdioms.map((pi, piIdx) => (
-                <div key={pi.id || piIdx} className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3 border border-gray-100 dark:border-gray-700 flex items-start justify-between gap-2">
-                  <div>
-                    <div className="font-semibold text-gray-800 dark:text-gray-200 text-sm">
-                      {pi.phrase}
-                    </div>
-                    {pi.translation && (
-                      <div className="text-sm text-gray-600 dark:text-gray-300 mt-0.5">
-                        {pi.translation}
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => speakEnglish(pi.phrase)}
-                    className="text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 p-1 rounded-full transition-colors shrink-0"
-                    title="Listen"
-                  >
-                    <Volume2 size={16} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Tags */}
-        {getCardTags(currentCard).length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
-            {getCardTags(currentCard).map(tag => (
-              <span key={tag} className="text-xs px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
-                #{tag}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
+export { CardDetailModal } from '../CardDetailModal'
+export type { CardDetailModalProps } from '../CardDetailModal'
 

@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useMemo, Component, ReactNode, ErrorInfo } from 'react'
-import { useFlashcardStore, Flashcard, getCardTags, getCardsForMode } from '../store'
-import { RefreshCcw, ThumbsDown, ThumbsUp, Lightbulb, LightbulbOff, Layers, MousePointerClick, ArrowLeft, Grid2X2, Type, BrainCircuit, Headphones, Volume2, Shuffle, Zap, ListOrdered, ToggleLeft, Skull } from 'lucide-react'
+import { useFlashcardStore, Flashcard, getCardTags, getCardsForMode, normalizePhraseItem } from '../store'
+import { ThumbsDown, ThumbsUp, Lightbulb, LightbulbOff, Layers, MousePointerClick, Grid2X2, Type, BrainCircuit, Headphones, Volume2, Shuffle, Zap, ListOrdered, ToggleLeft, Skull, Sparkles, ChevronRight } from 'lucide-react'
 import { MatchGame } from './games/MatchGame'
-import { EmptyState, CardDetailModal, RootCardButton } from './games/shared'
+import { EmptyState, CardDetailModal, RootCardButton, GameHeader, ResultScreen } from './games/shared'
 import { MemoryGame } from './games/MemoryGame'
 import { FillBlankGame } from './games/FillBlankGame'
 import { ListenGame } from './games/ListenGame'
@@ -119,222 +119,333 @@ function GameMenu({ onSelect }: { onSelect: (mode: GameMode) => void }) {
     }
   }
 
-  return (
-    <div className="max-w-4xl mx-auto py-12 animate-in fade-in flex flex-col items-center">
-      <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Choose Practice Mode</h2>
-      
-      {allTags.length > 0 && (
-        <div className="flex flex-wrap gap-2 justify-center mb-6 px-4 max-w-2xl">
-          <button
-            onClick={() => setActiveTags([])}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              activeTags.length === 0
-                ? 'bg-purple-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-            }`}
-          >
-            All Tags
-          </button>
-          {allTags.map(tag => {
-            const isActive = activeTags.includes(tag)
-            return (
-              <button
-                key={tag}
-                onClick={() => toggleTag(tag)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
-                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600'
-                }`}
-              >
-                {tag}
-              </button>
-            )
-          })}
-        </div>
-      )}
+  const eligibleCards = useMemo(() => {
+    let list = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
+    return getCardsForMode(list, gameInputMode)
+  }, [flashcards, activeTags, gameInputMode])
 
-      <div className="flex justify-center mb-8 w-full px-4">
-        <div className="bg-gray-100/80 dark:bg-gray-800/80 p-1 rounded-xl flex items-center shadow-inner border border-gray-200/50 dark:border-gray-700/50">
+  return (
+    <div className="w-full max-w-7xl mx-auto py-2 px-4 sm:px-6 lg:px-8 animate-in fade-in flex flex-col">
+      {/* Compact 1-Line Header Bar: Mode Switcher + Tags + Cards Available */}
+      <div className="w-full mb-4 py-2 px-3 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200/70 dark:border-gray-700/70 shadow-2xs flex items-center justify-between gap-3 flex-wrap">
+        {/* Left: Mode Switcher */}
+        <div className="bg-gray-100 dark:bg-gray-900/80 p-0.5 sm:p-1 rounded-xl flex items-center shadow-inner border border-gray-200/50 dark:border-gray-700/50 shrink-0">
           <button
+            type="button"
             onClick={() => setGameInputMode('sentence')}
-            className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               gameInputMode === 'sentence' 
-                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm ring-1 ring-gray-200/50 dark:ring-gray-600/50' 
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-700/50'
+                ? 'bg-white dark:bg-gray-700 text-purple-700 dark:text-purple-300 shadow-xs' 
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
             }`}
           >
             Sentence Mode
           </button>
           <button
+            type="button"
             onClick={() => setGameInputMode('word')}
-            className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               gameInputMode === 'word' 
-                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm ring-1 ring-gray-200/50 dark:ring-gray-600/50' 
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200/50 dark:hover:bg-gray-700/50'
+                ? 'bg-white dark:bg-gray-700 text-purple-700 dark:text-purple-300 shadow-xs' 
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
             }`}
           >
             Flashcard Mode
           </button>
         </div>
+
+        {/* Center / Right: Tags & Cards Available on the same row */}
+        <div className="flex items-center gap-2 flex-wrap min-w-0 ml-auto">
+          {allTags.length > 0 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 max-w-full sm:max-w-md no-scrollbar">
+              <button
+                type="button"
+                onClick={() => setActiveTags([])}
+                className={`px-2.5 py-1 rounded-full text-xs font-medium shrink-0 transition-colors ${
+                  activeTags.length === 0
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'bg-gray-100 dark:bg-gray-700/60 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+              >
+                All Tags
+              </button>
+              {allTags.map(tag => {
+                const isActive = activeTags.includes(tag)
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => toggleTag(tag)}
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium shrink-0 transition-colors ${
+                      isActive
+                        ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
+                        : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-purple-300'
+                    }`}
+                  >
+                    #{tag}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 shrink-0">
+            <Sparkles size={13} className="text-purple-600 dark:text-purple-400" />
+            <span>{eligibleCards.length} cards available</span>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full px-4">
-        <button 
-          onClick={() => onSelect('swipe')}
-          className="w-full bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600 hover:shadow-md transition-all flex flex-col items-center text-center gap-3 group"
-        >
-          <div className="bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 p-4 rounded-full group-hover:scale-110 transition-transform">
-            <Layers size={32} />
+      {/* Categorized Game Sections */}
+      <div className="w-full space-y-4">
+        {/* Section 1: Quick Recall & Review */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="w-2 h-2 rounded-full bg-purple-500" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              Quick Recall & Review
+            </h3>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Swipe Cards</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Review & swipe right if remembered.</p>
-          </div>
-        </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
+            <button 
+              onClick={() => onSelect('swipe')}
+              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-purple-300 dark:hover:border-purple-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Layers size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                  Swipe Cards
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                  Review & swipe right if remembered
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 group-hover:text-purple-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
 
-        <button 
-          onClick={() => onSelect('quiz')}
-          className="w-full bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all flex flex-col items-center text-center gap-3 group"
-        >
-          <div className="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 p-4 rounded-full group-hover:scale-110 transition-transform">
-            <MousePointerClick size={32} />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Multiple Choice</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Select meaning from random options.</p>
-          </div>
-        </button>
+            <button 
+              onClick={() => onSelect('quiz')}
+              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-blue-300 dark:hover:border-blue-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <MousePointerClick size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                  Multiple Choice
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                  Select meaning from 4-6 options
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
 
-        <button 
-          onClick={() => onSelect('match')}
-          className="w-full bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-600 hover:shadow-md transition-all flex flex-col items-center text-center gap-3 group"
-        >
-          <div className="bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400 p-4 rounded-full group-hover:scale-110 transition-transform">
-            <Grid2X2 size={32} />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Match Game</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Connect words with their meanings.</p>
-          </div>
-        </button>
+            <button 
+              onClick={() => onSelect('truefalse')}
+              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-rose-300 dark:hover:border-rose-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <ToggleLeft size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
+                  True or False
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                  Rapidly verify if meaning is correct
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 group-hover:text-rose-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
 
-        <button 
-          onClick={() => onSelect('fill')}
-          className="w-full bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-md transition-all flex flex-col items-center text-center gap-3 group"
-        >
-          <div className="bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 p-4 rounded-full group-hover:scale-110 transition-transform">
-            <Type size={32} />
+            <button 
+              onClick={() => onSelect('speed')}
+              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-yellow-300 dark:hover:border-yellow-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600 dark:text-yellow-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Zap size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-yellow-600 dark:group-hover:text-yellow-400 transition-colors">
+                  Speed Match
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                  Beat the clock with streak combos
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 group-hover:text-yellow-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Fill in the Blank</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Type the exact missing word.</p>
-          </div>
-        </button>
+        </div>
 
-        <button 
-          onClick={() => onSelect('memory')}
-          className="w-full bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-pink-300 dark:hover:border-pink-600 hover:shadow-md transition-all flex flex-col items-center text-center gap-3 group"
-        >
-          <div className="bg-pink-100 dark:bg-pink-900/40 text-pink-600 dark:text-pink-400 p-4 rounded-full group-hover:scale-110 transition-transform">
-            <BrainCircuit size={32} />
+        {/* Section 2: Memory & Connections */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              Memory & Connections
+            </h3>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Memory Flip</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Flip cards to find matching pairs.</p>
-          </div>
-        </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
+            <button 
+              onClick={() => onSelect('match')}
+              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-emerald-300 dark:hover:border-emerald-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Grid2X2 size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                  Match Game
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                  Connect words & phrases with meanings
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
 
-        <button 
-          onClick={() => onSelect('listen')}
-          className="w-full bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-cyan-300 dark:hover:border-cyan-600 hover:shadow-md transition-all flex flex-col items-center text-center gap-3 group"
-        >
-          <div className="bg-cyan-100 dark:bg-cyan-900/40 text-cyan-600 dark:text-cyan-400 p-4 rounded-full group-hover:scale-110 transition-transform">
-            <Headphones size={32} />
+            <button 
+              onClick={() => onSelect('memory')}
+              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-pink-300 dark:hover:border-pink-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg bg-pink-100 dark:bg-pink-900/40 text-pink-600 dark:text-pink-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <BrainCircuit size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-pink-600 dark:group-hover:text-pink-400 transition-colors">
+                  Memory Flip
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                  Flip cards to find hidden pairs
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 group-hover:text-pink-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Dictation</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Listen to the pronunciation and spell it.</p>
-          </div>
-        </button>
+        </div>
 
-        <button 
-          onClick={() => onSelect('scramble')}
-          className="w-full bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-md transition-all flex flex-col items-center text-center gap-3 group"
-        >
-          <div className="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 p-4 rounded-full group-hover:scale-110 transition-transform">
-            <Shuffle size={32} />
+        {/* Section 3: Spelling & Construction */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="w-2 h-2 rounded-full bg-orange-500" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              Spelling & Construction
+            </h3>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Word Scramble</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Unscramble the letters of the word.</p>
-          </div>
-        </button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
+            <button 
+              onClick={() => onSelect('fill')}
+              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-orange-300 dark:hover:border-orange-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Type size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
+                  Fill in the Blank
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                  Type or spell the exact missing word
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 group-hover:text-orange-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
 
-        <button 
-          onClick={() => onSelect('speed')}
-          className="w-full bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-yellow-300 dark:hover:border-yellow-600 hover:shadow-md transition-all flex flex-col items-center text-center gap-3 group"
-        >
-          <div className="bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600 dark:text-yellow-400 p-4 rounded-full group-hover:scale-110 transition-transform">
-            <Zap size={32} />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Speed Match</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Beat the clock for the highest score.</p>
-          </div>
-        </button>
+            <button 
+              onClick={() => onSelect('typing')}
+              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-fuchsia-300 dark:hover:border-fuchsia-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg bg-fuchsia-100 dark:bg-fuchsia-900/40 text-fuchsia-600 dark:text-fuchsia-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Type size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-fuchsia-600 dark:group-hover:text-fuchsia-400 transition-colors">
+                  Fill Blank (4 Choices)
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                  Choose the missing word in context
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 group-hover:text-fuchsia-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
 
-        <button 
-          onClick={() => onSelect('sentence')}
-          className="w-full bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-teal-300 dark:hover:border-teal-600 hover:shadow-md transition-all flex flex-col items-center text-center gap-3 group"
-        >
-          <div className="bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 p-4 rounded-full group-hover:scale-110 transition-transform">
-            <ListOrdered size={32} />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Sentence Builder</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Put the words in the right order.</p>
-          </div>
-        </button>
+            <button 
+              onClick={() => onSelect('sentence')}
+              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-teal-300 dark:hover:border-teal-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <ListOrdered size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+                  Sentence Builder
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                  Put words into correct order
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 group-hover:text-teal-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
 
-        <button 
-          onClick={() => onSelect('truefalse')}
-          className="w-full bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-rose-300 dark:hover:border-rose-600 hover:shadow-md transition-all flex flex-col items-center text-center gap-3 group"
-        >
-          <div className="bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 p-4 rounded-full group-hover:scale-110 transition-transform">
-            <ToggleLeft size={32} />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">True or False</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Is this meaning correct?</p>
-          </div>
-        </button>
+            <button 
+              onClick={() => onSelect('scramble')}
+              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Shuffle size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                  Word Scramble
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                  Rearrange letter tiles into the word
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
 
-        <button 
-          onClick={() => onSelect('hangman')}
-          className="w-full bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md transition-all flex flex-col items-center text-center gap-3 group"
-        >
-          <div className="bg-slate-100 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 p-4 rounded-full group-hover:scale-110 transition-transform">
-            <Skull size={32} />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Hangman</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Guess the word letter by letter.</p>
-          </div>
-        </button>
+            <button 
+              onClick={() => onSelect('listen')}
+              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-cyan-300 dark:hover:border-cyan-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg bg-cyan-100 dark:bg-cyan-900/40 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Headphones size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
+                  Dictation (Audio)
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                  Listen to native audio and write it
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 group-hover:text-cyan-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
 
-        <button 
-          onClick={() => onSelect('typing')}
-          className="w-full bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-fuchsia-300 dark:hover:border-fuchsia-600 hover:shadow-md transition-all flex flex-col items-center text-center gap-3 group"
-        >
-          <div className="bg-fuchsia-100 dark:bg-fuchsia-900/40 text-fuchsia-600 dark:text-fuchsia-400 p-4 rounded-full group-hover:scale-110 transition-transform">
-            <Type size={32} />
+            <button 
+              onClick={() => onSelect('hangman')}
+              className="w-full bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200/70 dark:border-gray-700/70 shadow-xs hover:shadow-md hover:border-slate-300 dark:hover:border-slate-500 transition-all flex items-center gap-3 text-left group cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <Skull size={20} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm group-hover:text-slate-600 dark:group-hover:text-slate-400 transition-colors">
+                  Hangman
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                  Deduce the word letter by letter
+                </p>
+              </div>
+              <ChevronRight size={16} className="text-gray-400 group-hover:text-slate-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+            </button>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Fill Blank (4 Choices)</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Select missing word/phrase from 4 options.</p>
-          </div>
-        </button>
+        </div>
       </div>
     </div>
   )
@@ -346,6 +457,7 @@ function QuizGame({ onExit }: { onExit: () => void }) {
   const { flashcards, activeTags, gameInputMode } = useFlashcardStore()
   const [seed, setSeed] = useState(0)
   const [quizMode, setQuizMode] = useState<'w2m' | 'm2w'>('w2m')
+  const [quizSourceMode, setQuizSourceMode] = useState<'highlights' | 'phrases'>('highlights')
   const [uniqueWords, setUniqueWords] = useState(false)
   const [answerCount, setAnswerCount] = useState(6)
   const [correct, setCorrect] = useState(0)
@@ -357,6 +469,24 @@ function QuizGame({ onExit }: { onExit: () => void }) {
     const questions: any[] = []
     let filtered = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
     filtered = getCardsForMode(filtered, gameInputMode)
+
+    if (quizSourceMode === 'phrases') {
+      filtered.forEach(card => {
+        const phrases = card.phrasesAndIdioms || []
+        phrases.forEach((rawPi, idx) => {
+          const pi = normalizePhraseItem(rawPi)
+          if (!pi.phrase) return
+          questions.push({
+            cardId: card.id,
+            highlightId: pi.id || `${card.id}-pi-${idx}`,
+            word: pi.phrase,
+            sentence: pi.phrase,
+            correctMeaning: pi.translation || pi.phrase,
+          })
+        })
+      })
+      return questions.sort(() => Math.random() - 0.5)
+    }
     
     if (uniqueWords) {
       // Each card appears only once, using only first highlight
@@ -389,7 +519,7 @@ function QuizGame({ onExit }: { onExit: () => void }) {
       })
     }
     return questions.sort(() => Math.random() - 0.5)
-  }, [flashcards, seed, activeTags, uniqueWords, gameInputMode])
+  }, [flashcards, seed, activeTags, uniqueWords, gameInputMode, quizSourceMode])
 
   const allMeanings = useMemo(() => {
     return Array.from(new Set(allQuestions.map(q => q.correctMeaning).filter(Boolean)))
@@ -445,45 +575,28 @@ function QuizGame({ onExit }: { onExit: () => void }) {
     setSkipped(0)
   }
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (selectedOption) return
+      const n = Number(e.key)
+      if (n >= 1 && n <= options.length) {
+        handleSelect(options[n - 1])
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [options, selectedOption, correctOption])
+
   if (currentIndex >= allQuestions.length) {
     return (
-      <div className="text-center py-20 animate-in fade-in flex flex-col items-center">
-        <div className="text-6xl mb-6">🎉</div>
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Quiz Complete!</h2>
-        <div className="flex gap-6 mb-8 mt-2">
-          <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-gray-700 dark:text-gray-300">{correct}</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Correct</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-gray-700 dark:text-gray-300">{wrong}</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Wrong</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-gray-700 dark:text-gray-300">{skipped}</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Skipped</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-gray-700 dark:text-gray-300">{allQuestions.length}</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Total</span>
-          </div>
-        </div>
-        
-        <div className="flex gap-4">
-          <button 
-            onClick={onExit}
-            className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-6 py-2.5 rounded-lg font-medium transition-colors"
-          >
-            Back
-          </button>
-          <button 
-            onClick={handleRestart}
-            className="bg-purple-600 text-white px-6 py-2.5 rounded-lg hover:bg-purple-700 font-medium inline-flex items-center gap-2 shadow-sm transition-colors"
-          >
-            <RefreshCcw size={18} /> Play Again
-          </button>
-        </div>
-      </div>
+      <ResultScreen 
+        title="Multiple Choice Complete!"
+        correct={correct}
+        wrong={wrong}
+        skipped={skipped}
+        onExit={onExit}
+        onAgain={handleRestart}
+      />
     )
   }
 
@@ -498,7 +611,7 @@ function QuizGame({ onExit }: { onExit: () => void }) {
     setTimeout(() => {
       setSelectedOption(null)
       setCurrentIndex(i => i + 1)
-    }, 1500)
+    }, 1200)
   }
 
   const handleSkip = () => {
@@ -508,118 +621,148 @@ function QuizGame({ onExit }: { onExit: () => void }) {
   }
 
   return (
-    <div className="max-w-xl mx-auto py-6 animate-in fade-in flex flex-col h-full">
-      {/* Top bar */}
-      <div className="flex justify-between items-center mb-6 gap-2">
-        <button onClick={onExit} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 flex-shrink-0">
-          <ArrowLeft size={24} />
-        </button>
-        
-        <div className="flex items-center gap-2 flex-wrap justify-end flex-1">
-          {/* Answer count selector — styled like the library tag dropdown */}
-          <SelectDropdown
-            value={String(answerCount)}
-            onChange={v => setAnswerCount(Number(v))}
-            options={[2,3,4,5,6,7,8].map(n => ({ value: String(n), label: `${n} options` }))}
-            className="w-28 flex-shrink-0"
-            buttonClassName="!py-1.5 !text-xs"
-          />
+    <div className="max-w-xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full">
+      {/* Top Header */}
+      <GameHeader
+        onExit={onExit}
+        current={currentIndex}
+        total={allQuestions.length}
+        center={
+          <div className="flex items-center gap-1.5 flex-wrap justify-center">
+            {/* Quiz mode segmented control */}
+            <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg border border-gray-200/60 dark:border-gray-700/60 text-xs font-semibold">
+              <button 
+                onClick={() => setQuizMode('m2w')} 
+                className={`px-2 py-0.5 rounded-md transition-colors ${quizMode === 'm2w' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}
+              >
+                Mean
+              </button>
+              <button 
+                onClick={() => setQuizMode('w2m')} 
+                className={`px-2 py-0.5 rounded-md transition-colors ${quizMode === 'w2m' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}
+              >
+                Word
+              </button>
+            </div>
 
-          {/* Unique words toggle */}
-          <button
-            onClick={() => { setUniqueWords(u => !u); setCurrentIndex(0); setCorrect(0); setWrong(0); setSkipped(0) }}
-            title={uniqueWords ? 'Each word shown once (ON)' : 'Each word shown once (OFF)'}
-            className={`flex-shrink-0 text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors ${
-              uniqueWords
-                ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700'
-                : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-            }`}
-          >
-            1 Mean
-          </button>
-
-          {/* Quiz mode segmented control */}
-          <div className="flex bg-gray-100 dark:bg-gray-900 rounded-lg p-0.5 flex-shrink-0">
-            <button onClick={() => setQuizMode('m2w')} className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${quizMode === 'm2w' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}>Mean</button>
-            <button onClick={() => setQuizMode('w2m')} className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${quizMode === 'w2m' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}>Word</button>
+            {/* Source mode toggle */}
+            <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg border border-gray-200/60 dark:border-gray-700/60 text-xs font-semibold">
+              <button
+                onClick={() => { setQuizSourceMode('highlights'); setCurrentIndex(0); setCorrect(0); setWrong(0); setSkipped(0) }}
+                className={`px-2 py-0.5 rounded-md transition-colors ${quizSourceMode === 'highlights' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}
+              >
+                Words
+              </button>
+              <button
+                onClick={() => { setQuizSourceMode('phrases'); setCurrentIndex(0); setCorrect(0); setWrong(0); setSkipped(0) }}
+                className={`px-2 py-0.5 rounded-md transition-colors ${quizSourceMode === 'phrases' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400'}`}
+              >
+                Phrases
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
+        }
+        right={
+          <div className="flex items-center gap-1.5">
+            <SelectDropdown
+              value={String(answerCount)}
+              onChange={v => setAnswerCount(Number(v))}
+              options={[2,3,4,5,6,7,8].map(n => ({ value: String(n), label: `${n} opts` }))}
+              className="w-24 flex-shrink-0"
+              buttonClassName="!py-0.5 !text-xs !rounded-lg"
+            />
+            <button
+              onClick={() => { setUniqueWords(u => !u); setCurrentIndex(0); setCorrect(0); setWrong(0); setSkipped(0) }}
+              title={uniqueWords ? 'Each word shown once (ON)' : 'Each word shown once (OFF)'}
+              className={`text-xs font-semibold px-2 py-0.5 rounded-lg border transition-colors ${
+                uniqueWords
+                  ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700'
+                  : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700'
+              }`}
+            >
+              1 Mean
+            </button>
+          </div>
+        }
+      />
 
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-6 text-center flex-1 flex flex-col items-center justify-center relative">
-        {/* Top-left root card button */}
+      {/* Question Card */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-200/80 dark:border-gray-700/80 p-4 sm:p-5 mb-2.5 text-center flex flex-col items-center justify-center relative min-h-[110px]">
         {currentCardObj && (
           <RootCardButton 
             onClick={() => setShowModalCard(currentCardObj)}
-            className="absolute top-4 left-4"
+            className="absolute top-3 left-3"
           />
         )}
 
         {quizMode === 'w2m' && (
           <button
             onClick={() => speakEnglish(currentQ.word)}
-            title="Listen"
-            className="absolute bottom-4 right-4 p-2 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
+            title="Listen pronunciation"
+            className="absolute bottom-3 right-3 p-1.5 rounded-lg text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors cursor-pointer"
           >
-            <Volume2 size={22} />
+            <Volume2 size={20} />
           </button>
         )}
-        <h2 className="text-4xl font-bold text-purple-600 dark:text-purple-400 break-words whitespace-pre-wrap">{questionText}</h2>
+
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white break-words whitespace-pre-wrap tracking-tight">
+          {questionText}
+        </h2>
         
-        {/* POS and phonetic when question is the word */}
         {quizMode === 'w2m' && currentCardObj && (
-          <div className="flex flex-col items-center gap-0.5 mt-2">
+          <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2">
             {(currentCardObj.posEntries ? currentCardObj.posEntries.map(p => p.partOfSpeech).filter(Boolean).join(', ') : currentCardObj.partOfSpeech) && (
-              <span className="text-sm italic text-gray-500 dark:text-gray-400 font-normal">
+              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-800/50">
                 {currentCardObj.posEntries ? currentCardObj.posEntries.map(p => p.partOfSpeech).filter(Boolean).join(', ') : currentCardObj.partOfSpeech}
               </span>
             )}
             {currentCardObj.phonetic && (
-              <span className="text-sm italic text-gray-400 dark:text-gray-500 font-normal">
+              <span className="text-[11px] font-mono text-gray-400 dark:text-gray-500">
                 {currentCardObj.phonetic}
               </span>
             )}
           </div>
         )}
 
-        {/* Skip button inside card */}
         <button
           onClick={handleSkip}
           disabled={!!selectedOption}
-          className="absolute top-4 right-4 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 font-medium"
+          className="absolute top-3 right-3 text-xs font-semibold text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 px-2.5 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 cursor-pointer"
         >
           Skip
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-4 w-full">
+      {/* Answer Options Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2 w-full">
         {options.map((opt, i) => {
-          let baseBtnClass = "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200"
-          let hoverBtnClass = "hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/30"
+          let baseBtnClass = "bg-white dark:bg-gray-800 border-gray-200/80 dark:border-gray-700 text-gray-800 dark:text-gray-200 shadow-2xs"
+          let hoverBtnClass = "hover:border-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-950/30 hover:shadow-xs"
           
           if (selectedOption) {
             if (opt === correctOption) {
-              baseBtnClass = "bg-green-100 dark:bg-green-900/40 border-green-500 text-green-800 dark:text-green-200"
+              baseBtnClass = "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-800 dark:text-emerald-200 font-bold ring-2 ring-emerald-400/40"
               hoverBtnClass = ""
             } else if (opt === selectedOption) {
-              baseBtnClass = "bg-red-100 dark:bg-red-900/40 border-red-500 text-red-800 dark:text-red-200"
+              baseBtnClass = "bg-rose-50 dark:bg-rose-950/40 border-rose-500 text-rose-800 dark:text-rose-200 ring-2 ring-rose-400/40"
               hoverBtnClass = ""
             } else {
-              baseBtnClass = "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800 text-gray-400 dark:text-gray-600 opacity-50"
+              baseBtnClass = "bg-gray-50 dark:bg-gray-850 border-gray-100 dark:border-gray-800 text-gray-400 dark:text-gray-600 opacity-40"
               hoverBtnClass = ""
             }
           }
-
-          const btnClass = `${baseBtnClass} ${hoverBtnClass}`
 
           return (
             <button
               key={i}
               onClick={() => handleSelect(opt)}
               disabled={!!selectedOption}
-              className={`w-full p-3 rounded-xl border-2 text-center font-medium transition-all duration-300 ${btnClass} flex items-center justify-center min-h-[3.5rem]`}
+              className={`w-full p-2.5 rounded-xl border text-center font-medium transition-all duration-200 ${baseBtnClass} ${hoverBtnClass} flex items-center justify-center min-h-[2.75rem] relative group cursor-pointer`}
             >
-              <div className="text-sm whitespace-pre-wrap break-words w-full">
+              <span className="absolute top-1.5 left-2 text-[10px] font-bold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 px-1 py-0.2 rounded group-hover:text-purple-600 dark:group-hover:text-purple-400">
+                {i + 1}
+              </span>
+              <div className="text-xs sm:text-sm font-medium whitespace-pre-wrap break-words w-full px-4">
                 {opt}
               </div>
             </button>
@@ -627,18 +770,12 @@ function QuizGame({ onExit }: { onExit: () => void }) {
         })}
       </div>
 
-      {/* Stats bar */}
-      <div className="flex items-center justify-center gap-6 mt-2 px-1 text-sm font-medium text-gray-500 dark:text-gray-400">
-        <span>
-          {correct} correct
-        </span>
-        <span>
-          {wrong} wrong
-        </span>
-        <span>
-          {skipped} skip
-        </span>
-        <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
+      {/* Bottom Stats */}
+      <div className="flex items-center justify-center gap-6 mt-2 px-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
+        <span className="text-emerald-600 dark:text-emerald-400">{correct} correct</span>
+        <span className="text-rose-600 dark:text-rose-400">{wrong} wrong</span>
+        <span className="text-amber-600 dark:text-amber-400">{skipped} skip</span>
+        <div className="w-px h-3.5 bg-gray-300 dark:bg-gray-700" />
         <span className="tabular-nums">
           {currentIndex + 1} / {allQuestions.length}
         </span>
@@ -661,27 +798,43 @@ function SwipeGame({ onExit }: { onExit: () => void }) {
   const [swipeCount, setSwipeCount] = useState(0)
   const [showHighlights, setShowHighlights] = useState(false)
   const [displayMode, setDisplayMode] = useState<'sentence' | 'words' | 'meanings' | 'phrases'>('sentence')
-  const [filterMode, setFilterMode] = useState<'all' | 'unlearned' | 'learned'>('all')
+  const [knownCount, setKnownCount] = useState(0)
+  const [unknownCount, setUnknownCount] = useState(0)
   const [showModalCard, setShowModalCard] = useState<Flashcard | null>(null)
   
   useEffect(() => {
     let cardsToLearn = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
     cardsToLearn = getCardsForMode(cardsToLearn, gameInputMode)
-    
-    if (filterMode === 'unlearned') {
-      cardsToLearn = cardsToLearn.filter(c => !c.srs || c.srs.reps < 2)
-    } else if (filterMode === 'learned') {
-      cardsToLearn = cardsToLearn.filter(c => Boolean(c.srs && c.srs.reps >= 2))
-    }
 
     let items: { card: Flashcard, hid: string | null }[]
     if (displayMode === 'phrases') {
       items = cardsToLearn.flatMap(card => 
-        (card.phrasesAndIdioms || []).filter(p => p.phrase).map((p, idx) => ({ card, hid: p.id || `${card.id}-pi-${idx}` }))
+        (card.phrasesAndIdioms || []).map(normalizePhraseItem).filter(p => p.phrase).map((p, idx) => ({ card, hid: p.id || `${card.id}-pi-${idx}` }))
       )
     } else if (gameInputMode === 'word') {
       if (displayMode === 'words') {
         items = cardsToLearn.map(card => ({ card, hid: null }))
+      } else if (displayMode === 'sentence') {
+        items = cardsToLearn.flatMap(card => {
+          if (card.posEntries && card.posEntries.length > 0) {
+            const exs: { card: Flashcard, hid: string }[] = []
+            card.posEntries.forEach((pos, pi) => {
+              pos.meanings.forEach((m, mi) => {
+                (m.examples || []).forEach((ex, ei) => {
+                  if (ex.sentence) {
+                    exs.push({ card, hid: ex.id || `${card.id}-ex-${pi}-${mi}-${ei}` })
+                  }
+                })
+              })
+            })
+            if (exs.length > 0) return exs
+          }
+          const hlExs = (card.highlights || []).filter(h => h.example)
+          if (hlExs.length > 0) {
+            return hlExs.map(h => ({ card, hid: h.id }))
+          }
+          return (card.highlights || []).map(h => ({ card, hid: h.id }))
+        })
       } else {
         items = cardsToLearn.flatMap(card => (card.highlights || []).map(h => ({ card, hid: h.id })))
       }
@@ -693,53 +846,67 @@ function SwipeGame({ onExit }: { onExit: () => void }) {
       }
     }
     setLearningCards(items.sort(() => Math.random() - 0.5))
-  }, [flashcards, displayMode, filterMode, activeTags, gameInputMode])
+    setKnownCount(0)
+    setUnknownCount(0)
+    setSwipeCount(0)
+  }, [flashcards, displayMode, activeTags, gameInputMode])
 
   if (learningCards.length === 0) {
     if (swipeCount === 0) return <EmptyState onExit={onExit} text={displayMode === 'phrases' ? 'No phrases and idioms found.' : undefined} />
     return (
-      <div className="text-center py-20 animate-in fade-in flex flex-col items-center">
-        <div className="text-6xl mb-6">🎉</div>
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Congratulations!</h2>
-        <p className="text-gray-500 dark:text-gray-400 mb-6">You have reviewed all the cards.</p>
-        <div className="flex gap-4">
-          <button onClick={onExit} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-6 py-2.5 rounded-lg font-medium transition-colors">Back</button>
-          <button 
-            onClick={() => {
-              setSwipeCount(0)
-              let cardsToLearn = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
-              cardsToLearn = getCardsForMode(cardsToLearn, gameInputMode)
-              if (filterMode === 'unlearned') {
-                cardsToLearn = cardsToLearn.filter(c => !c.srs || c.srs.reps < 2)
-              } else if (filterMode === 'learned') {
-                cardsToLearn = cardsToLearn.filter(c => Boolean(c.srs && c.srs.reps >= 2))
-              }
-              let items: { card: Flashcard, hid: string | null }[]
-              if (displayMode === 'phrases') {
-                items = cardsToLearn.flatMap(card => 
-                  (card.phrasesAndIdioms || []).filter(p => p.phrase).map((p, idx) => ({ card, hid: p.id || `${card.id}-pi-${idx}` }))
-                )
-              } else if (gameInputMode === 'word') {
-                if (displayMode === 'words') {
-                  items = cardsToLearn.map(card => ({ card, hid: null }))
-                } else {
-                  items = cardsToLearn.flatMap(card => (card.highlights || []).map(h => ({ card, hid: h.id })))
+      <ResultScreen
+        title="Swipe Review Complete!"
+        correct={knownCount}
+        wrong={unknownCount}
+        onExit={onExit}
+        onAgain={() => {
+          setSwipeCount(0)
+          setKnownCount(0)
+          setUnknownCount(0)
+          let cardsToLearn = activeTags.length > 0 ? flashcards.filter(f => getCardTags(f).some(t => activeTags.includes(t))) : flashcards
+          cardsToLearn = getCardsForMode(cardsToLearn, gameInputMode)
+          let items: { card: Flashcard, hid: string | null }[]
+          if (displayMode === 'phrases') {
+            items = cardsToLearn.flatMap(card => 
+              (card.phrasesAndIdioms || []).map(normalizePhraseItem).filter(p => p.phrase).map((p, idx) => ({ card, hid: p.id || `${card.id}-pi-${idx}` }))
+            )
+          } else if (gameInputMode === 'word') {
+            if (displayMode === 'words') {
+              items = cardsToLearn.map(card => ({ card, hid: null }))
+            } else if (displayMode === 'sentence') {
+              items = cardsToLearn.flatMap(card => {
+                if (card.posEntries && card.posEntries.length > 0) {
+                  const exs: { card: Flashcard, hid: string }[] = []
+                  card.posEntries.forEach((pos, pi) => {
+                    pos.meanings.forEach((m, mi) => {
+                      (m.examples || []).forEach((ex, ei) => {
+                        if (ex.sentence) {
+                          exs.push({ card, hid: ex.id || `${card.id}-ex-${pi}-${mi}-${ei}` })
+                        }
+                      })
+                    })
+                  })
+                  if (exs.length > 0) return exs
                 }
-              } else {
-                if (displayMode === 'sentence') {
-                  items = cardsToLearn.map(card => ({ card, hid: null }))
-                } else {
-                  items = cardsToLearn.flatMap(card => (card.highlights || []).map(h => ({ card, hid: h.id })))
+                const hlExs = (card.highlights || []).filter(h => h.example)
+                if (hlExs.length > 0) {
+                  return hlExs.map(h => ({ card, hid: h.id }))
                 }
-              }
-              setLearningCards(items.sort(() => Math.random() - 0.5))
-            }} 
-            className="bg-purple-600 text-white px-6 py-2.5 rounded-lg hover:bg-purple-700 font-medium inline-flex items-center gap-2 shadow-sm transition-colors"
-          >
-            <RefreshCcw size={18} /> Play Again
-          </button>
-        </div>
-      </div>
+                return (card.highlights || []).map(h => ({ card, hid: h.id }))
+              })
+            } else {
+              items = cardsToLearn.flatMap(card => (card.highlights || []).map(h => ({ card, hid: h.id })))
+            }
+          } else {
+            if (displayMode === 'sentence') {
+              items = cardsToLearn.map(card => ({ card, hid: null }))
+            } else {
+              items = cardsToLearn.flatMap(card => (card.highlights || []).map(h => ({ card, hid: h.id })))
+            }
+          }
+          setLearningCards(items.sort(() => Math.random() - 0.5))
+        }}
+      />
     )
   }
 
@@ -747,53 +914,54 @@ function SwipeGame({ onExit }: { onExit: () => void }) {
   const currentCard = currentItem.card
 
   return (
-    <div className="max-w-md mx-auto flex flex-col items-center justify-start relative animate-in fade-in pt-12 pb-8">
-      <div className="w-full flex justify-between items-center z-10 gap-2 flex-wrap mb-6">
-        <button onClick={onExit} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-          <ArrowLeft size={24} />
-        </button>
-
-        <div className="flex bg-gray-100 dark:bg-gray-900 rounded-lg p-0.5 flex-1 max-w-[340px] mx-auto">
+    <div className="max-w-md mx-auto flex flex-col items-center justify-start relative animate-in fade-in py-2 px-4">
+      {/* Header */}
+      <GameHeader
+        onExit={onExit}
+        center={
+          <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-xl border border-gray-200/60 dark:border-gray-700/60 max-w-[340px] w-full text-xs font-semibold">
+            <button 
+              onClick={() => setDisplayMode('sentence')}
+              className={`flex-1 py-1 rounded-lg transition-colors ${displayMode === 'sentence' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+            >
+              {gameInputMode === 'word' ? 'Sentences' : 'Sentence'}
+            </button>
+            <button 
+              onClick={() => setDisplayMode('words')}
+              className={`flex-1 py-1 rounded-lg transition-colors ${displayMode === 'words' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+            >
+              Words
+            </button>
+            <button 
+              onClick={() => setDisplayMode('meanings')}
+              className={`flex-1 py-1 rounded-lg transition-colors ${displayMode === 'meanings' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+            >
+              Meanings
+            </button>
+            <button 
+              onClick={() => setDisplayMode('phrases')}
+              className={`flex-1 py-1 rounded-lg transition-colors ${displayMode === 'phrases' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+            >
+              Phrases
+            </button>
+          </div>
+        }
+        right={
           <button 
-            onClick={() => setDisplayMode('sentence')}
-            className={`flex-1 py-1 text-xs font-medium rounded-md transition-colors ${displayMode === 'sentence' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+            onClick={() => setShowHighlights(!showHighlights)}
+            title={showHighlights ? 'Hide Hints' : 'Show Hints'}
+            className={`p-1.5 rounded-xl flex items-center justify-center transition-colors border ${
+              showHighlights 
+                ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800' 
+                : 'bg-white dark:bg-gray-800 text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50'
+            }`}
           >
-            {gameInputMode === 'word' ? 'Sentences' : 'Sentence'}
+            {showHighlights ? <Lightbulb size={16} /> : <LightbulbOff size={16} />}
           </button>
-          <button 
-            onClick={() => setDisplayMode('words')}
-            className={`flex-1 py-1 text-xs font-medium rounded-md transition-colors ${displayMode === 'words' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
-          >
-            Words
-          </button>
-          <button 
-            onClick={() => setDisplayMode('meanings')}
-            className={`flex-1 py-1 text-xs font-medium rounded-md transition-colors ${displayMode === 'meanings' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
-          >
-            Meanings
-          </button>
-          <button 
-            onClick={() => setDisplayMode('phrases')}
-            className={`flex-1 py-1 text-xs font-medium rounded-md transition-colors ${displayMode === 'phrases' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
-          >
-            Phrases
-          </button>
-        </div>
-
-        <button 
-          onClick={() => setShowHighlights(!showHighlights)}
-          className={`text-sm font-medium px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1.5 transition-colors border ${
-            showHighlights 
-              ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800' 
-              : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-          }`}
-        >
-          {showHighlights ? <Lightbulb size={16} /> : <LightbulbOff size={16} />}
-          <span className="hidden sm:inline">{showHighlights ? 'Hide Hints' : 'Show Hints'}</span>
-        </button>
-      </div>
+        }
+      />
       
-      <div className="relative w-full max-w-sm aspect-square flex items-center justify-center">
+      <div className="relative w-full max-w-xs aspect-[4/3] sm:aspect-square flex items-center justify-center">
         <SwipeableCard 
           key={`${currentCard.id}-${currentItem.hid}-${swipeCount}`} 
           card={currentCard}
@@ -804,49 +972,58 @@ function SwipeGame({ onExit }: { onExit: () => void }) {
           onSwipedRight={() => {
             setLearningCards(prev => prev.slice(1))
             setSwipeCount(c => c + 1)
+            setKnownCount(c => c + 1)
           }}
           onSwipedLeft={() => {
             setLearningCards(prev => [...prev.slice(1), currentItem])
             setSwipeCount(c => c + 1)
+            setUnknownCount(c => c + 1)
           }}
         />
       </div>
 
-      <div className="mt-8 flex flex-col items-center gap-3 w-full">
-        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-          {learningCards.length} từ còn lại
-        </span>
+      <div className="mt-3 flex flex-col items-center gap-2 w-full">
+        {/* Action buttons and counters */}
+        <div className="flex items-center justify-between w-full max-w-xs px-2">
+          <button
+            onClick={() => {
+              setLearningCards(prev => [...prev.slice(1), currentItem])
+              setSwipeCount(c => c + 1)
+              setUnknownCount(c => c + 1)
+            }}
+            title="Mark Unknown (Swipe Left)"
+            className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 flex items-center justify-center hover:bg-rose-100 hover:scale-105 transition-all shadow-xs cursor-pointer"
+          >
+            <ThumbsDown size={18} />
+          </button>
 
-        <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl gap-1 text-xs">
+          <div className="flex items-center gap-2.5 bg-white dark:bg-gray-800 px-3.5 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-2xs">
+            <div className="flex flex-col items-center">
+              <span className="font-bold text-rose-500 text-sm leading-none">{unknownCount}</span>
+              <span className="text-[10px] text-gray-400 mt-0.5">Unknown</span>
+            </div>
+            <div className="w-px h-5 bg-gray-200 dark:bg-gray-700" />
+            <div className="flex flex-col items-center">
+              <span className="font-bold text-gray-700 dark:text-gray-300 text-sm leading-none">{learningCards.length}</span>
+              <span className="text-[10px] text-gray-400 mt-0.5">left</span>
+            </div>
+            <div className="w-px h-5 bg-gray-200 dark:bg-gray-700" />
+            <div className="flex flex-col items-center">
+              <span className="font-bold text-emerald-500 text-sm leading-none">{knownCount}</span>
+              <span className="text-[10px] text-gray-400 mt-0.5">Known</span>
+            </div>
+          </div>
+
           <button
-            onClick={() => setFilterMode('all')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
-              filterMode === 'all'
-                ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-            }`}
+            onClick={() => {
+              setLearningCards(prev => prev.slice(1))
+              setSwipeCount(c => c + 1)
+              setKnownCount(c => c + 1)
+            }}
+            title="Mark Known (Swipe Right)"
+            className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center hover:bg-emerald-100 hover:scale-105 transition-all shadow-xs cursor-pointer"
           >
-            Tất cả
-          </button>
-          <button
-            onClick={() => setFilterMode('unlearned')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
-              filterMode === 'unlearned'
-                ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-            }`}
-          >
-            Chưa thuộc
-          </button>
-          <button
-            onClick={() => setFilterMode('learned')}
-            className={`px-3 py-1.5 rounded-lg font-medium transition-colors ${
-              filterMode === 'learned'
-                ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-            }`}
-          >
-            Đã thuộc
+            <ThumbsUp size={18} />
           </button>
         </div>
       </div>
@@ -1005,31 +1182,31 @@ function SwipeableCard({
         handleDragEnd()
       }}
       onPointerCancel={handleDragEnd}
-      className={`absolute w-full max-w-sm aspect-square bg-white dark:bg-gray-800 rounded-3xl shadow-2xl flex items-center justify-center p-8 select-none touch-none cursor-grab active:cursor-grabbing border-4 border-transparent ${
+      className={`absolute w-full max-w-xs aspect-[4/3] sm:aspect-square bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex items-center justify-center p-5 select-none touch-none cursor-grab active:cursor-grabbing border-4 border-transparent ${
         !isDragging ? 'transition-all duration-300 ease-out' : ''
       }`}
       style={{
         transform: transformStyle,
         opacity: opacity,
         borderColor: isRight ? '#4ade80' : isLeft ? '#f87171' : 'transparent',
-        boxShadow: isRight ? '0 20px 25px -5px rgba(74, 222, 128, 0.2)' : isLeft ? '0 20px 25px -5px rgba(248, 113, 113, 0.2)' : ''
+        boxShadow: isRight ? '0 10px 15px -3px rgba(74, 222, 128, 0.2)' : isLeft ? '0 10px 15px -3px rgba(248, 113, 113, 0.2)' : ''
       }}
     >
       {isRight && (
-        <div className="absolute top-6 left-6 text-green-500 border-4 border-green-500 rounded-full p-2 rotate-12 opacity-80 bg-white">
-          <ThumbsUp size={40} />
+        <div className="absolute top-4 left-4 text-green-500 border-2 border-green-500 rounded-full p-1.5 rotate-12 opacity-80 bg-white">
+          <ThumbsUp size={28} />
         </div>
       )}
       {isLeft && (
-        <div className="absolute top-6 right-6 text-red-500 border-4 border-red-500 rounded-full p-2 -rotate-12 opacity-80 bg-white">
-          <ThumbsDown size={40} />
+        <div className="absolute top-4 right-4 text-red-500 border-2 border-red-500 rounded-full p-1.5 -rotate-12 opacity-80 bg-white">
+          <ThumbsDown size={28} />
         </div>
       )}
 
       {/* Top-left root card button */}
       <RootCardButton
         onClick={() => onShowDetail?.(card)}
-        className="absolute top-4 left-4"
+        className="absolute top-3 left-3"
       />
 
       <button
@@ -1037,7 +1214,8 @@ function SwipeableCard({
         onClick={e => {
           e.stopPropagation()
           if (displayMode === 'phrases') {
-            const pi = (card.phrasesAndIdioms || []).find((x, idx) => (x.id || `${card.id}-pi-${idx}`) === onlyHighlightId)
+            const rawPi = (card.phrasesAndIdioms || []).find((x, idx) => (x.id || `${card.id}-pi-${idx}`) === onlyHighlightId)
+            const pi = rawPi ? normalizePhraseItem(rawPi) : null
             speakEnglish(pi ? pi.phrase : card.sentence)
             return
           }
@@ -1047,7 +1225,30 @@ function SwipeableCard({
             } else {
               const h = (card.highlights || []).find(x => x.id === onlyHighlightId)
               if (displayMode === 'sentence') {
-                speakEnglish(h?.example || card.sentence)
+                let sentenceToSpeak = card.sentence
+                if (card.posEntries) {
+                  for (let pi = 0; pi < card.posEntries.length; pi++) {
+                    const pos = card.posEntries[pi]
+                    for (let mi = 0; mi < pos.meanings.length; mi++) {
+                      const m = pos.meanings[mi]
+                      const examples = m.examples || []
+                      for (let ei = 0; ei < examples.length; ei++) {
+                        const ex = examples[ei]
+                        const exId = ex.id || `${card.id}-ex-${pi}-${mi}-${ei}`
+                        if (exId === onlyHighlightId) {
+                          sentenceToSpeak = ex.sentence
+                          break
+                        }
+                      }
+                      if (sentenceToSpeak !== card.sentence) break
+                    }
+                    if (sentenceToSpeak !== card.sentence) break
+                  }
+                }
+                if (sentenceToSpeak === card.sentence && h?.example) {
+                  sentenceToSpeak = h.example
+                }
+                speakEnglish(sentenceToSpeak)
               } else {
                 if (h) speakEnglish(h.meaning)
               }
@@ -1063,24 +1264,22 @@ function SwipeableCard({
           }
         }}
         title="Listen"
-        className="absolute bottom-4 right-4 p-2 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors cursor-pointer"
+        className="absolute bottom-3 right-3 p-1.5 rounded-full text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors cursor-pointer"
       >
-        <Volume2 size={22} />
+        <Volume2 size={20} />
       </button>
 
       <div className="text-center w-full">
-        <div className="text-3xl font-medium leading-relaxed text-gray-800 dark:text-gray-200 flex flex-wrap justify-center items-center whitespace-pre-wrap">
+        <div className="text-xl sm:text-2xl font-medium leading-relaxed text-gray-800 dark:text-gray-200 flex flex-wrap justify-center items-center whitespace-pre-wrap">
           {displayMode === 'phrases' ? (() => {
-            const pi = (card.phrasesAndIdioms || []).find((x, idx) => (x.id || `${card.id}-pi-${idx}`) === onlyHighlightId)
-            if (!pi) return null
+            const rawPi = (card.phrasesAndIdioms || []).find((x, idx) => (x.id || `${card.id}-pi-${idx}`) === onlyHighlightId)
+            if (!rawPi) return null
+            const pi = normalizePhraseItem(rawPi)
             return (
-              <div className="flex flex-col items-center gap-2 w-full px-4 text-center">
-                <span className="font-bold text-2xl text-gray-800 dark:text-gray-100">{pi.phrase}</span>
-                <span className="text-xs uppercase tracking-wider text-purple-600 dark:text-purple-400 font-semibold bg-purple-50 dark:bg-purple-900/30 px-2.5 py-1 rounded-full">
-                  Phrase / Idiom
-                </span>
+              <div className="flex flex-col items-center gap-1.5 w-full px-4 text-center">
+                <span className="font-bold text-xl text-gray-800 dark:text-gray-100">{pi.phrase}</span>
                 {showHighlights && (
-                  <span className="text-purple-600 dark:text-purple-400 text-lg font-medium mt-2">
+                  <span className="text-purple-600 dark:text-purple-400 text-base font-medium mt-1">
                     {pi.translation}
                   </span>
                 )}
@@ -1109,10 +1308,9 @@ function SwipeableCard({
                 </div>
               )
             }
-            const h = (card.highlights || []).find(x => x.id === onlyHighlightId)
-            if (!h) return null
-
             if (displayMode === 'meanings') {
+              const h = (card.highlights || []).find(x => x.id === onlyHighlightId)
+              if (!h) return null
               return (
                 <div className="flex flex-col items-center gap-2 w-full px-4 text-center">
                   <span>{h.meaning}</span>
@@ -1126,12 +1324,83 @@ function SwipeableCard({
             }
             
             // displayMode === 'sentence'
+            let sentenceText = ''
+            let sentenceHint = ''
+
+            // 1. Try finding in card.posEntries by example ID
+            if (card.posEntries && card.posEntries.length > 0) {
+              for (let pi = 0; pi < card.posEntries.length; pi++) {
+                const pos = card.posEntries[pi]
+                for (let mi = 0; mi < pos.meanings.length; mi++) {
+                  const m = pos.meanings[mi]
+                  const examples = m.examples || []
+                  for (let ei = 0; ei < examples.length; ei++) {
+                    const ex = examples[ei]
+                    const exId = ex.id || `${card.id}-ex-${pi}-${mi}-${ei}`
+                    if (exId === onlyHighlightId || ex.sentence === onlyHighlightId) {
+                      sentenceText = ex.sentence
+                      sentenceHint = ex.translation || ''
+                      break
+                    }
+                  }
+                  if (sentenceText) break
+                }
+                if (sentenceText) break
+              }
+            }
+
+            // 2. If not found by example ID, check highlights
+            if (!sentenceText) {
+              const h = (card.highlights || []).find(x => x.id === onlyHighlightId)
+              if (h && h.example) {
+                sentenceText = h.example
+                sentenceHint = h.meaning
+                if (card.posEntries) {
+                  for (const pos of card.posEntries) {
+                    for (const m of pos.meanings) {
+                      for (const ex of (m.examples || [])) {
+                        if (ex.sentence === h.example && ex.translation) {
+                          sentenceHint = ex.translation
+                          break
+                        }
+                      }
+                      if (sentenceHint !== h.meaning) break
+                    }
+                    if (sentenceHint !== h.meaning) break
+                  }
+                }
+              }
+            }
+
+            // 3. Fallback: first available example in posEntries
+            if (!sentenceText && card.posEntries) {
+              for (const pos of card.posEntries) {
+                for (const m of pos.meanings) {
+                  for (const ex of (m.examples || [])) {
+                    if (ex.sentence) {
+                      sentenceText = ex.sentence
+                      sentenceHint = ex.translation || ''
+                      break
+                    }
+                  }
+                  if (sentenceText) break
+                }
+                if (sentenceText) break
+              }
+            }
+
+            // 4. Final fallback: card's word sentence
+            if (!sentenceText) {
+              sentenceText = card.sentence
+              sentenceHint = (card.highlights || [])[0]?.meaning || ''
+            }
+
             return (
               <div className="flex flex-col gap-2 w-full px-4 text-center">
-                <span>{h.example || card.sentence}</span>
-                {showHighlights && (
+                <span className="font-medium text-2xl leading-relaxed">{sentenceText}</span>
+                {showHighlights && sentenceHint && (
                   <span className="text-purple-600 dark:text-purple-400 text-lg font-medium mt-2">
-                    {h.meaning}
+                    {sentenceHint}
                   </span>
                 )}
               </div>
@@ -1203,6 +1472,15 @@ function SwipeableCard({
               </span>
             )
           })}
+          {displayMode === 'sentence' && showHighlights && (card.highlights || []).length > 0 && (
+            <div className="flex flex-wrap justify-center gap-3 mt-4 w-full">
+              {(card.highlights || []).map((hl, i) => (
+                <span key={i} className="text-purple-600 dark:text-purple-400 text-lg font-medium">
+                  {hl.meaning}
+                </span>
+              ))}
+            </div>
+          )}
           </>
           )}
         </div>

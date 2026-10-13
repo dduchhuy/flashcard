@@ -95,7 +95,7 @@ export function fuzzyMatch(input: string, target: string) {
   return distance <= maxDistance
 }
 
-export function speakEnglish(text: string) {
+export function speakEnglish(text: string, options?: { accent?: 'US' | 'UK' }) {
   if (!('speechSynthesis' in window) || !text) return
   window.speechSynthesis.cancel()
   const u = new SpeechSynthesisUtterance(text)
@@ -105,7 +105,7 @@ export function speakEnglish(text: string) {
   
   let selectedVoice = null
 
-  if (settings.isSpecialAccent && settings.specialAccent) {
+  if (!options?.accent && settings.isSpecialAccent && settings.specialAccent) {
     let langPrefix = ''
     let nameKeywords: string[] = []
     
@@ -141,7 +141,7 @@ export function speakEnglish(text: string) {
     }
   } else {
     // Normal Accent/Gender Logic
-    let targetAccent = settings.voiceAccent
+    let targetAccent = options?.accent || settings.voiceAccent
     if (targetAccent === 'Random') {
       targetAccent = Math.random() > 0.5 ? 'US' : 'UK'
     }

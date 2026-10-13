@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { useFlashcardStore, getCardTags, getCardsForMode, Flashcard } from '../../store'
-import { ArrowLeft, RefreshCcw, Lightbulb, Volume2 } from 'lucide-react'
+import { useFlashcardStore, getCardTags, getCardsForMode, Flashcard, normalizePhraseItem } from '../../store'
+import { Lightbulb, Volume2 } from 'lucide-react'
 import { extractWordText, extractWordsAndSpaces, fuzzyMatch, speakEnglish, escapeRegExp } from '../../utils'
 import { LetterInput, letterIndices, buildGuess } from './LetterInput'
-import { EmptyState, CardDetailModal, RootCardButton } from './shared'
+import { EmptyState, CardDetailModal, RootCardButton, GameHeader, ResultScreen, GameStatsBar } from './shared'
 
 type FillMode = 'meaning' | 'meaning-all' | 'sentence' | 'phrase'
 
@@ -22,7 +22,7 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
     
     if (fillMode === 'phrase') {
       filtered.forEach(card => {
-        const phrases = card.phrasesAndIdioms || []
+        const phrases = (card.phrasesAndIdioms || []).map(normalizePhraseItem)
         phrases.forEach((pi, idx) => {
           if (!pi.phrase) return
           questions.push({
@@ -174,34 +174,14 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
 
   if (currentIndex >= allQuestions.length) {
     return (
-      <div className="text-center py-20 animate-in fade-in flex flex-col items-center">
-        <div className="text-6xl mb-6">🏆</div>
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Practice Complete!</h2>
-        <div className="flex gap-6 mb-8 mt-2">
-          <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-gray-700 dark:text-gray-300">{correct}</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Correct</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-gray-700 dark:text-gray-300">{wrong}</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Wrong</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-gray-700 dark:text-gray-300">{skipped}</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Skipped</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-2xl font-bold text-gray-700 dark:text-gray-300">{allQuestions.length}</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Total</span>
-          </div>
-        </div>
-        <div className="flex gap-4 mt-2">
-          <button onClick={onExit} className="bg-gray-200 dark:bg-gray-700 px-6 py-2 rounded-lg font-medium">Back</button>
-          <button onClick={handleRestart} className="bg-purple-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium">
-            <RefreshCcw size={18} /> Play Again
-          </button>
-        </div>
-      </div>
+      <ResultScreen
+        title="Fill in the Blank Complete!"
+        correct={correct}
+        wrong={wrong}
+        skipped={skipped}
+        onExit={onExit}
+        onAgain={handleRestart}
+      />
     )
   }
 
@@ -247,59 +227,57 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
   const isMeaningMode = fillMode === 'meaning' || fillMode === 'meaning-all'
 
   return (
-    <div className="max-w-2xl mx-auto py-6 animate-in fade-in flex flex-col h-full">
-      {/* Top bar */}
-      <div className="flex justify-between items-center mb-6 flex-wrap gap-2">
-        <div className="flex items-center gap-4">
-          <button onClick={onExit} className="text-gray-500 hover:text-gray-700 dark:text-gray-400">
-            <ArrowLeft size={24} />
-          </button>
-        </div>
-        
-        {/* Mode segmented control */}
-        <div className="flex bg-gray-100 dark:bg-gray-900 rounded-lg p-0.5">
+    <div className="max-w-2xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full">
+      <GameHeader
+        onExit={onExit}
+        current={currentIndex + 1}
+        total={allQuestions.length}
+        center={
+          <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg border border-gray-200/60 dark:border-gray-700/60 text-xs font-semibold">
+            <button
+              onClick={() => setFillMode('meaning')}
+              className={`px-2 py-0.5 text-xs font-medium rounded-md transition-colors ${fillMode === 'meaning' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+            >
+              Meaning→Word
+            </button>
+            <button
+              onClick={() => setFillMode('meaning-all')}
+              className={`px-2 py-0.5 text-xs font-medium rounded-md transition-colors ${fillMode === 'meaning-all' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+            >
+              All Meanings
+            </button>
+            <button
+              onClick={() => setFillMode('sentence')}
+              className={`px-2 py-0.5 text-xs font-medium rounded-md transition-colors ${fillMode === 'sentence' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+            >
+              Sentence
+            </button>
+            <button
+              onClick={() => setFillMode('phrase')}
+              className={`px-2 py-0.5 text-xs font-medium rounded-md transition-colors ${fillMode === 'phrase' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+            >
+              Phrases
+            </button>
+          </div>
+        }
+        right={
           <button
-            onClick={() => setFillMode('meaning')}
-            className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${fillMode === 'meaning' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+            onClick={() => speakEnglish(currentQ.word)}
+            className="p-1.5 rounded-lg flex items-center justify-center border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 hover:bg-purple-100 transition-colors"
+            title="Listen"
           >
-            Meaning→Word
+            <Volume2 size={16} />
           </button>
-          <button
-            onClick={() => setFillMode('meaning-all')}
-            className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${fillMode === 'meaning-all' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-          >
-            All Meanings
-          </button>
-          <button
-            onClick={() => setFillMode('sentence')}
-            className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${fillMode === 'sentence' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-          >
-            Sentence
-          </button>
-          <button
-            onClick={() => setFillMode('phrase')}
-            className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${fillMode === 'phrase' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-          >
-            Phrases
-          </button>
-        </div>
+        }
+      />
 
-        <button 
-          onClick={() => speakEnglish(currentQ.word)}
-          className="px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors border bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50"
-        >
-          <Volume2 size={16} />
-          <span className="hidden sm:inline">Listen</span>
-        </button>
-      </div>
-
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 mb-6 text-center max-w-xl mx-auto w-full relative">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700 p-4 sm:p-5 mb-2.5 text-center max-w-xl mx-auto w-full relative">
         {(() => {
           const rootCard = currentQ ? flashcards.find(f => f.id === currentQ.cardId) : null
           return rootCard ? (
             <RootCardButton 
               onClick={() => setShowModalCard(rootCard)}
-              className="absolute top-4 left-4"
+              className="absolute top-3 left-3"
             />
           ) : null
         })()}
@@ -307,25 +285,25 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
         {/* Meaning display area */}
         {isMeaningMode ? (
           // In meaning modes: show meaning big, user types the word
-          <div className="mb-8">
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">What is the word for this meaning?</p>
-            <div className="bg-purple-50 dark:bg-gray-900 rounded-xl p-4 border border-purple-100 dark:border-gray-700">
-              <p className="text-xl font-semibold text-purple-700 dark:text-purple-300 whitespace-pre-wrap leading-relaxed break-words">
+          <div className="mb-3">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1.5">What is the word for this meaning?</p>
+            <div className="bg-purple-50 dark:bg-gray-900 rounded-xl p-3 border border-purple-100 dark:border-gray-700">
+              <p className="text-base sm:text-lg font-semibold text-purple-700 dark:text-purple-300 whitespace-pre-wrap leading-relaxed break-words">
                 {currentQ.displayMeaning}
               </p>
             </div>
             {/* Show answer when wrong */}
             {status === 'wrong' && (
-              <div className="mt-4 animate-in fade-in slide-in-from-bottom-2">
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Correct answer:</p>
-                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{currentQ.word}</p>
+              <div className="mt-2 animate-in fade-in slide-in-from-bottom-2">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Correct answer:</p>
+                <p className="text-xl font-bold text-red-600 dark:text-red-400">{currentQ.word}</p>
               </div>
             )}
           </div>
         ) : (
           // Sentence mode: show blanked sentence
           <>
-            <p className="text-lg text-gray-800 dark:text-gray-200 mb-8 leading-relaxed whitespace-pre-wrap px-4">
+            <p className="text-base sm:text-lg text-gray-800 dark:text-gray-200 mb-3 leading-relaxed whitespace-pre-wrap px-2">
               {(() => {
                 if (showFullSentence) return currentQ.sentence
                 if (currentQ.isExample) {
@@ -380,24 +358,24 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
             
             {/* Show answer when wrong in sentence mode */}
             {status === 'wrong' && (
-              <div className="mb-4 animate-in fade-in slide-in-from-bottom-2">
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Correct answer:</p>
-                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{currentQ.word}</p>
+              <div className="mb-2 animate-in fade-in slide-in-from-bottom-2">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Correct answer:</p>
+                <p className="text-xl font-bold text-red-600 dark:text-red-400">{currentQ.word}</p>
               </div>
             )}
             
-            <div className="bg-purple-50 dark:bg-gray-900 rounded-xl p-4 mb-8 border border-purple-100 dark:border-gray-700 animate-in fade-in slide-in-from-top-2">
+            <div className="bg-purple-50 dark:bg-gray-900 rounded-xl p-2.5 sm:p-3 mb-3 border border-purple-100 dark:border-gray-700 animate-in fade-in slide-in-from-top-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Meaning</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Meaning</span>
                 <button 
                   onClick={() => setHideMeaning(!hideMeaning)}
-                  className="text-xs px-2.5 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium flex items-center gap-1"
+                  className="text-xs px-2 py-0.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-md shadow-2xs hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium flex items-center gap-1"
                 >
                   {hideMeaning ? 'Show' : 'Hide'}
                 </button>
               </div>
               {!hideMeaning && (
-                <div className="mt-3 font-medium text-purple-700 dark:text-purple-300 text-lg break-words whitespace-pre-wrap block">
+                <div className="mt-1.5 font-medium text-purple-700 dark:text-purple-300 text-sm sm:text-base break-words whitespace-pre-wrap block">
                   {currentQ.meaning}
                 </div>
               )}
@@ -426,11 +404,11 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
           />
         </div>
         
-        <div className="mt-6 flex flex-wrap gap-3 justify-center">
+        <div className="mt-3 flex flex-wrap gap-2 justify-center">
           <button
             onClick={handleSkip}
             disabled={status !== 'playing'}
-            className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-5 py-3 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+            className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-4 py-2 text-xs sm:text-sm rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors cursor-pointer"
           >
             Skip
           </button>
@@ -440,37 +418,24 @@ export function FillBlankGame({ onExit }: { onExit: () => void }) {
               onClick={handleHint}
               disabled={status !== 'playing' || hinted.length >= letterIndices(currentQ.word).length}
               title="Hint"
-              className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-5 py-3 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors flex items-center justify-center"
+              className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 px-3.5 py-2 text-xs sm:text-sm rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors flex items-center justify-center cursor-pointer"
             >
-              <Lightbulb size={20} />
+              <Lightbulb size={18} />
             </button>
           )}
           
           <button
             onClick={checkAnswer}
             disabled={status !== 'playing' || !inputValue.trim()}
-            className="bg-purple-600 text-white px-8 py-3 rounded-xl font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors flex-1 min-w-[140px]"
+            className="bg-purple-600 text-white px-5 py-2 text-xs sm:text-sm rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors flex-1 min-w-[120px] cursor-pointer"
           >
             Submit Answer
           </button>
         </div>
       </div>
 
-      {/* Stats bar */}
-      <div className="flex items-center justify-center gap-6 py-2 px-1 text-sm font-medium text-gray-500 dark:text-gray-400">
-        <span>
-          {correct} correct
-        </span>
-        <span>
-          {wrong} wrong
-        </span>
-        <span>
-          {skipped} skip
-        </span>
-        <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
-        <span className="tabular-nums">
-          {currentIndex + 1} / {allQuestions.length}
-        </span>
+      <div className="mt-2 flex flex-col items-center gap-2">
+        <GameStatsBar correct={correct} wrong={wrong} skipped={skipped} />
       </div>
 
       <CardDetailModal

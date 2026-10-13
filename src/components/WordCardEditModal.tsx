@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Plus, Trash2, Check, Sparkles } from 'lucide-react'
+import { X, Plus, Trash2, Check, Sparkles, ArrowLeftRight } from 'lucide-react'
 import { Flashcard, PosEntry, PhraseIdiom, useFlashcardStore, getCardTags } from '../store'
 
 function emptyMeaning() {
@@ -30,6 +30,7 @@ export function WordCardEditModal({ card, isOpen, onClose }: WordCardEditModalPr
   const [phonetic, setPhonetic] = useState('')
   const [posFormEntries, setPosFormEntries] = useState<PosEntry[]>([])
   const [phrasesForm, setPhrasesForm] = useState<PhraseIdiom[]>([])
+  const [usageNotesForm, setUsageNotesForm] = useState<string[]>([])
   const [tagsInput, setTagsInput] = useState('')
 
   useEffect(() => {
@@ -75,6 +76,12 @@ export function WordCardEditModal({ card, isOpen, onClose }: WordCardEditModalPr
       } else {
         setPhrasesForm([])
       }
+
+      if (card.usageNotes && card.usageNotes.length > 0) {
+        setUsageNotesForm([...card.usageNotes])
+      } else {
+        setUsageNotesForm([])
+      }
     }
   }, [card, isOpen])
 
@@ -91,12 +98,16 @@ export function WordCardEditModal({ card, isOpen, onClose }: WordCardEditModalPr
         meanings: pos.meanings
           .filter(m => m.meaning.trim() !== '')
           .map(m => ({
+            id: m.id,
             meaning: m.meaning.trim(),
-            examples: m.examples
+            notes: m.notes,
+            labels: m.labels,
+            examples: (m.examples || [])
               .filter(ex => ex.sentence.trim() !== '')
               .map(ex => ({
+                id: ex.id,
                 sentence: ex.sentence.trim(),
-                translation: ex.translation.trim()
+                translation: ex.translation?.trim() || ''
               }))
           }))
       }))
@@ -114,9 +125,12 @@ export function WordCardEditModal({ card, isOpen, onClose }: WordCardEditModalPr
     const validPhrases = phrasesForm
       .filter(p => p.phrase.trim() !== '')
       .map(p => ({
+        ...p,
         phrase: p.phrase.trim(),
         translation: p.translation.trim()
       }))
+
+    const validUsageNotes = usageNotesForm.map(u => u.trim()).filter(Boolean)
 
     updateWordCard(
       card.id,
@@ -124,7 +138,8 @@ export function WordCardEditModal({ card, isOpen, onClose }: WordCardEditModalPr
       finalPosEntries,
       validPhrases,
       tagsInput,
-      phonetic.trim() || undefined
+      phonetic.trim() || undefined,
+      validUsageNotes
     )
 
     onClose()
@@ -275,7 +290,7 @@ export function WordCardEditModal({ card, isOpen, onClose }: WordCardEditModalPr
 
                       {/* Examples */}
                       <div className="space-y-2 pt-1 border-t border-gray-100 dark:border-gray-600/40">
-                        {m.examples.map((ex, exIdx) => (
+                        {(m.examples || []).map((ex, exIdx) => (
                           <div
                             key={exIdx}
                             className="flex flex-col sm:flex-row gap-2 items-start sm:items-center bg-gray-50/70 dark:bg-gray-800/40 p-2 rounded-lg"
@@ -285,29 +300,36 @@ export function WordCardEditModal({ card, isOpen, onClose }: WordCardEditModalPr
                               value={ex.sentence}
                               onChange={e => {
                                 const updated = [...posFormEntries]
-                                updated[pIdx].meanings[mIdx].examples[exIdx].sentence = e.target.value
-                                setPosFormEntries(updated)
+                                const exList = updated[pIdx].meanings[mIdx].examples || []
+                                if (exList[exIdx]) {
+                                  exList[exIdx].sentence = e.target.value
+                                  updated[pIdx].meanings[mIdx].examples = exList
+                                  setPosFormEntries(updated)
+                                }
                               }}
                               className="flex-1 bg-transparent text-xs text-gray-700 dark:text-gray-200 italic placeholder-gray-400 focus:outline-none w-full"
                             />
                             <input
                               placeholder="Translation (e.g. Anh ấy là con người hành động...)"
-                              value={ex.translation}
+                              value={ex.translation || ''}
                               onChange={e => {
                                 const updated = [...posFormEntries]
-                                updated[pIdx].meanings[mIdx].examples[exIdx].translation = e.target.value
-                                setPosFormEntries(updated)
+                                const exList = updated[pIdx].meanings[mIdx].examples || []
+                                if (exList[exIdx]) {
+                                  exList[exIdx].translation = e.target.value
+                                  updated[pIdx].meanings[mIdx].examples = exList
+                                  setPosFormEntries(updated)
+                                }
                               }}
                               className="flex-1 bg-transparent text-xs text-gray-500 dark:text-gray-400 placeholder-gray-400 focus:outline-none w-full sm:border-l sm:border-gray-200 sm:dark:border-gray-600 sm:pl-2"
                             />
-                            {m.examples.length > 1 && (
+                            {(m.examples || []).length > 1 && (
                               <button
                                 type="button"
                                 onClick={() => {
                                   const updated = [...posFormEntries]
-                                  updated[pIdx].meanings[mIdx].examples = updated[pIdx].meanings[mIdx].examples.filter(
-                                    (_, idx) => idx !== exIdx
-                                  )
+                                  const exList = updated[pIdx].meanings[mIdx].examples || []
+                                  updated[pIdx].meanings[mIdx].examples = exList.filter((_, idx) => idx !== exIdx)
                                   setPosFormEntries(updated)
                                 }}
                                 className="p-1 text-gray-400 hover:text-red-500 transition-colors shrink-0"
@@ -323,7 +345,9 @@ export function WordCardEditModal({ card, isOpen, onClose }: WordCardEditModalPr
                           type="button"
                           onClick={() => {
                             const updated = [...posFormEntries]
-                            updated[pIdx].meanings[mIdx].examples.push({ sentence: '', translation: '' })
+                            const exList = updated[pIdx].meanings[mIdx].examples || []
+                            exList.push({ sentence: '', translation: '' })
+                            updated[pIdx].meanings[mIdx].examples = exList
                             setPosFormEntries(updated)
                           }}
                           className="text-[11px] text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 font-medium pt-1"
@@ -383,6 +407,20 @@ export function WordCardEditModal({ card, isOpen, onClose }: WordCardEditModalPr
                   }}
                   className="flex-1 bg-white dark:bg-gray-700 text-sm font-semibold text-gray-800 dark:text-gray-100 placeholder-gray-400 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 focus:outline-none w-full"
                 />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updated = [...phrasesForm]
+                    const tmp = updated[piIdx].phrase
+                    updated[piIdx].phrase = updated[piIdx].translation
+                    updated[piIdx].translation = tmp
+                    setPhrasesForm(updated)
+                  }}
+                  title="Hoán đổi cụm từ tiếng Anh và câu dịch"
+                  className="p-1.5 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-lg transition-colors shrink-0"
+                >
+                  <ArrowLeftRight size={15} />
+                </button>
                 <input
                   placeholder="Translation / Meaning (e.g. dễ như ăn bánh, nghỉ tay...)"
                   value={pi.translation}
@@ -403,6 +441,55 @@ export function WordCardEditModal({ card, isOpen, onClose }: WordCardEditModalPr
                 </button>
               </div>
             ))}
+          </div>
+
+          {/* Usage Notes */}
+          <div className="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                <span>💡 Usage Notes ({usageNotesForm.length})</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => setUsageNotesForm([...usageNotesForm, ''])}
+                className="text-xs text-amber-700 dark:text-amber-400 hover:text-amber-800 font-medium flex items-center gap-1 bg-amber-50 dark:bg-amber-900/30 px-2.5 py-1.5 rounded-lg transition-colors"
+              >
+                <Plus size={14} /> Add Usage Note
+              </button>
+            </div>
+
+            {usageNotesForm.length === 0 ? (
+              <p className="text-xs text-gray-400 italic">No usage notes added yet. Click above to add grammar or usage tips.</p>
+            ) : (
+              <div className="space-y-2">
+                {usageNotesForm.map((note, nIdx) => (
+                  <div
+                    key={nIdx}
+                    className="flex gap-2 items-start bg-amber-50/40 dark:bg-amber-950/20 p-3 rounded-xl border border-amber-200/60 dark:border-amber-900/40"
+                  >
+                    <textarea
+                      rows={2}
+                      placeholder="Usage note, grammar tip, or distinction (e.g. Khi là danh từ, trọng âm rơi vào âm tiết thứ nhất...)"
+                      value={note}
+                      onChange={e => {
+                        const updated = [...usageNotesForm]
+                        updated[nIdx] = e.target.value
+                        setUsageNotesForm(updated)
+                      }}
+                      className="flex-1 bg-white dark:bg-gray-700 text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 p-2 rounded-lg border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50 resize-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setUsageNotesForm(usageNotesForm.filter((_, idx) => idx !== nIdx))}
+                      className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors shrink-0"
+                      title="Remove note"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Tags */}

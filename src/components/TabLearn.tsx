@@ -296,11 +296,40 @@ export function TabLearn() {
     resetSession(selectedTags, learnMode, isRandom)
   }
 
+  // Keyboard shortcuts (Space/Enter to flip, 1-4 to rate)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (showSettings || !current) return
+      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return
+
+      if (e.key === ' ' || e.key === 'Enter') {
+        if (!showAnswer) {
+          e.preventDefault()
+          setShowAnswer(true)
+        }
+      } else if (e.key === '1') {
+        e.preventDefault()
+        handleRate('again')
+      } else if (e.key === '2') {
+        e.preventDefault()
+        handleRate('hard')
+      } else if (e.key === '3') {
+        e.preventDefault()
+        handleRate('good')
+      } else if (e.key === '4') {
+        e.preventDefault()
+        handleRate('easy')
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [showSettings, current, showAnswer, handleRate])
+
   // ── Done screen ───────────────────────────────────────────────
   const total = stats.again + stats.hard + stats.good + stats.easy
   if (!current) {
     return (
-      <div className="max-w-xl mx-auto py-8 flex flex-col gap-4 animate-in fade-in">
+      <div className="max-w-3xl mx-auto py-8 flex flex-col gap-4 animate-in fade-in">
         {/* Toolbar */}
         <div className="flex items-center gap-2 flex-wrap">
           <TagSelector allTags={allTags} selected={selectedTags} onChange={setSelectedTags} />
@@ -358,7 +387,7 @@ export function TabLearn() {
   const badge = cardTypeBadge()
 
   return (
-    <div className="max-w-xl mx-auto py-4 flex flex-col gap-3 animate-in fade-in">
+    <div className="max-w-3xl mx-auto py-4 pb-36 md:pb-28 flex flex-col gap-3 animate-in fade-in">
 
       {/* Toolbar */}
       <div className="flex items-center gap-2 flex-wrap">
@@ -535,26 +564,29 @@ export function TabLearn() {
           </div>
           )}
         </div>
+      </div>
 
-        {/* Actions — always visible */}
-        <div className="px-6 pb-6">
-          <div className="grid grid-cols-4 gap-2">
-            {([
-              { r: 'again' as Rating, label: 'Again', bg: 'bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400' },
-              { r: 'hard' as Rating, label: 'Hard', bg: 'bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:hover:bg-orange-900/40 text-orange-600 dark:text-orange-400' },
-              { r: 'good' as Rating, label: 'Good', bg: 'bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 text-green-600 dark:text-green-400' },
-              { r: 'easy' as Rating, label: 'Easy', bg: 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400' },
-            ]).map(({ r, label, bg }) => (
-              <button
-                key={r}
-                onClick={() => handleRate(r)}
-                className={`flex flex-col items-center rounded-xl py-3 px-1 transition-colors ${bg}`}
-              >
-                <span className="text-sm font-bold">{label}</span>
-                <span className="text-xs mt-0.5 opacity-70">{previews[r]}</span>
-              </button>
-            ))}
-          </div>
+      {/* Floating Fixed Bottom Actions Bar — always docked at bottom without moving */}
+      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-30 py-2.5 sm:py-3 px-3 sm:px-6 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-t border-gray-200/80 dark:border-gray-700/80 shadow-lg">
+        <div className="max-w-3xl mx-auto grid grid-cols-4 gap-2 sm:gap-3">
+          {([
+            { r: 'again' as Rating, keyNum: '1', label: 'Again', bg: 'bg-red-50 hover:bg-red-100 dark:bg-red-900/25 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 border border-red-200/50 dark:border-red-800/40' },
+            { r: 'hard' as Rating, keyNum: '2', label: 'Hard', bg: 'bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/25 dark:hover:bg-orange-900/40 text-orange-600 dark:text-orange-400 border border-orange-200/50 dark:border-orange-800/40' },
+            { r: 'good' as Rating, keyNum: '3', label: 'Good', bg: 'bg-green-50 hover:bg-green-100 dark:bg-green-900/25 dark:hover:bg-green-900/40 text-green-600 dark:text-green-400 border border-green-200/50 dark:border-green-800/40' },
+            { r: 'easy' as Rating, keyNum: '4', label: 'Easy', bg: 'bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/25 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-800/40' },
+          ]).map(({ r, keyNum, label, bg }) => (
+            <button
+              key={r}
+              onClick={() => handleRate(r)}
+              className={`flex flex-col items-center justify-center rounded-xl sm:rounded-2xl py-2 sm:py-2.5 px-1 transition-all shadow-2xs hover:shadow-xs active:scale-[0.98] ${bg}`}
+            >
+              <div className="flex items-center gap-1">
+                <span className="text-sm sm:text-base font-bold">{label}</span>
+                <span className="text-[10px] opacity-50 font-mono hidden sm:inline">[{keyNum}]</span>
+              </div>
+              <span className="text-[11px] sm:text-xs mt-0.5 opacity-75 font-medium">{previews[r]}</span>
+            </button>
+          ))}
         </div>
       </div>
     </div>

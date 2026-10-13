@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useFlashcardStore, getCardTags, getCardsForMode, Flashcard } from '../../store'
-import { ArrowLeft, RefreshCcw, Shuffle, Volume2, VolumeX } from 'lucide-react'
+import { useFlashcardStore, getCardTags, getCardsForMode, Flashcard, normalizePhraseItem } from '../../store'
+import { Shuffle, Volume2, VolumeX } from 'lucide-react'
 import { extractWordText, speakEnglish } from '../../utils'
-import { EmptyState, CardDetailModal, RootCardButton } from './shared'
+import { EmptyState, CardDetailModal, RootCardButton, GameHeader, ResultScreen } from './shared'
 
 type MixItem = {
   uid: string
@@ -46,7 +46,7 @@ export function MatchGame({ onExit }: { onExit: () => void }) {
             id: `${card.id}-hex-${hi}`,
             cardId: card.id,
             word: h.example,
-            meaning: h.exampleTranslation || h.meaning,
+            meaning: h.meaning,
           })
         })
       })
@@ -55,7 +55,7 @@ export function MatchGame({ onExit }: { onExit: () => void }) {
 
     if (matchMode === 'phrases') {
       filtered.forEach(card => {
-        const phrases = card.phrasesAndIdioms || []
+        const phrases = (card.phrasesAndIdioms || []).map(normalizePhraseItem)
         phrases.forEach((pi, idx) => {
           if (!pi.phrase) return
           pairs.push({
@@ -160,79 +160,74 @@ export function MatchGame({ onExit }: { onExit: () => void }) {
 
   if (currentRound * 5 >= allPairs.length) {
     return (
-      <div className="text-center py-20 animate-in fade-in flex flex-col items-center">
-        <div className="text-6xl mb-6">🏆</div>
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Match Complete!</h2>
-        <div className="flex gap-4 mt-6">
-          <button onClick={onExit} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-6 py-2 rounded-lg font-medium">Back</button>
-          <button onClick={() => { setSeed(s => s + 1); setCurrentRound(0) }} className="bg-purple-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium">
-            <RefreshCcw size={18} /> Play Again
-          </button>
-        </div>
-      </div>
+      <ResultScreen
+        title="Match Complete!"
+        correct={allPairs.length}
+        wrong={0}
+        onExit={onExit}
+        onAgain={() => { setSeed(s => s + 1); setCurrentRound(0) }}
+      />
     )
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-6 animate-in fade-in flex flex-col h-full">
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center gap-2">
-          <button onClick={onExit} className="text-gray-500 hover:text-gray-700 dark:text-gray-400">
-            <ArrowLeft size={24} />
-          </button>
-          <RootCardButton 
-            onClick={() => {
-              const currentPairId = selectedWordId || selectedMeaningId || actualRoundPairs[0]?.id
-              const foundPair = actualRoundPairs.find(p => p.id === currentPairId)
-              const card = flashcards.find(f => f.id === foundPair?.cardId) || flashcards.find(f => f.id === actualRoundPairs[0]?.cardId)
-              if (card) setShowModalCard(card)
-            }}
-          />
-        </div>
-        <div className="w-6" />
-        <div className="flex items-center gap-3">
-        <button
-          onClick={() => setAutoSpeak(a => !a)}
-          title={autoSpeak ? 'Auto-read English: on' : 'Auto-read English: off'}
-          className={`p-2 rounded-full border transition-colors ${autoSpeak ? 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800' : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-700'}`}
-        >
-          {autoSpeak ? <Volume2 size={18} /> : <VolumeX size={18} />}
-        </button>
-        <button 
-          onClick={() => setItems(prev => [...prev].sort(() => Math.random() - 0.5))}
-          className="text-gray-500 hover:text-purple-600 dark:text-gray-400 dark:hover:text-purple-400 transition-colors"
-          title="Shuffle Cards"
-        >
-          <Shuffle size={20} />
-        </button>
-        </div>
-      </div>
+    <div className="max-w-2xl mx-auto py-2 px-3 sm:px-4 animate-in fade-in flex flex-col h-full">
+      <GameHeader
+        onExit={onExit}
+        progress={actualRoundPairs.length > 0 ? Math.round((matchedIds.size / actualRoundPairs.length) * 100) : 0}
+        center={
+          <div className="flex bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg border border-gray-200/60 dark:border-gray-700/60 text-xs font-semibold">
+            <button
+              onClick={() => { setMatchMode('words'); setCurrentRound(0); setSeed(s => s + 1) }}
+              className={`px-2.5 py-1 rounded-md transition-colors ${matchMode === 'words' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+            >
+              Words
+            </button>
+            <button
+              onClick={() => { setMatchMode('examples'); setCurrentRound(0); setSeed(s => s + 1) }}
+              className={`px-2.5 py-1 rounded-md transition-colors ${matchMode === 'examples' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}
+            >
+              Examples
+            </button>
+            <button
+              onClick={() => { setMatchMode('phrases'); setCurrentRound(0); setSeed(s => s + 1) }}
+              className={`px-2.5 py-1 rounded-md transition-colors ${matchMode === 'phrases' ? 'bg-white dark:bg-gray-700 shadow-xs text-purple-700 dark:text-purple-300' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-400'}`}
+            >
+              Phrases
+            </button>
+          </div>
+        }
+        right={
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setAutoSpeak(a => !a)}
+              title={autoSpeak ? 'Auto-read English: on' : 'Auto-read English: off'}
+              className={`p-1.5 rounded-lg border transition-colors ${autoSpeak ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700' : 'bg-white dark:bg-gray-800 text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50'}`}
+            >
+              {autoSpeak ? <Volume2 size={16} /> : <VolumeX size={16} />}
+            </button>
+            <button 
+              onClick={() => setItems(prev => [...prev].sort(() => Math.random() - 0.5))}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-transparent hover:border-gray-200"
+              title="Shuffle Cards"
+            >
+              <Shuffle size={16} />
+            </button>
+            <RootCardButton 
+              onClick={() => {
+                const currentPairId = selectedWordId || selectedMeaningId || actualRoundPairs[0]?.id
+                const foundPair = actualRoundPairs.find(p => p.id === currentPairId)
+                const card = flashcards.find(f => f.id === foundPair?.cardId) || flashcards.find(f => f.id === actualRoundPairs[0]?.cardId)
+                if (card) setShowModalCard(card)
+              }}
+            />
+          </div>
+        }
+      />
 
-      {/* Mode switcher */}
-      <div className="flex bg-gray-100 dark:bg-gray-900 rounded-lg p-0.5 mb-6 self-center">
-        <button
-          onClick={() => { setMatchMode('words'); setCurrentRound(0); setSeed(s => s + 1) }}
-          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${matchMode === 'words' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-        >
-          Từ
-        </button>
-        <button
-          onClick={() => { setMatchMode('examples'); setCurrentRound(0); setSeed(s => s + 1) }}
-          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${matchMode === 'examples' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-        >
-          Câu ví dụ
-        </button>
-        <button
-          onClick={() => { setMatchMode('phrases'); setCurrentRound(0); setSeed(s => s + 1) }}
-          className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${matchMode === 'phrases' ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-purple-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
-        >
-          Phrases
-        </button>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 flex-1">
+      <div className="grid grid-cols-2 gap-2 flex-1 mb-2">
         {items.map(item => {
-          if (matchedIds.has(item.pairId)) return <div key={item.uid} className="h-24" /> // spacer
+          if (matchedIds.has(item.pairId)) return <div key={item.uid} className="h-16 sm:h-18" /> // spacer
 
           const isSelected = item.type === 'word' ? selectedWordId === item.pairId : selectedMeaningId === item.pairId
           const isError = item.type === 'word' ? errorPair?.w === item.pairId : errorPair?.m === item.pairId
@@ -258,10 +253,10 @@ export function MatchGame({ onExit }: { onExit: () => void }) {
           )
 
           return (
-            <div key={item.uid} className="relative group w-full h-24">
+            <div key={item.uid} className="relative group w-full h-16 sm:h-18">
               <button
                 onClick={() => handleSelect(item)}
-                className={`w-full h-full p-4 rounded-xl border-2 text-center font-medium transition-all duration-300 ${btnClass} flex items-center justify-center`}
+                className={`w-full h-full p-2.5 rounded-xl border-2 text-center text-xs sm:text-sm font-medium transition-all duration-300 ${btnClass} flex items-center justify-center`}
               >
                 <div className="line-clamp-2 whitespace-pre-wrap break-all">
                   {item.text}
@@ -271,7 +266,7 @@ export function MatchGame({ onExit }: { onExit: () => void }) {
               <div className="absolute top-0 left-0 w-full hidden group-hover:block z-50 animate-in fade-in zoom-in-95 duration-100">
                 <button
                   onClick={() => handleSelect(item)}
-                  className={`w-full min-h-[6rem] h-auto p-4 rounded-xl border-2 text-center font-medium shadow-2xl flex items-center justify-center ${overlayClass}`}
+                  className={`w-full min-h-[4.5rem] h-auto p-2.5 rounded-xl border-2 text-center text-xs sm:text-sm font-medium shadow-2xl flex items-center justify-center ${overlayClass}`}
                 >
                   <div className="whitespace-pre-wrap break-all">
                     {item.text}
@@ -282,7 +277,7 @@ export function MatchGame({ onExit }: { onExit: () => void }) {
           )
         })}
       </div>
-      <p className="text-center text-sm font-medium text-gray-500 dark:text-gray-400 mt-6">
+      <p className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 mt-2">
         Round {currentRound + 1}
       </p>
 
