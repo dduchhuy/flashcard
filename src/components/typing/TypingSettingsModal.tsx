@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { X, Sliders, Volume2, Database, RotateCcw, Play, Upload, Download, FileText, BookOpen, Check, AlertCircle } from "lucide-react"
 import { useTypingStore, Book } from "../../typingStore"
 import { useFlashcardStore } from "../../store"
@@ -46,6 +47,30 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
       loadFont(settings.fontFamily)
     }
   }, [isOpen, settings.fontFamily])
+
+  // Close modal when pressing Escape key
+  useEffect(() => {
+    if (!isOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation()
+        e.preventDefault()
+        onClose()
+      }
+    }
+    window.addEventListener("keydown", onKey, { capture: true })
+    return () => window.removeEventListener("keydown", onKey, { capture: true })
+  }, [isOpen, onClose])
+
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    if (!isOpen) return
+    const orig = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = orig
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -147,9 +172,20 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-      <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95">
+  return createPortal(
+    <div
+      data-modal-open="true"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose()
+        }
+      }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95"
+      >
         
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between shrink-0">
@@ -1058,6 +1094,7 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

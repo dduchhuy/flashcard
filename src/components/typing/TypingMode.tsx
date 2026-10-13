@@ -39,12 +39,15 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
   const [keystrokes, setKeystrokes] = useState(0)
   const [errors, setErrors] = useState(0)
   const [startTime, setStartTime] = useState<number | null>(null)
-  const [now, setNow] = useState(Date.now())
+  const [liveMs, setLiveMs] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
 
   const activeRef = useRef<HTMLDivElement | null>(null)
   const recentDeletedTelexRef = useRef<{ char: string; time: number } | null>(null)
   const ignoreNextImeBackspaceRef = useRef<number>(-10000)
   const lastKeyTimeRef = useRef<number>(Date.now())
+  const accumulatedMsRef = useRef<number>(0)
+  const activeSegmentStartRef = useRef<number | null>(null)
   const isAfkPausedRef = useRef<boolean>(false)
 
   // Dynamically load font (Google Fonts, CDN, system)
@@ -70,10 +73,29 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
     setKeystrokes(0)
     setErrors(0)
     setStartTime(null)
+    setLiveMs(0)
+    setIsPaused(false)
+    accumulatedMsRef.current = 0
+    activeSegmentStartRef.current = null
+    isAfkPausedRef.current = false
     recentDeletedTelexRef.current = null
     ignoreNextImeBackspaceRef.current = -10000
     lastKeyTimeRef.current = Date.now()
-    isAfkPausedRef.current = false
+  }
+
+  const ensureTimerActive = (nowTime: number) => {
+    lastKeyTimeRef.current = nowTime
+    if (startTime === null) {
+      setStartTime(nowTime)
+      accumulatedMsRef.current = 0
+      activeSegmentStartRef.current = nowTime
+      isAfkPausedRef.current = false
+      setIsPaused(false)
+    } else if (isAfkPausedRef.current) {
+      isAfkPausedRef.current = false
+      setIsPaused(false)
+      activeSegmentStartRef.current = nowTime
+    }
   }
 
   // Live timer tick with Auto-pause AFK detection
@@ -92,15 +114,24 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
     const t = setInterval(() => {
       const current = Date.now()
       const idle = current - lastKeyTimeRef.current
-      if (idle > thresholdMs) {
-        isAfkPausedRef.current = true
-      } else {
-        if (isAfkPausedRef.current) {
-          isAfkPausedRef.current = false
+
+      if (idle >= thresholdMs) {
+        if (!isAfkPausedRef.current) {
+          isAfkPausedRef.current = true
+          setIsPaused(true)
+          if (activeSegmentStartRef.current !== null) {
+            accumulatedMsRef.current += Math.max(0, lastKeyTimeRef.current - activeSegmentStartRef.current)
+            activeSegmentStartRef.current = null
+            setLiveMs(accumulatedMsRef.current)
+          }
         }
-        setNow(current)
+      } else {
+        if (!isAfkPausedRef.current && activeSegmentStartRef.current !== null) {
+          const activeCurrent = accumulatedMsRef.current + Math.max(0, current - activeSegmentStartRef.current)
+          setLiveMs(activeCurrent)
+        }
       }
-    }, 250)
+    }, 100)
     return () => clearInterval(t)
   }, [startTime, settings.autoPause])
 
@@ -129,7 +160,11 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
 
   const completeParagraph = () => {
     if (activeIdx < 0) return
-    const durationMs = startTime ? Date.now() - startTime : 0
+    let durationMs = accumulatedMsRef.current
+    if (activeSegmentStartRef.current !== null && !isAfkPausedRef.current) {
+      durationMs += Math.max(0, Date.now() - activeSegmentStartRef.current)
+    }
+    durationMs = Math.max(durationMs, 500)
     const minutes = Math.max(durationMs / 60000, 1 / 600)
     const correctChars = typed.reduce((acc, ch, i) => acc + (isCharMatch(target[i], ch) ? 1 : 0), 0)
     const wpm = Math.round((correctChars / 5) / minutes)
@@ -225,7 +260,7 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
           return
         }
 
-        lastKeyTimeRef.current = Date.now()
+        ensureTimerActive(Date.now())
 
         if (settings.soundEnabled) {
           playKeycapsSound({
@@ -266,7 +301,7 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
       e.preventDefault()
 
       const nowTime = Date.now()
-      lastKeyTimeRef.current = nowTime
+      ensureTimerActive(nowTime)
 
       // Case 1: An accented character was recently deleted by IME backspace,
       // and user/IME typed the modifier key to restore it
@@ -276,10 +311,6 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
         const revert = resolveTelexRevert(del.char, e.key, targetRemaining)
         if (revert && revert.length >= 2) {
           recentDeletedTelexRef.current = null
-          if (startTime === null) {
-            setStartTime(nowTime)
-            setNow(nowTime)
-          }
           setKeystrokes(k => k + 1)
           const delWasError = !isCharMatch(target[typed.length], del.char)
           let newErrors = 0
@@ -307,10 +338,6 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
           const expectedNext = target.slice(typed.length, typed.length + decomp.expansion.length)
           if (expectedNext.toLowerCase() === decomp.expansion.join("").toLowerCase()) {
             recentDeletedTelexRef.current = null
-            if (startTime === null) {
-              setStartTime(nowTime)
-              setNow(nowTime)
-            }
             setKeystrokes(k => k + 1)
             let newErrors = 0
             for (let ri = 0; ri < decomp.expansion.length; ri++) {
@@ -336,10 +363,6 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
         const targetRemaining = target.slice(typed.length - 1)
         const revert = resolveTelexRevert(lastTypedChar, e.key, targetRemaining)
         if (revert && revert.length >= 2) {
-          if (startTime === null) {
-            setStartTime(nowTime)
-            setNow(nowTime)
-          }
           setKeystrokes(k => k + 1)
           const wasError = !isCharMatch(target[typed.length - 1], lastTypedChar)
           const newTyped = [...typed.slice(0, -1), ...revert]
@@ -371,10 +394,6 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
           if (/[aeiouy]/i.test(potentialVowel)) {
             const mapForK = TELEX_MAP[e.key.toLowerCase()]
             if (mapForK && Object.values(mapForK).some(exp => exp[0].toLowerCase() === potentialVowel.toLowerCase())) {
-              if (startTime === null) {
-                setStartTime(nowTime)
-                setNow(nowTime)
-              }
               setKeystrokes(k => k + 1)
               const inserted = [potentialVowel, e.key]
               let newErrors = 0
@@ -397,10 +416,6 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
       }
 
       if (typed.length >= target.length) return
-      if (startTime === null) {
-        setStartTime(nowTime)
-        setNow(nowTime)
-      }
       const expected = target[typed.length]
       const isMatch = isCharMatch(expected, e.key)
       setKeystrokes(k => k + 1)
@@ -437,7 +452,6 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
   const avgWpm = doneEntries.length ? Math.round(doneEntries.reduce((a, p) => a + p.wpm, 0) / doneEntries.length) : 0
   const avgAcc = doneEntries.length ? Math.round(doneEntries.reduce((a, p) => a + p.accuracy, 0) / doneEntries.length) : 0
   const totalMs = doneEntries.reduce((a, p) => a + p.durationMs, 0)
-  const liveMs = startTime ? now - startTime : 0
   const liveCorrect = typed.reduce((acc, ch, i) => acc + (isCharMatch(target[i], ch) ? 1 : 0), 0)
   const liveWpm = liveMs > 1500 ? Math.round((liveCorrect / 5) / (liveMs / 60000)) : 0
   const liveAcc = keystrokes > 0 ? Math.max(0, Math.min(100, Math.round(((keystrokes - errors) / keystrokes) * 100))) : 100
@@ -606,9 +620,23 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
           <div className="h-4 w-px bg-gray-200 dark:bg-gray-700 shrink-0" />
 
           {/* Timer Slot */}
-          <div className="w-[70px] shrink-0 flex items-center gap-1.5" title="Elapsed typing time">
-            <Timer size={14} className="text-blue-500 shrink-0" />
-            <span className="font-semibold text-gray-800 dark:text-gray-200 tabular-nums font-mono whitespace-nowrap">
+          <div
+            className="w-[70px] shrink-0 flex items-center gap-1.5"
+            title={isPaused ? "Paused (type to resume)" : "Elapsed typing time"}
+          >
+            <Timer
+              size={14}
+              className={`shrink-0 transition-colors ${
+                isPaused ? "text-amber-500 animate-pulse" : "text-blue-500"
+              }`}
+            />
+            <span
+              className={`font-semibold tabular-nums font-mono whitespace-nowrap transition-colors ${
+                isPaused
+                  ? "text-amber-600 dark:text-amber-400"
+                  : "text-gray-800 dark:text-gray-200"
+              }`}
+            >
               {formatDuration(liveMs)}
             </span>
           </div>
