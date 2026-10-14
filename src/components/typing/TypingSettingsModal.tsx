@@ -120,6 +120,118 @@ function SettingsDropdown({
   )
 }
 
+// Grid picker for sounds — shows categories with compact cards
+function SoundGridPicker({
+  value,
+  onChange,
+  onPreview,
+  options,
+  placeholder = "Select...",
+}: {
+  value: string
+  onChange: (val: string) => void
+  onPreview?: (val: string) => void
+  options: DropdownOption[]
+  placeholder?: string
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false)
+    }
+    document.addEventListener("mousedown", handleGlobalClick)
+    document.addEventListener("keydown", handleKey)
+    return () => {
+      document.removeEventListener("mousedown", handleGlobalClick)
+      document.removeEventListener("keydown", handleKey)
+    }
+  }, [])
+
+  const selected = options.find(o => o.value === value)
+
+  const groups = useMemo(() => {
+    const map = new Map<string, DropdownOption[]>()
+    for (const opt of options) {
+      const g = opt.group || ""
+      if (!map.has(g)) map.set(g, [])
+      map.get(g)!.push(opt)
+    }
+    return Array.from(map.entries())
+  }, [options])
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-semibold flex items-center justify-between text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/70 shadow-xs transition-colors cursor-pointer"
+      >
+        <span className="truncate mr-2">{selected?.label || value || placeholder}</span>
+        <ChevronDown size={15} className={`text-gray-400 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 mt-1.5 w-full min-w-[320px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl z-50 overflow-hidden flex flex-col animate-in fade-in zoom-in-95">
+          <div className="overflow-y-auto p-2 max-h-72 space-y-3">
+            {groups.map(([grpName, grpOptions]) => (
+              <div key={grpName}>
+                {grpName && (
+                  <div className="px-1 pt-1 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                    {grpName}
+                  </div>
+                )}
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+                  {grpOptions.map(opt => {
+                    const isSelected = opt.value === value
+                    return (
+                      <div key={opt.value} className="relative group">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onChange(opt.value)
+                            setIsOpen(false)
+                          }}
+                          className={`w-full text-center px-1.5 py-2 text-[11px] rounded-xl font-medium transition-all cursor-pointer leading-tight ${
+                            isSelected
+                              ? "bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-700 shadow-sm"
+                              : "text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          }`}
+                        >
+                          {opt.label}
+                          {isSelected && (
+                            <span className="block text-[9px] text-purple-500 dark:text-purple-400 mt-0.5">✓ active</span>
+                          )}
+                        </button>
+                        {onPreview && (
+                          <button
+                            type="button"
+                            onMouseDown={e => { e.stopPropagation(); onPreview(opt.value) }}
+                            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-purple-600 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center shadow-sm z-10 cursor-pointer"
+                            title={`Preview ${opt.label}`}
+                          >
+                            <Play size={8} fill="currentColor" />
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 interface TypingSettingsModalProps {
   isOpen: boolean
   onClose: () => void
@@ -181,7 +293,7 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
     return KEYCAPS_SWITCHES.map(sw => ({
       label: sw.name,
       value: sw.id,
-      group: sw.category === "TypeLouder" ? "TypeLouder Switches" : "Mechanical (Entertrained)",
+      group: sw.category === "TypeLouder" ? "TypeLouder" : "Mechanical (KBS + Entertrained)",
     }))
   }, [])
 
@@ -938,12 +1050,13 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                         <Play size={13} fill="currentColor" />
                       </button>
                     </div>
-                    <SettingsDropdown
+                    <SoundGridPicker
                       value={settings.keycapsSound}
                       onChange={val => {
                         updateTypingSettings({ keycapsSound: val })
                         playKeycapsSound({ switchId: val, volume: settings.keycapsVolume, key: "a" })
                       }}
+                      onPreview={val => playKeycapsSound({ switchId: val, volume: settings.keycapsVolume, key: "a" })}
                       options={keycapsOptions}
                     />
                   </div>
@@ -1061,12 +1174,13 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                         <Play size={13} fill="currentColor" />
                       </button>
                     </div>
-                    <SettingsDropdown
+                    <SoundGridPicker
                       value={settings.errorSound}
                       onChange={val => {
                         updateTypingSettings({ errorSound: val })
                         playErrorSound(val, settings.errorVolume)
                       }}
+                      onPreview={val => playErrorSound(val, settings.errorVolume)}
                       options={errorOptions}
                     />
                   </div>

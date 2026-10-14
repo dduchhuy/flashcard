@@ -18,7 +18,7 @@ export const KEYCAPS_SWITCHES: KeycapsSwitchItem[] = [
   { id: "typelouder/glacier-glide", name: "Glacier Glide", category: "TypeLouder" },
   { id: "typelouder/cream-clack", name: "Cream Clack", category: "TypeLouder" },
 
-  // Mechanical switches (Entertrained)
+  // Mechanical switches (Entertrained + KBS.im)
   { id: "mechanical/alpaca", name: "Alpacas", category: "Mechanical" },
   { id: "mechanical/blackink", name: "Black Inks", category: "Mechanical" },
   { id: "mechanical/bluealps", name: "Blue Alps", category: "Mechanical" },
