@@ -766,11 +766,20 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter, 
           </button>
         </div>
 
-        {/* Progress Bar */}
+        {/* Progress Bar — updates per keystroke using current paragraph fraction */}
         <div className="h-1 bg-gray-100 dark:bg-gray-700 w-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-300"
-            style={{ width: `${paragraphs.length > 0 ? (doneCount / paragraphs.length) * 100 : 0}%` }}
+            className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-150"
+            style={{
+              width: `${(() => {
+                if (paragraphs.length === 0) return 0
+                const currentParaFraction =
+                  activeIdx >= 0 && target.length > 0
+                    ? Math.min(typed.length / target.length, 1)
+                    : 0
+                return ((doneCount + currentParaFraction) / paragraphs.length) * 100
+              })()}%`,
+            }}
           />
         </div>
       </div>

@@ -45,9 +45,9 @@ export function BookReader({ book, onBack }: BookReaderProps) {
       if (!ticking) {
         window.requestAnimationFrame(() => {
           const currentY = window.scrollY
-          if (currentY > 60) {
+          if (currentY > 70) {
             setIsScrolledDown(true)
-          } else {
+          } else if (currentY <= 25) {
             setIsScrolledDown(false)
           }
           ticking = false
@@ -246,10 +246,10 @@ export function BookReader({ book, onBack }: BookReaderProps) {
           onMouseLeave={(e) => {
             if (e.clientY > 110) setIsHoveringTop(false)
           }}
-          className={`sticky top-[61px] z-25 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-800 shadow-xs px-3 transition-all duration-300 ease-in-out ${
+          className={`sticky top-[61px] z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm px-3 py-2.5 mb-3 transition-all duration-300 ease-in-out ${
             isTopBarHidden 
-              ? '-translate-y-full opacity-0 pointer-events-none -mb-12 h-0 py-0 overflow-hidden border-transparent' 
-              : 'translate-y-0 opacity-100 pointer-events-auto py-2.5 mb-3'
+              ? '-translate-y-[130%] opacity-0 pointer-events-none' 
+              : 'translate-y-0 opacity-100 pointer-events-auto'
           }`}
         >
           <div className="flex flex-wrap items-center gap-2">

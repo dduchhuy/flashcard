@@ -79,7 +79,7 @@ function App() {
   return (
     <div className={`min-h-screen flex flex-col overflow-x-clip transition-colors ${settings.isDarkMode ? "dark bg-gray-900 text-white" : "bg-gray-50"}`}>
       {/* Header */}
-      <header className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md shadow-xs sticky top-0 z-30 transition-colors border-b border-gray-100 dark:border-gray-800">
+      <header className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md shadow-xs sticky top-0 z-50 transition-colors border-b border-gray-100 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           {/* Logo / Brand — Clicking navigates to Home */}
           <button
