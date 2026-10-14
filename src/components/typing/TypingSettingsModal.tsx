@@ -200,14 +200,11 @@ function SoundGridPicker({
                           }}
                           className={`w-full text-center px-1.5 py-2 text-[11px] rounded-xl font-medium transition-all cursor-pointer leading-tight ${
                             isSelected
-                              ? "bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-700 shadow-sm"
+                              ? "bg-purple-100 dark:bg-purple-950/70 text-purple-700 dark:text-purple-300 border-2 border-purple-500 dark:border-purple-400 font-semibold shadow-xs"
                               : "text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
                           }`}
                         >
                           {opt.label}
-                          {isSelected && (
-                            <span className="block text-[9px] text-purple-500 dark:text-purple-400 mt-0.5">✓ active</span>
-                          )}
                         </button>
                         {onPreview && (
                           <button
@@ -648,14 +645,9 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                 <div className="space-y-4">
                   {/* Font Family */}
                   <div>
-                    <div className="flex justify-between items-center mb-1.5">
-                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
-                        Font Family ({selectedFontMode.toUpperCase()})
-                      </label>
-                      <span className="text-[11px] text-purple-600 dark:text-purple-400 font-medium capitalize">
-                        {selectedFontMode} font
-                      </span>
-                    </div>
+                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
+                      Font Family
+                    </label>
                     <SettingsDropdown
                       value={currentModeFont.fontFamily}
                       onChange={val => handleUpdateModeFont({ fontFamily: val })}

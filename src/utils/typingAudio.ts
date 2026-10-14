@@ -294,8 +294,9 @@ export function previewKeycapsSound(options: {
     key: "a",
   })
 
-  // 2. If mechanical switch, also trigger upstroke (release) after 110ms
+  // 2. If mechanical switch, also trigger upstroke (release) after realistic interval (55ms for MX Black/Blue matching Typersguild)
   if (!switchId.startsWith("typelouder/")) {
+    const delay = switchId.includes("mxblack") || switchId.includes("mxblue") ? 55 : 95
     setTimeout(() => {
       playKeycapsSound({
         switchId,
@@ -305,7 +306,7 @@ export function previewKeycapsSound(options: {
         pitchModifier,
         key: "a",
       })
-    }, 110)
+    }, delay)
   }
 }
 
