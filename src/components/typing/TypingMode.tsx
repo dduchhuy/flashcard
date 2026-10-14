@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { CheckCircle2, RotateCcw, Timer, Gauge, Target, Volume2, VolumeX } from "lucide-react"
+import { CheckCircle2, RotateCcw, Timer, Gauge, Target, Volume2, VolumeX, Pin, PinOff } from "lucide-react"
 import { useTypingStore, Book, BookChapter } from "../../typingStore"
 import { isCharMatch, resolveTelexRevert, ACCENT_TO_EXPANSION, TELEX_MAP } from "../../utils/bookUtils"
 import { playKeycapsSound, playErrorSound, preloadSwitch, preloadError } from "../../utils/typingAudio"
@@ -12,6 +12,8 @@ interface TypingModeProps {
   hasNext: boolean
   onNextChapter: () => void
   isTopBarVisible?: boolean
+  /** Set true when rendered inside Zen Mode overlay */
+  zenMode?: boolean
 }
 
 function formatDuration(ms: number) {
@@ -21,9 +23,10 @@ function formatDuration(ms: number) {
   return `${m}:${sec.toString().padStart(2, "0")}`
 }
 
-export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter, isTopBarVisible = true }: TypingModeProps) {
+export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter, isTopBarVisible = true, zenMode = false }: TypingModeProps) {
   const { progress, lastPosition, markParagraphComplete, resetChapterProgress, setLastPosition, settings, updateTypingSettings } = useTypingStore()
   const chapterProgress = progress[book.id]?.[chapter.id] || {}
+  const isPinned = settings.hudPinned ?? true
 
   const firstIncomplete = useMemo(() => {
     const last = lastPosition[book.id]
@@ -699,8 +702,16 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter, 
         }}
       />
 
-      {/* Sticky Stats HUD (Always visible below top navigation) */}
-      <div className={`sticky ${isTopBarVisible ? "top-[122px]" : "top-[69px]"} z-20 mb-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm overflow-hidden text-xs sm:text-sm transition-[top] duration-300`}>
+      {/* Stats HUD (Sticky or relative based on isPinned, higher up when in zenMode) */}
+      <div
+        className={`${
+          isPinned
+            ? zenMode
+              ? "sticky top-1 sm:top-2 z-20"
+              : `sticky ${isTopBarVisible ? "top-[122px]" : "top-[69px]"} z-20`
+            : "relative z-10"
+        } mb-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm overflow-hidden text-xs sm:text-sm transition-all duration-300`}
+      >
         <div className="px-4 py-2 flex items-center justify-between gap-2">
           {/* 4 evenly spaced stats */}
           <div className="flex-1 grid grid-cols-4 items-center text-center divide-x divide-gray-200 dark:divide-gray-700">
@@ -751,19 +762,35 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter, 
             </div>
           </div>
 
-          {/* Sound Toggle Button */}
-          <button
-            type="button"
-            onClick={() => updateTypingSettings({ soundEnabled: !settings.soundEnabled })}
-            title={settings.soundEnabled ? "Mute typing sound" : "Enable typing sound"}
-            className={`shrink-0 ml-2 p-1.5 rounded-lg border transition-colors cursor-pointer ${
-              settings.soundEnabled
-                ? "bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-300 border-purple-200 dark:border-purple-800/60 hover:bg-purple-100"
-                : "bg-gray-50 dark:bg-gray-800 text-gray-400 border-gray-200 dark:border-gray-700 hover:text-gray-600"
-            }`}
-          >
-            {settings.soundEnabled ? <Volume2 size={13} /> : <VolumeX size={13} />}
-          </button>
+          <div className="flex items-center gap-1.5 shrink-0 ml-2">
+            {/* Pin / Unpin HUD Button */}
+            <button
+              type="button"
+              onClick={() => updateTypingSettings({ hudPinned: !isPinned })}
+              title={isPinned ? "Bỏ ghim (cuộn theo nội dung, không nổi lên)" : "Ghim thanh thông số nổi trên cùng"}
+              className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                isPinned
+                  ? "bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-300 border-purple-200 dark:border-purple-800/60 hover:bg-purple-100 dark:hover:bg-purple-900/40"
+                  : "bg-gray-50 dark:bg-gray-800 text-gray-400 border-gray-200 dark:border-gray-700 hover:text-gray-600 dark:hover:text-gray-300"
+              }`}
+            >
+              {isPinned ? <Pin size={13} className="fill-purple-600 dark:fill-purple-300" /> : <PinOff size={13} />}
+            </button>
+
+            {/* Sound Toggle Button */}
+            <button
+              type="button"
+              onClick={() => updateTypingSettings({ soundEnabled: !settings.soundEnabled })}
+              title={settings.soundEnabled ? "Mute typing sound" : "Enable typing sound"}
+              className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                settings.soundEnabled
+                  ? "bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-300 border-purple-200 dark:border-purple-800/60 hover:bg-purple-100"
+                  : "bg-gray-50 dark:bg-gray-800 text-gray-400 border-gray-200 dark:border-gray-700 hover:text-gray-600"
+              }`}
+            >
+              {settings.soundEnabled ? <Volume2 size={13} /> : <VolumeX size={13} />}
+            </button>
+          </div>
         </div>
 
         {/* Progress Bar — updates per keystroke using current paragraph fraction */}

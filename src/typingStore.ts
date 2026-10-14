@@ -62,6 +62,7 @@ export interface TypingSettings {
   markAsRead: boolean
   autoPause: '2s' | '5s' | '10s' | 'never'
   hideParagraphStats: boolean
+  hudPinned: boolean
 
   // Sound
   soundEnabled: boolean
@@ -99,6 +100,7 @@ export const defaultTypingSettings: TypingSettings = {
   markAsRead: true,
   autoPause: '5s',
   hideParagraphStats: false,
+  hudPinned: true,
 
   soundEnabled: true,
   keycapsSound: 'mechanical/mxbrown',

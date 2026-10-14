@@ -171,9 +171,9 @@ export function BookReader({ book, onBack }: BookReaderProps) {
 
   if (zenMode) {
     return (
-      <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900 overflow-y-auto px-4 py-8 sm:px-12 flex flex-col items-center">
+      <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900 overflow-y-auto px-4 pt-2 sm:pt-3 pb-8 sm:px-12 flex flex-col items-center">
         {/* Discreet Zen Controls */}
-        <div className="w-full max-w-4xl flex items-center justify-between mb-6 opacity-40 hover:opacity-100 transition-opacity">
+        <div className="w-full max-w-4xl flex items-center justify-between mb-2 opacity-40 hover:opacity-100 transition-opacity">
           <span className="text-xs text-gray-400 font-medium">Zen Mode · Press <kbd className="font-mono bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-[11px]">Esc</kbd> to exit</span>
           <div className="flex items-center gap-2">
             <button
@@ -202,6 +202,7 @@ export function BookReader({ book, onBack }: BookReaderProps) {
                 paragraphs={paragraphs}
                 hasNext={!!nextChapter}
                 onNextChapter={() => nextChapter && selectChapter(nextChapter.chapter.id)}
+                zenMode={true}
               />
             ) : (
               <AnnotatedReader book={book} chapter={current.chapter} paragraphs={paragraphs} mode={viewMode} />
