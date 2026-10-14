@@ -34,23 +34,22 @@ export function BookReader({ book, onBack }: BookReaderProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [zenMode, setZenMode] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
-  const [isTopBarHidden, setIsTopBarHidden] = useState(false)
+  const [isScrolledDown, setIsScrolledDown] = useState(false)
+  const [isHoveringTop, setIsHoveringTop] = useState(false)
 
-  // Auto-hide top bar when scrolling down, show when scrolling up or mouse near top
+  // Auto-hide top bar when scrolling down, show when mouse moves to top, auto-hide when mouse leaves
   useEffect(() => {
-    let lastY = window.scrollY
     let ticking = false
 
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
           const currentY = window.scrollY
-          if (currentY > 60 && currentY > lastY + 5) {
-            setIsTopBarHidden(true)
-          } else if (currentY < lastY - 5 || currentY <= 30) {
-            setIsTopBarHidden(false)
+          if (currentY > 60) {
+            setIsScrolledDown(true)
+          } else {
+            setIsScrolledDown(false)
           }
-          lastY = currentY
           ticking = false
         })
         ticking = true
@@ -58,8 +57,12 @@ export function BookReader({ book, onBack }: BookReaderProps) {
     }
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (e.clientY <= 70) {
-        setIsTopBarHidden(false)
+      // Reveal when mouse enters top zone (<= 110px)
+      if (e.clientY <= 110) {
+        setIsHoveringTop(true)
+      } else if (e.clientY > 150) {
+        // "khi để chuột xuống thì tự ẩn": automatically hide when mouse moves back down
+        setIsHoveringTop(false)
       }
     }
 
@@ -70,6 +73,8 @@ export function BookReader({ book, onBack }: BookReaderProps) {
       window.removeEventListener('mousemove', handleMouseMove)
     }
   }, [])
+
+  const isTopBarHidden = isScrolledDown && !isHoveringTop
 
   // Listen for Escape key to exit Zen mode
   useEffect(() => {
@@ -234,12 +239,19 @@ export function BookReader({ book, onBack }: BookReaderProps) {
         </div>
       )}
 
-      <div className={`flex-1 min-w-0 ${sidebarCollapsed ? 'max-w-4xl mx-auto w-full' : 'max-w-4xl mx-auto'}`}>        {/* Top bar with auto-hide */}
-        <div className={`sticky top-0 z-30 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md py-2.5 mb-3 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-xs px-3 transition-all duration-300 ease-in-out ${
-          isTopBarHidden 
-            ? '-translate-y-24 opacity-0 pointer-events-none' 
-            : 'translate-y-0 opacity-100 pointer-events-auto'
-        }`}>
+      <div className={`flex-1 min-w-0 ${sidebarCollapsed ? 'max-w-4xl mx-auto w-full' : 'max-w-4xl mx-auto'}`}>
+        {/* Top bar with auto-hide (positioned under main nav, above HUD stats) */}
+        <div
+          onMouseEnter={() => setIsHoveringTop(true)}
+          onMouseLeave={(e) => {
+            if (e.clientY > 110) setIsHoveringTop(false)
+          }}
+          className={`sticky top-[61px] z-25 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-gray-800 shadow-xs px-3 transition-all duration-300 ease-in-out ${
+            isTopBarHidden 
+              ? '-translate-y-full opacity-0 pointer-events-none -mb-12 h-0 py-0 overflow-hidden border-transparent' 
+              : 'translate-y-0 opacity-100 pointer-events-auto py-2.5 mb-3'
+          }`}
+        >
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -324,6 +336,7 @@ export function BookReader({ book, onBack }: BookReaderProps) {
               paragraphs={paragraphs}
               hasNext={!!nextChapter}
               onNextChapter={() => nextChapter && selectChapter(nextChapter.chapter.id)}
+              isTopBarVisible={!isTopBarHidden}
             />
           ) : (
             <AnnotatedReader book={book} chapter={current.chapter} paragraphs={paragraphs} mode={viewMode} />

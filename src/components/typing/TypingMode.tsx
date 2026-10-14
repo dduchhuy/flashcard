@@ -11,6 +11,7 @@ interface TypingModeProps {
   paragraphs: string[]
   hasNext: boolean
   onNextChapter: () => void
+  isTopBarVisible?: boolean
 }
 
 function formatDuration(ms: number) {
@@ -20,7 +21,7 @@ function formatDuration(ms: number) {
   return `${m}:${sec.toString().padStart(2, "0")}`
 }
 
-export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }: TypingModeProps) {
+export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter, isTopBarVisible = true }: TypingModeProps) {
   const { progress, lastPosition, markParagraphComplete, resetChapterProgress, setLastPosition, settings, updateTypingSettings } = useTypingStore()
   const chapterProgress = progress[book.id]?.[chapter.id] || {}
 
@@ -698,8 +699,8 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
         }}
       />
 
-      {/* Sticky Stats HUD */}
-      <div className="sticky top-2 z-20 mb-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm overflow-hidden text-xs sm:text-sm">
+      {/* Sticky Stats HUD (Always visible below top navigation) */}
+      <div className={`sticky ${isTopBarVisible ? "top-[122px]" : "top-[69px]"} z-20 mb-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm overflow-hidden text-xs sm:text-sm transition-[top] duration-300`}>
         <div className="px-4 py-2 flex items-center justify-between gap-2">
           {/* 4 evenly spaced stats */}
           <div className="flex-1 grid grid-cols-4 items-center text-center divide-x divide-gray-200 dark:divide-gray-700">
