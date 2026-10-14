@@ -48,3 +48,17 @@ body {
   height: 0 !important;
 }
 
+@keyframes caretBlink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.caret-blink {
+  animation: caretBlink 1s ease-in-out infinite;
+}
+
+

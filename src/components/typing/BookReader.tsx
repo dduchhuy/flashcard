@@ -34,6 +34,42 @@ export function BookReader({ book, onBack }: BookReaderProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [zenMode, setZenMode] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [isTopBarHidden, setIsTopBarHidden] = useState(false)
+
+  // Auto-hide top bar when scrolling down, show when scrolling up or mouse near top
+  useEffect(() => {
+    let lastY = window.scrollY
+    let ticking = false
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentY = window.scrollY
+          if (currentY > 60 && currentY > lastY + 5) {
+            setIsTopBarHidden(true)
+          } else if (currentY < lastY - 5 || currentY <= 30) {
+            setIsTopBarHidden(false)
+          }
+          lastY = currentY
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (e.clientY <= 70) {
+        setIsTopBarHidden(false)
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    window.addEventListener('mousemove', handleMouseMove, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('mousemove', handleMouseMove)
+    }
+  }, [])
 
   // Listen for Escape key to exit Zen mode
   useEffect(() => {
@@ -198,80 +234,85 @@ export function BookReader({ book, onBack }: BookReaderProps) {
         </div>
       )}
 
-      <div className={`flex-1 min-w-0 ${sidebarCollapsed ? 'max-w-4xl mx-auto w-full' : 'max-w-4xl mx-auto'}`}>
-        {/* Top bar */}
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-sm font-semibold text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-          >
-            <ArrowLeft size={16} /> Books
-          </button>
-          
-          {/* Desktop Sidebar Toggle */}
-          <button
-            type="button"
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="hidden lg:flex items-center p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-            title={sidebarCollapsed ? "Show Table of Contents" : "Hide Table of Contents (Center Typing Area)"}
-          >
-            {sidebarCollapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
-          </button>
+      <div className={`flex-1 min-w-0 ${sidebarCollapsed ? 'max-w-4xl mx-auto w-full' : 'max-w-4xl mx-auto'}`}>        {/* Top bar with auto-hide */}
+        <div className={`sticky top-0 z-30 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md py-2.5 mb-3 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-xs px-3 transition-all duration-300 ease-in-out ${
+          isTopBarHidden 
+            ? '-translate-y-24 opacity-0 pointer-events-none' 
+            : 'translate-y-0 opacity-100 pointer-events-auto'
+        }`}>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={onBack}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-sm font-semibold text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+            >
+              <ArrowLeft size={16} /> Books
+            </button>
+            
+            {/* Desktop Sidebar Toggle */}
+            <button
+              type="button"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="hidden lg:flex items-center p-2 rounded-xl text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+              title={sidebarCollapsed ? "Show Table of Contents" : "Hide Table of Contents (Center Typing Area)"}
+            >
+              {sidebarCollapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setShowToc(true)}
-            className="lg:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-          >
-            <ListTree size={16} /> Chapters
-          </button>
-          
-          <h2 className="flex-1 min-w-0 truncate text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">
-            {current?.chapter.title || book.title}
-          </h2>
+            <button
+              type="button"
+              onClick={() => setShowToc(true)}
+              className="lg:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+            >
+              <ListTree size={16} /> Chapters
+            </button>
+            
+            <h2 className="flex-1 min-w-0 truncate text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">
+              {current?.chapter.title || book.title}
+            </h2>
 
-          {/* Mode Switcher */}
-          <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl border border-gray-200/60 dark:border-gray-700/60">
-            {MODES.map(m => {
-              const Icon = m.icon
-              const active = viewMode === m.id
-              return (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => setViewMode(m.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                    active
-                      ? 'bg-white dark:bg-gray-700 text-purple-700 dark:text-purple-300 shadow-xs'
-                      : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
-                  }`}
-                >
-                  <Icon size={15} /> {m.label}
-                </button>
-              )
-            })}
+            {/* Mode Switcher */}
+            <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl border border-gray-200/60 dark:border-gray-700/60">
+              {MODES.map(m => {
+                const Icon = m.icon
+                const active = viewMode === m.id
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => setViewMode(m.id)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                      active
+                        ? 'bg-white dark:bg-gray-700 text-purple-700 dark:text-purple-300 shadow-xs'
+                        : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
+                    }`}
+                  >
+                    <Icon size={15} /> {m.label}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Zen Mode Button */}
+            <button
+              type="button"
+              onClick={() => setZenMode(true)}
+              className="flex items-center p-2 rounded-xl text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+              title="Zen Mode (Distraction-Free)"
+            >
+              <Maximize2 size={16} />
+            </button>
+
+            {/* Settings Button */}
+            <button
+              type="button"
+              onClick={() => setShowSettings(true)}
+              className="flex items-center p-2 rounded-xl text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+              title="Typing Settings"
+            >
+              <Settings size={16} />
+            </button>
           </div>
-
-          {/* Zen Mode Button */}
-          <button
-            type="button"
-            onClick={() => setZenMode(true)}
-            className="flex items-center p-2 rounded-xl text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-            title="Zen Mode (Distraction-Free)"
-          >
-            <Maximize2 size={16} />
-          </button>
-
-          {/* Settings Button */}
-          <button
-            type="button"
-            onClick={() => setShowSettings(true)}
-            className="flex items-center p-2 rounded-xl text-gray-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-            title="Typing Settings"
-          >
-            <Settings size={16} />
-          </button>
         </div>
 
         {current && (

@@ -249,15 +249,19 @@ export function TabAllCards() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isSettingsOpen])
 
-  // Count cards by type
+  // Count cards by type (reflecting selectedTags filter)
   const { flashcardCount, sentenceCount } = useMemo(() => {
     let f = 0, s = 0
     flashcards.forEach(c => {
+      if (selectedTags.length > 0) {
+        const tags = getCardTags(c)
+        if (!selectedTags.some(t => tags.includes(t))) return
+      }
       if (isWordCard(c)) f++
       else s++
     })
     return { flashcardCount: f, sentenceCount: s }
-  }, [flashcards])
+  }, [flashcards, selectedTags])
 
   // All unique tags
   const allAvailableTags = useMemo(() => {
@@ -785,18 +789,13 @@ export function TabAllCards() {
                 title="Filter by Tag"
               >
                 <TagIcon size={15} className={selectedTags.length > 0 ? 'text-purple-600 dark:text-purple-400 shrink-0' : 'text-gray-400 shrink-0'} />
-                <span className="font-semibold max-w-[110px] truncate">
+                <span className="font-semibold max-w-[120px] truncate">
                   {selectedTags.length === 0
                     ? 'Tags'
                     : selectedTags.length === 1
                     ? `#${selectedTags[0]}`
-                    : `${selectedTags.length} Tags`}
+                    : `${selectedTags.length} tags`}
                 </span>
-                {selectedTags.length > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-600 text-white leading-none">
-                    {selectedTags.length}
-                  </span>
-                )}
                 <ChevronDown size={14} className={`text-gray-400 transition-transform ${openQuickMenu === 'tag' ? 'rotate-180' : ''}`} />
               </button>
 

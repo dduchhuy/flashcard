@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import { createPortal } from "react-dom"
-import { X, Sliders, Volume2, Database, RotateCcw, Play, Upload, Download, FileText, BookOpen, Check, AlertCircle } from "lucide-react"
+import { X, Sliders, Volume2, Database, RotateCcw, Play, Upload, Download, FileText, BookOpen, Check, AlertCircle, ChevronDown } from "lucide-react"
 import { useTypingStore, Book } from "../../typingStore"
 import { useFlashcardStore } from "../../store"
 import { KEYCAPS_SWITCHES, ERROR_SOUNDS, playKeycapsSound, playErrorSound } from "../../utils/typingAudio"
@@ -17,6 +17,108 @@ import {
 import { loadAllFromGitData, exportAllToGitData } from "../../utils/gitDataService"
 
 import { FONT_OPTIONS, loadFont, getFontVariationSettings, getEffectiveFontFamily } from "../../utils/fontLoader"
+
+interface DropdownOption {
+  label: string
+  value: string
+  group?: string
+}
+
+function SettingsDropdown({
+  value,
+  onChange,
+  options,
+  placeholder = "Select...",
+  className = "",
+}: {
+  value: string
+  onChange: (val: string) => void
+  options: DropdownOption[]
+  placeholder?: string
+  className?: string
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false)
+    }
+    document.addEventListener("mousedown", handleGlobalClick)
+    document.addEventListener("keydown", handleKey)
+    return () => {
+      document.removeEventListener("mousedown", handleGlobalClick)
+      document.removeEventListener("keydown", handleKey)
+    }
+  }, [])
+
+  const selected = options.find(o => o.value === value)
+
+  const groups = useMemo(() => {
+    const map = new Map<string, DropdownOption[]>()
+    for (const opt of options) {
+      const g = opt.group || ""
+      if (!map.has(g)) map.set(g, [])
+      map.get(g)!.push(opt)
+    }
+    return Array.from(map.entries())
+  }, [options])
+
+  return (
+    <div className={`relative ${className}`} ref={ref}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-semibold flex items-center justify-between text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/70 shadow-xs transition-colors cursor-pointer"
+      >
+        <span className="truncate mr-2">{selected?.label || value || placeholder}</span>
+        <ChevronDown size={15} className={`text-gray-400 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 mt-1.5 w-full min-w-[200px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl z-50 overflow-hidden max-h-64 flex flex-col animate-in fade-in zoom-in-95">
+          <div className="overflow-y-auto p-1.5 space-y-1">
+            {groups.map(([grpName, grpOptions]) => (
+              <div key={grpName}>
+                {grpName && (
+                  <div className="px-2.5 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                    {grpName}
+                  </div>
+                )}
+                {grpOptions.map(opt => {
+                  const isSelected = opt.value === value
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => {
+                        onChange(opt.value)
+                        setIsOpen(false)
+                      }}
+                      className={`w-full text-left px-2.5 py-1.5 text-xs sm:text-sm rounded-lg flex items-center justify-between font-medium transition-colors cursor-pointer ${
+                        isSelected
+                          ? "bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 font-semibold"
+                          : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      }`}
+                    >
+                      <span className="truncate mr-2">{opt.label}</span>
+                      {isSelected && <Check size={14} className="text-purple-600 dark:text-purple-400 shrink-0" />}
+                    </button>
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 interface TypingSettingsModalProps {
   isOpen: boolean
@@ -41,6 +143,41 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
   const [isGitSyncing, setIsGitSyncing] = useState(false)
   const bookImportInputRef = useRef<HTMLInputElement>(null)
   const saveImportInputRef = useRef<HTMLInputElement>(null)
+
+  const fontOptions = useMemo(() => {
+    return FONT_OPTIONS.flatMap(grp =>
+      grp.fonts.map(f => ({ label: f.name, value: f.name, group: grp.group }))
+    )
+  }, [])
+
+  const caretStyleOptions = useMemo(() => [
+    { label: "Line (|)", value: "line" },
+    { label: "Floor (_)", value: "floor" },
+    { label: "Block (█)", value: "block" },
+  ], [])
+
+  const caretAnimationOptions = useMemo(() => [
+    { label: "Linear", value: "linear" },
+    { label: "Swing", value: "swing" },
+    { label: "Ease", value: "ease" },
+    { label: "Ease-in", value: "ease-in" },
+    { label: "Ease-out", value: "ease-out" },
+  ], [])
+
+  const keycapsOptions = useMemo(() => {
+    return KEYCAPS_SWITCHES.map(sw => ({
+      label: sw.name,
+      value: sw.id,
+      group: sw.category === "TypeLouder" ? "TypeLouder Switches" : "Mechanical (Entertrained)",
+    }))
+  }, [])
+
+  const errorOptions = useMemo(() => {
+    return ERROR_SOUNDS.map(err => ({
+      label: err.name,
+      value: err.id,
+    }))
+  }, [])
 
   useEffect(() => {
     if (isOpen && settings.fontFamily) {
@@ -327,21 +464,11 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                     <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                       Font Family
                     </label>
-                    <select
+                    <SettingsDropdown
                       value={settings.fontFamily}
-                      onChange={e => updateTypingSettings({ fontFamily: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm text-gray-800 dark:text-gray-200 font-medium focus:ring-2 focus:ring-purple-500 cursor-pointer"
-                    >
-                      {FONT_OPTIONS.map(grp => (
-                        <optgroup key={grp.group} label={grp.group}>
-                          {grp.fonts.map(f => (
-                            <option key={f.name} value={f.name}>
-                              {f.name}
-                            </option>
-                          ))}
-                        </optgroup>
-                      ))}
-                    </select>
+                      onChange={val => updateTypingSettings({ fontFamily: val })}
+                      options={fontOptions}
+                    />
                   </div>
 
                   {/* Font Size & Line Height */}
@@ -458,32 +585,22 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                     <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                       Caret Style
                     </label>
-                    <select
+                    <SettingsDropdown
                       value={settings.caretStyle}
-                      onChange={e => updateTypingSettings({ caretStyle: e.target.value as any })}
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm font-medium cursor-pointer"
-                    >
-                      <option value="line">Line (|)</option>
-                      <option value="floor">Floor (_)</option>
-                      <option value="block">Block (█)</option>
-                    </select>
+                      onChange={val => updateTypingSettings({ caretStyle: val as any })}
+                      options={caretStyleOptions}
+                    />
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                       Caret Animation
                     </label>
-                    <select
+                    <SettingsDropdown
                       value={settings.caretAnimation}
-                      onChange={e => updateTypingSettings({ caretAnimation: e.target.value as any })}
-                      className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm font-medium cursor-pointer"
-                    >
-                      <option value="linear">Linear</option>
-                      <option value="swing">Swing</option>
-                      <option value="ease">Ease</option>
-                      <option value="ease-in">Ease-in</option>
-                      <option value="ease-out">Ease-out</option>
-                    </select>
+                      onChange={val => updateTypingSettings({ caretAnimation: val as any })}
+                      options={caretAnimationOptions}
+                    />
                   </div>
                 </div>
               </div>
@@ -492,6 +609,25 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
               <div className="space-y-3">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Typing Behavior</h3>
 
+                {/* Typewriter Mode */}
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-800">
+                  <div className="pr-3">
+                    <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">Typewriter Mode</div>
+                    <div className="text-xs text-gray-500">Keep the active typing line centered vertically on the screen.</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => updateTypingSettings({ typewriterMode: !settings.typewriterMode })}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 cursor-pointer ${
+                      settings.typewriterMode ? "bg-purple-600" : "bg-gray-300 dark:bg-gray-700"
+                    }`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      settings.typewriterMode ? "translate-x-6" : "translate-x-1"
+                    }`} />
+                  </button>
+                </div>
+
                 {/* Keep In Position */}
                 <div className="flex items-center justify-between p-3.5 rounded-2xl bg-gray-50 dark:bg-gray-900/40 border border-gray-100 dark:border-gray-800">
                   <div className="pr-3">
@@ -499,6 +635,7 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                     <div className="text-xs text-gray-500">Adds additional margin to the bottom to keep the active line in position.</div>
                   </div>
                   <button
+                    type="button"
                     onClick={() => updateTypingSettings({ keepInPosition: !settings.keepInPosition })}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 cursor-pointer ${
                       settings.keepInPosition ? "bg-purple-600" : "bg-gray-300 dark:bg-gray-700"
@@ -719,40 +856,27 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                     <div className="flex justify-between items-center mb-1.5">
                       <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Mechanical Switch</label>
                       <button
+                        type="button"
                         onClick={() => playKeycapsSound({
                           switchId: settings.keycapsSound,
                           pitchModifier: settings.keycapsPitch,
                           volume: settings.keycapsVolume,
                           key: "a",
                         })}
-                        className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 font-semibold cursor-pointer"
+                        className="p-1 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors cursor-pointer"
+                        title="Play sound preview"
                       >
-                        <Play size={12} fill="currentColor" /> Preview Switch
+                        <Play size={13} fill="currentColor" />
                       </button>
                     </div>
-                    <select
+                    <SettingsDropdown
                       value={settings.keycapsSound}
-                      onChange={e => {
-                        updateTypingSettings({ keycapsSound: e.target.value })
-                        playKeycapsSound({ switchId: e.target.value, volume: settings.keycapsVolume, key: "a" })
+                      onChange={val => {
+                        updateTypingSettings({ keycapsSound: val })
+                        playKeycapsSound({ switchId: val, volume: settings.keycapsVolume, key: "a" })
                       }}
-                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm font-medium cursor-pointer"
-                    >
-                      <optgroup label="TypeLouder Switches">
-                        {KEYCAPS_SWITCHES.filter(sw => sw.category === "TypeLouder").map(sw => (
-                          <option key={sw.id} value={sw.id}>
-                            {sw.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                      <optgroup label="Mechanical (Entertrained)">
-                        {KEYCAPS_SWITCHES.filter(sw => sw.category !== "TypeLouder").map(sw => (
-                          <option key={sw.id} value={sw.id}>
-                            {sw.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    </select>
+                      options={keycapsOptions}
+                    />
                   </div>
 
                   {/* Volume Slider */}
@@ -860,26 +984,22 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                     <div className="flex justify-between items-center mb-1.5">
                       <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Error Sound Effect</label>
                       <button
+                        type="button"
                         onClick={() => playErrorSound(settings.errorSound, settings.errorVolume)}
-                        className="flex items-center gap-1 text-xs text-rose-600 hover:text-rose-700 font-semibold cursor-pointer"
+                        className="p-1 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors cursor-pointer"
+                        title="Play error sound preview"
                       >
-                        <Play size={12} fill="currentColor" /> Preview Error
+                        <Play size={13} fill="currentColor" />
                       </button>
                     </div>
-                    <select
+                    <SettingsDropdown
                       value={settings.errorSound}
-                      onChange={e => {
-                        updateTypingSettings({ errorSound: e.target.value })
-                        playErrorSound(e.target.value, settings.errorVolume)
+                      onChange={val => {
+                        updateTypingSettings({ errorSound: val })
+                        playErrorSound(val, settings.errorVolume)
                       }}
-                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm font-medium cursor-pointer"
-                    >
-                      {ERROR_SOUNDS.map(err => (
-                        <option key={err.id} value={err.id}>
-                          {err.name}
-                        </option>
-                      ))}
-                    </select>
+                      options={errorOptions}
+                    />
                   </div>
 
                   {/* Errors Volume Slider */}

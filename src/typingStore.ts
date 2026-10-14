@@ -52,6 +52,7 @@ export interface TypingSettings {
   caretAnimation: 'linear' | 'swing' | 'ease' | 'ease-in' | 'ease-out'
 
   // Behavior
+  typewriterMode: boolean
   keepInPosition: boolean
   newLineIndication: boolean
   typosIndication: 'both' | 'highlight' | 'replace'
@@ -88,6 +89,7 @@ export const defaultTypingSettings: TypingSettings = {
   caretStyle: 'line',
   caretAnimation: 'ease',
 
+  typewriterMode: false,
   keepInPosition: false,
   newLineIndication: false,
   typosIndication: 'both',

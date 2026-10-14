@@ -332,6 +332,98 @@ export function parseTxtToBook(filename: string, text: string): { title: string;
     }
   }
 
+  // Check if format uses divider line (--- or ===) or markdown headings (## or ###)
+  const hasDividerOrMarkdown = lines.some(l => /^-{3,}\s*$/.test(l.trim()) || /^#{2,3}\s+\S+/.test(l.trim()))
+
+  if (hasDividerOrMarkdown) {
+    const chapters: BookChapter[] = []
+    let currentMain: BookChapter | null = null
+    let currentSub: BookChapter | null = null
+    let currentLines: string[] = []
+
+    const flushContent = () => {
+      const content = currentLines.join('\n').trim()
+      currentLines = []
+      if (currentSub) {
+        currentSub.content = currentSub.content ? `${currentSub.content}\n\n${content}`.trim() : content
+      } else if (currentMain) {
+        currentMain.content = currentMain.content ? `${currentMain.content}\n\n${content}`.trim() : content
+      }
+    }
+
+    let mainCount = 0
+    let subCount = 0
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]
+      const trimmed = line.trim()
+
+      // Skip title/author metadata lines if at very top before any chapter
+      if (mainCount === 0 && (/^title:\s*/i.test(trimmed) || /^(?:author|by):\s*/i.test(trimmed))) {
+        continue
+      }
+
+      // Divider line: ----------------------------------------
+      if (/^-{3,}\s*$/.test(trimmed) || /^={3,}\s*$/.test(trimmed)) {
+        flushContent()
+        currentSub = null
+        continue
+      }
+
+      // Main Chapter: ## Title
+      const mainMatch = trimmed.match(/^##\s+(.+)$/)
+      if (mainMatch && !trimmed.startsWith('###')) {
+        flushContent()
+        mainCount++
+        subCount = 0
+        currentSub = null
+        currentMain = {
+          id: `chapter-${mainCount}`,
+          title: mainMatch[1].trim(),
+          content: '',
+          children: []
+        }
+        chapters.push(currentMain)
+        continue
+      }
+
+      // Sub-chapter: ### Title
+      const subMatch = trimmed.match(/^###\s+(.+)$/)
+      if (subMatch) {
+        flushContent()
+        subCount++
+        if (!currentMain) {
+          mainCount++
+          currentMain = {
+            id: `chapter-${mainCount}`,
+            title: title || `Chapter ${mainCount}`,
+            content: '',
+            children: []
+          }
+          chapters.push(currentMain)
+        }
+        currentSub = {
+          id: `chapter-${mainCount}-${subCount}`,
+          title: subMatch[1].trim(),
+          content: '',
+          children: []
+        }
+        currentMain.children.push(currentSub)
+        continue
+      }
+
+      // Regular line content
+      currentLines.push(line)
+    }
+
+    flushContent()
+
+    const validChapters = chapters.filter(c => c.content.trim() || c.children.length > 0)
+    if (validChapters.length > 0) {
+      return { title, author, chapters: validChapters }
+    }
+  }
+
   // Chapter boundary pattern
   const chapterRegex = /^(?:chapter|chương|part|phần|section|act|hồi|mục|book)\s+([0-9ivxlcdm]+|[a-z0-9\s]+)/i
   const chapterIndices: { lineIdx: number; title: string }[] = []

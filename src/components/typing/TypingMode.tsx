@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { CheckCircle2, RotateCcw, ChevronRight, Timer, Gauge, Target, Volume2, VolumeX } from "lucide-react"
+import { CheckCircle2, RotateCcw, Timer, Gauge, Target, Volume2, VolumeX } from "lucide-react"
 import { useTypingStore, Book, BookChapter } from "../../typingStore"
 import { isCharMatch, resolveTelexRevert, ACCENT_TO_EXPANSION, TELEX_MAP } from "../../utils/bookUtils"
 import { playKeycapsSound, playErrorSound, preloadSwitch, preloadError } from "../../utils/typingAudio"
@@ -43,6 +43,7 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
   const [isPaused, setIsPaused] = useState(false)
 
   const activeRef = useRef<HTMLDivElement | null>(null)
+  const mobileInputRef = useRef<HTMLInputElement | null>(null)
   const recentDeletedTelexRef = useRef<{ char: string; time: number } | null>(null)
   const ignoreNextImeBackspaceRef = useRef<number>(-10000)
   const lastKeyTimeRef = useRef<number>(Date.now())
@@ -135,10 +136,17 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
     return () => clearInterval(t)
   }, [startTime, settings.autoPause])
 
-  // Scroll active paragraph into view
+  // Scroll active paragraph or line into view
   useEffect(() => {
-    if (activeIdx >= 0) activeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
-  }, [activeIdx])
+    if (activeIdx >= 0 && activeRef.current) {
+      if (settings.typewriterMode) {
+        const activeCaret = activeRef.current.querySelector('[data-caret="true"]') || activeRef.current
+        activeCaret.scrollIntoView({ behavior: "smooth", block: "center" })
+      } else {
+        activeRef.current.scrollIntoView({ behavior: "smooth", block: "center" })
+      }
+    }
+  }, [activeIdx, typed.length, settings.typewriterMode])
 
   const target = activeIdx >= 0 ? paragraphs[activeIdx] || "" : ""
 
@@ -191,7 +199,16 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
 
   // Keyboard handling
   useEffect(() => {
-    if (activeIdx < 0) return
+    if (activeIdx < 0) {
+      const finishHandler = (e: KeyboardEvent) => {
+        if (e.key === "Enter" && hasNext) {
+          e.preventDefault()
+          onNextChapter()
+        }
+      }
+      window.addEventListener("keydown", finishHandler)
+      return () => window.removeEventListener("keydown", finishHandler)
+    }
 
     const keyupHandler = (e: KeyboardEvent) => {
       if (!settings.soundEnabled || !settings.keycapsReleaseSound) return
@@ -214,7 +231,7 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
 
     const handler = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null
-      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return
+      if (el && el !== mobileInputRef.current && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return
       if (document.querySelector('[data-modal-open="true"]')) return
       if (e.isComposing || e.key === "Process" || e.key === "Dead") return
       if (e.metaKey || (e.ctrlKey && e.key !== "Backspace")) return
@@ -507,33 +524,59 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
       // Caret element
       let caretEl: React.ReactNode = null
       if (isCurrent) {
-        const animClass =
-          settings.caretAnimation === "linear"
-            ? "animate-pulse"
-            : settings.caretAnimation === "swing"
-            ? "animate-bounce"
-            : "animate-pulse"
+        const easing =
+          settings.caretAnimation === "linear" ? "linear" :
+          settings.caretAnimation === "swing" ? "cubic-bezier(0.25, 1, 0.5, 1)" :
+          settings.caretAnimation === "ease-in" ? "ease-in" :
+          settings.caretAnimation === "ease-out" ? "ease-out" :
+          "ease"
 
         if (settings.caretStyle === "floor") {
-          caretEl = <span className={`absolute left-0 right-0 bottom-0 h-[2.5px] bg-purple-600 dark:bg-purple-400 ${animClass} rounded`} />
+          caretEl = (
+            <span
+              data-caret="true"
+              className="absolute left-0 right-0 bottom-[2px] h-[3px] bg-purple-600 dark:bg-purple-400 rounded-full z-10 pointer-events-none caret-blink"
+              style={{
+                transition: `all 80ms ${easing}`,
+              }}
+            />
+          )
         } else if (settings.caretStyle === "block") {
-          caretEl = <span className={`absolute inset-0 bg-purple-600/30 dark:bg-purple-400/40 ${animClass} rounded`} />
+          caretEl = (
+            <span
+              data-caret="true"
+              className="absolute inset-x-0 top-[0.12em] bottom-[0.12em] bg-purple-600/35 dark:bg-purple-400/40 rounded-[2px] z-10 pointer-events-none caret-blink"
+              style={{
+                transition: `all 80ms ${easing}`,
+              }}
+            />
+          )
         } else {
           // line
-          caretEl = <span className={`absolute -left-[1px] top-[0.15em] bottom-[0.1em] w-[2px] bg-purple-600 dark:bg-purple-400 ${animClass} rounded`} />
+          caretEl = (
+            <span
+              data-caret="true"
+              className="absolute -left-[1.5px] top-[0.12em] bottom-[0.12em] w-[2.5px] bg-purple-600 dark:bg-purple-400 rounded-full z-10 pointer-events-none caret-blink"
+              style={{
+                transition: `all 80ms ${easing}`,
+              }}
+            />
+          )
         }
       }
 
       const isSpaceMistake = isTyped && !ok && /\s/.test(displayChar)
 
       return (
-        <span key={i} className="relative inline-block whitespace-pre" style={style}>
+        <span key={i} className="relative inline-block whitespace-pre" data-char-idx={i}>
           {caretEl}
-          {isSpaceMistake ? (
-            <span className="inline-block px-0.5 text-xs font-mono select-none" style={{ color: settings.errorColor }}>␣</span>
-          ) : (
-            displayChar
-          )}
+          <span style={style}>
+            {isSpaceMistake ? (
+              <span className="inline-block px-0.5 text-xs font-mono select-none" style={{ color: settings.errorColor }}>␣</span>
+            ) : (
+              displayChar
+            )}
+          </span>
         </span>
       )
     }
@@ -575,11 +618,11 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
         {typed.length === target.length && (
           <span className="relative inline-block w-0">
             {settings.caretStyle === "floor" ? (
-              <span className="absolute -left-2 right-0 bottom-0 w-3 h-[2.5px] bg-purple-600 dark:bg-purple-400 animate-pulse rounded" />
+              <span data-caret="true" className="absolute -left-2 right-0 bottom-[2px] w-3 h-[3px] bg-purple-600 dark:bg-purple-400 caret-blink rounded-full" />
             ) : settings.caretStyle === "block" ? (
-              <span className="absolute -left-2 top-[0.15em] bottom-[0.1em] w-3 bg-purple-600/30 dark:bg-purple-400/40 animate-pulse rounded" />
+              <span data-caret="true" className="absolute -left-2 top-[0.12em] bottom-[0.12em] w-3 bg-purple-600/35 dark:bg-purple-400/40 caret-blink rounded-[2px]" />
             ) : (
-              <span className="absolute -left-[1px] top-[0.15em] bottom-[0.1em] w-[2px] bg-purple-600 dark:bg-purple-400 animate-pulse rounded" />
+              <span data-caret="true" className="absolute -left-[1.5px] top-[0.12em] bottom-[0.12em] w-[2.5px] bg-purple-600 dark:bg-purple-400 caret-blink rounded-full" />
             )}
           </span>
         )}
@@ -628,80 +671,91 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
 
   return (
     <div>
+      {/* Hidden input to trigger virtual keyboard on mobile (Android / iOS) */}
+      <input
+        ref={mobileInputRef}
+        type="text"
+        aria-label="Touch typing input"
+        autoCapitalize="none"
+        autoCorrect="off"
+        autoComplete="off"
+        spellCheck={false}
+        className="fixed opacity-0 pointer-events-none -top-40 -left-40 w-1 h-1 z-0"
+        value=""
+        onChange={(e) => {
+          const val = e.target.value
+          if (val) {
+            for (const char of val) {
+              window.dispatchEvent(new KeyboardEvent("keydown", { key: char, bubbles: true }))
+            }
+            e.target.value = ""
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Backspace" || e.key === "Enter") {
+            window.dispatchEvent(new KeyboardEvent("keydown", { key: e.key, bubbles: true }))
+          }
+        }}
+      />
+
       {/* Sticky Stats HUD */}
-      <div className="sticky top-2 z-20 mb-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm px-4 py-2 flex items-center justify-between gap-3 text-xs sm:text-sm">
-        
-        {/* Left Stats Cluster with Fixed Slots */}
-        <div className="flex items-center gap-3 sm:gap-4 shrink-0 overflow-x-auto">
-          {/* WPM Slot */}
-          <div className="w-[78px] shrink-0 flex items-center gap-1.5" title="Typing speed (words per minute)">
-            <Gauge size={14} className="text-purple-500 shrink-0" />
-            <span className="font-semibold text-gray-800 dark:text-gray-200 tabular-nums font-mono whitespace-nowrap">
-              {liveWpm} <span className="text-[11px] text-gray-400 font-sans">WPM</span>
-            </span>
-          </div>
+      <div className="sticky top-2 z-20 mb-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm overflow-hidden text-xs sm:text-sm">
+        <div className="px-4 py-2 flex items-center justify-between gap-2">
+          {/* 4 evenly spaced stats */}
+          <div className="flex-1 grid grid-cols-4 items-center text-center divide-x divide-gray-200 dark:divide-gray-700">
+            {/* WPM Slot */}
+            <div className="flex items-center justify-center gap-1.5 px-2" title="Typing speed (words per minute)">
+              <Gauge size={14} className="text-purple-500 shrink-0" />
+              <span className="font-semibold text-gray-800 dark:text-gray-200 tabular-nums font-mono whitespace-nowrap">
+                {liveWpm} <span className="text-[11px] text-gray-400 font-sans">WPM</span>
+              </span>
+            </div>
 
-          <div className="h-4 w-px bg-gray-200 dark:bg-gray-700 shrink-0" />
+            {/* Accuracy Slot */}
+            <div className="flex items-center justify-center gap-1.5 px-2" title="Accuracy">
+              <Target size={14} className="text-emerald-500 shrink-0" />
+              <span className="font-semibold text-gray-800 dark:text-gray-200 tabular-nums font-mono whitespace-nowrap">
+                {liveAcc}%
+              </span>
+            </div>
 
-          {/* Accuracy Slot */}
-          <div className="w-[66px] shrink-0 flex items-center gap-1.5" title="Accuracy">
-            <Target size={14} className="text-emerald-500 shrink-0" />
-            <span className="font-semibold text-gray-800 dark:text-gray-200 tabular-nums font-mono whitespace-nowrap">
-              {liveAcc}%
-            </span>
-          </div>
-
-          <div className="h-4 w-px bg-gray-200 dark:bg-gray-700 shrink-0" />
-
-          {/* Timer Slot */}
-          <div
-            className="w-[70px] shrink-0 flex items-center gap-1.5"
-            title={isPaused ? "Paused (type to resume)" : "Elapsed typing time"}
-          >
-            <Timer
-              size={14}
-              className={`shrink-0 transition-colors ${
-                isPaused ? "text-amber-500 animate-pulse" : "text-blue-500"
-              }`}
-            />
-            <span
-              className={`font-semibold tabular-nums font-mono whitespace-nowrap transition-colors ${
-                isPaused
-                  ? "text-amber-600 dark:text-amber-400"
-                  : "text-gray-800 dark:text-gray-200"
-              }`}
+            {/* Timer Slot */}
+            <div
+              className="flex items-center justify-center gap-1.5 px-2"
+              title={isPaused ? "Paused (type to resume)" : "Elapsed typing time"}
             >
-              {formatDuration(liveMs)}
-            </span>
+              <Timer
+                size={14}
+                className={`shrink-0 transition-colors ${
+                  isPaused ? "text-amber-500 animate-pulse" : "text-blue-500"
+                }`}
+              />
+              <span
+                className={`font-semibold tabular-nums font-mono whitespace-nowrap transition-colors ${
+                  isPaused
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-gray-800 dark:text-gray-200"
+                }`}
+              >
+                {formatDuration(liveMs)}
+              </span>
+            </div>
+
+            {/* Paragraph Progress Slot */}
+            <div className="flex items-center justify-center gap-1.5 px-2 text-gray-500 font-medium whitespace-nowrap">
+              <span className="tabular-nums font-mono font-semibold text-gray-800 dark:text-gray-200">
+                {doneCount}/{paragraphs.length}
+              </span>
+              <span className="text-xs">paragraphs</span>
+            </div>
           </div>
 
-          <div className="h-4 w-px bg-gray-200 dark:bg-gray-700 shrink-0" />
-
-          {/* Paragraph Progress Slot */}
-          <div className="w-[124px] shrink-0 flex items-center gap-1 text-gray-500 font-medium whitespace-nowrap">
-            <span className="tabular-nums font-mono font-semibold text-gray-800 dark:text-gray-200">
-              {doneCount}/{paragraphs.length}
-            </span>
-            <span className="text-xs">paragraphs</span>
-          </div>
-        </div>
-
-        {/* Right Controls */}
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={resetParagraphState}
-            title="Restart current paragraph"
-            className="shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
-          >
-            <RotateCcw size={14} />
-          </button>
-
+          {/* Sound Toggle Button */}
           <button
             type="button"
             onClick={() => updateTypingSettings({ soundEnabled: !settings.soundEnabled })}
             title={settings.soundEnabled ? "Mute typing sound" : "Enable typing sound"}
-            className={`shrink-0 p-1.5 rounded-lg border transition-colors cursor-pointer ${
+            className={`shrink-0 ml-2 p-1.5 rounded-lg border transition-colors cursor-pointer ${
               settings.soundEnabled
                 ? "bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-300 border-purple-200 dark:border-purple-800/60 hover:bg-purple-100"
                 : "bg-gray-50 dark:bg-gray-800 text-gray-400 border-gray-200 dark:border-gray-700 hover:text-gray-600"
@@ -709,20 +763,22 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
           >
             {settings.soundEnabled ? <Volume2 size={13} /> : <VolumeX size={13} />}
           </button>
+        </div>
 
-          <span className="hidden lg:inline text-gray-400 font-normal shrink-0 text-[11px]">
-            <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-[10px] font-mono">Enter</kbd> finish ·{" "}
-            <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-[10px] font-mono">
-              {settings.paragraphReset === "esc" ? "Esc" : settings.paragraphReset === "off" ? "--" : "Tab"}
-            </kbd> restart
-          </span>
+        {/* Progress Bar */}
+        <div className="h-1 bg-gray-100 dark:bg-gray-700 w-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-300"
+            style={{ width: `${paragraphs.length > 0 ? (doneCount / paragraphs.length) * 100 : 0}%` }}
+          />
         </div>
       </div>
 
       {/* Paragraphs */}
       <div
         style={containerStyle}
-        className={`space-y-6 ${settings.keepInPosition ? "pb-[45vh]" : ""}`}
+        onClick={() => mobileInputRef.current?.focus()}
+        className={`space-y-6 ${settings.typewriterMode || settings.keepInPosition ? "pb-[65vh] pt-[10vh]" : ""}`}
       >
         {paragraphs.map((p, i) => {
           const done = chapterProgress[i]
@@ -804,9 +860,9 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter }
               <button
                 type="button"
                 onClick={onNextChapter}
-                className="flex items-center gap-1 px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold shadow-sm cursor-pointer"
+                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold shadow-sm cursor-pointer"
               >
-                Next Chapter <ChevronRight size={15} />
+                Next Chapter <kbd className="px-1.5 py-0.5 rounded bg-purple-700 text-[11px] font-mono">Enter ↵</kbd>
               </button>
             )}
           </div>
