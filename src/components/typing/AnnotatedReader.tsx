@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Trash2, X, Check } from 'lucide-react'
 import { useFlashcardStore, Flashcard, Highlight, getCardTags, isWordCard } from '../../store'
-import { useTypingStore, Book, BookChapter } from '../../typingStore'
+import { useTypingStore, Book, BookChapter, getEffectiveModeFont } from '../../typingStore'
 import { extractWordsAndSpaces } from '../../utils'
 import { splitSentences, sentenceKey, firstMeaningOf } from '../../utils/bookUtils'
 import { buildWordToFlashcardMap, findMatchingCard } from '../ClickableSentence'
@@ -44,10 +44,12 @@ export function AnnotatedReader({ book, chapter, paragraphs, mode }: AnnotatedRe
   const { flashcards, settings, addFlashcard, saveHighlight, removeHighlight, deleteFlashcard } = useFlashcardStore()
   const { sentenceLinks, linkSentence, unlinkSentence, settings: typingSettings } = useTypingStore()
 
-  // Load the current typing font when it changes
+  const effectiveFont = useMemo(() => getEffectiveModeFont(typingSettings, mode), [typingSettings, mode])
+
+  // Load the current mode font when it changes
   useEffect(() => {
-    if (typingSettings.fontFamily) loadFont(typingSettings.fontFamily)
-  }, [typingSettings.fontFamily])
+    if (effectiveFont.fontFamily) loadFont(effectiveFont.fontFamily)
+  }, [effectiveFont.fontFamily])
 
   const [selection, setSelection] = useState<{ skey: string; start: number; end: number } | null>(null)
   const [editor, setEditor] = useState<Editor | null>(null)
@@ -359,11 +361,11 @@ export function AnnotatedReader({ book, chapter, paragraphs, mode }: AnnotatedRe
       <div
         className={`space-y-6 text-gray-800 dark:text-gray-200 ${mode === 'note' ? 'select-none' : ''}`}
         style={{
-          fontFamily: getEffectiveFontFamily(typingSettings.fontFamily),
-          fontSize: `${typingSettings.fontSize || 20}px`,
-          fontWeight: typingSettings.fontWeight || 400,
-          lineHeight: typingSettings.lineHeight || 1.8,
-          fontVariationSettings: getFontVariationSettings(typingSettings.fontFamily) || undefined,
+          fontFamily: getEffectiveFontFamily(effectiveFont.fontFamily),
+          fontSize: `${effectiveFont.fontSize || 20}px`,
+          fontWeight: effectiveFont.fontWeight || 400,
+          lineHeight: effectiveFont.lineHeight || 1.8,
+          fontVariationSettings: getFontVariationSettings(effectiveFont.fontFamily) || undefined,
         }}
       >
         {paragraphs.map((p, pIdx) => {

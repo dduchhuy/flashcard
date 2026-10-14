@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { CheckCircle2, RotateCcw, Timer, Gauge, Target, Volume2, VolumeX, Pin, PinOff } from "lucide-react"
-import { useTypingStore, Book, BookChapter } from "../../typingStore"
+import { useTypingStore, Book, BookChapter, getEffectiveModeFont } from "../../typingStore"
 import { isCharMatch, resolveTelexRevert, ACCENT_TO_EXPANSION, TELEX_MAP } from "../../utils/bookUtils"
 import { playKeycapsSound, playErrorSound, preloadSwitch, preloadError } from "../../utils/typingAudio"
 import { loadFont, getFontVariationSettings, getEffectiveFontFamily } from "../../utils/fontLoader"
@@ -55,11 +55,13 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter, 
   const activeSegmentStartRef = useRef<number | null>(null)
   const isAfkPausedRef = useRef<boolean>(false)
 
+  const effectiveFont = useMemo(() => getEffectiveModeFont(settings, 'typing'), [settings])
+
   // Dynamically load font (Google Fonts, CDN, system)
   useEffect(() => {
-    if (!settings.fontFamily) return
-    loadFont(settings.fontFamily)
-  }, [settings.fontFamily])
+    if (!effectiveFont.fontFamily) return
+    loadFont(effectiveFont.fontFamily)
+  }, [effectiveFont.fontFamily])
 
   // Preload sound assets
   useEffect(() => {
@@ -666,11 +668,11 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter, 
   }
 
   const containerStyle: React.CSSProperties = {
-    fontFamily: getEffectiveFontFamily(settings.fontFamily),
-    fontSize: `${settings.fontSize}px`,
-    fontWeight: settings.fontWeight || 400,
-    lineHeight: settings.lineHeight,
-    fontVariationSettings: getFontVariationSettings(settings.fontFamily),
+    fontFamily: getEffectiveFontFamily(effectiveFont.fontFamily),
+    fontSize: `${effectiveFont.fontSize}px`,
+    fontWeight: effectiveFont.fontWeight || 400,
+    lineHeight: effectiveFont.lineHeight,
+    fontVariationSettings: getFontVariationSettings(effectiveFont.fontFamily),
   }
 
   return (

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react"
 import { createPortal } from "react-dom"
-import { X, Sliders, Volume2, Database, RotateCcw, Play, Upload, Download, FileText, BookOpen, Check, AlertCircle, ChevronDown } from "lucide-react"
-import { useTypingStore, Book } from "../../typingStore"
+import { X, Sliders, Volume2, Database, RotateCcw, Play, Upload, Download, FileText, BookOpen, Check, AlertCircle, ChevronDown, Keyboard, StickyNote, Eye } from "lucide-react"
+import { useTypingStore, Book, TypingViewMode, FontSettings, getEffectiveModeFont } from "../../typingStore"
 import { useFlashcardStore } from "../../store"
 import { KEYCAPS_SWITCHES, ERROR_SOUNDS, playKeycapsSound, playErrorSound } from "../../utils/typingAudio"
 import {
@@ -135,14 +135,27 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
     progress,
     lastPosition,
     sentenceLinks,
+    viewMode,
   } = useTypingStore()
   const { flashcards } = useFlashcardStore()
 
   const [activeTab, setActiveTab] = useState<"mode" | "sound" | "data">("mode")
+  const [selectedFontMode, setSelectedFontMode] = useState<TypingViewMode>(viewMode || 'typing')
   const [dataMessage, setDataMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [isGitSyncing, setIsGitSyncing] = useState(false)
   const bookImportInputRef = useRef<HTMLInputElement>(null)
   const saveImportInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (isOpen && viewMode) {
+      setSelectedFontMode(viewMode)
+    }
+  }, [isOpen, viewMode])
+
+  const currentModeFont = useMemo(
+    () => getEffectiveModeFont(settings, selectedFontMode),
+    [settings, selectedFontMode]
+  )
 
   const fontOptions = useMemo(() => {
     return FONT_OPTIONS.flatMap(grp =>
@@ -180,10 +193,33 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
   }, [])
 
   useEffect(() => {
-    if (isOpen && settings.fontFamily) {
-      loadFont(settings.fontFamily)
+    if (isOpen && currentModeFont.fontFamily) {
+      loadFont(currentModeFont.fontFamily)
     }
-  }, [isOpen, settings.fontFamily])
+  }, [isOpen, currentModeFont.fontFamily])
+
+  const handleUpdateModeFont = (partial: Partial<FontSettings>) => {
+    const updated: FontSettings = { ...currentModeFont, ...partial }
+    const currentModeFonts = settings.modeFonts || {
+      typing: { fontFamily: settings.fontFamily, fontSize: settings.fontSize, fontWeight: settings.fontWeight, lineHeight: settings.lineHeight },
+      note: { fontFamily: settings.fontFamily, fontSize: settings.fontSize, fontWeight: settings.fontWeight, lineHeight: settings.lineHeight },
+      preview: { fontFamily: settings.fontFamily, fontSize: settings.fontSize, fontWeight: settings.fontWeight, lineHeight: settings.lineHeight },
+    }
+    const nextModeFonts = {
+      ...currentModeFonts,
+      [selectedFontMode]: updated,
+    }
+    if (selectedFontMode === 'typing') {
+      updateTypingSettings({
+        ...partial,
+        modeFonts: nextModeFonts,
+      })
+    } else {
+      updateTypingSettings({
+        modeFonts: nextModeFonts,
+      })
+    }
+  }
 
   // Close modal when pressing Escape key
   useEffect(() => {
@@ -454,19 +490,57 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                 </div>
               </div>
 
-              {/* Typography */}
+              {/* Typography with Mode Selector */}
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Typography</h3>
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">Typography</h3>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                      Customize font family & size per mode
+                    </p>
+                  </div>
+
+                  {/* Mode Tabs: Typing | Note | Preview */}
+                  <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl border border-gray-200/60 dark:border-gray-700/60">
+                    {[
+                      { id: 'typing', label: 'Typing', icon: Keyboard },
+                      { id: 'note', label: 'Note', icon: StickyNote },
+                      { id: 'preview', label: 'Preview', icon: Eye },
+                    ].map(m => {
+                      const Icon = m.icon
+                      const active = selectedFontMode === m.id
+                      return (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => setSelectedFontMode(m.id as TypingViewMode)}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                            active
+                              ? 'bg-white dark:bg-gray-700 text-purple-700 dark:text-purple-300 shadow-xs'
+                              : 'text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200'
+                          }`}
+                        >
+                          <Icon size={14} /> {m.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
                 <div className="space-y-4">
-                  
                   {/* Font Family */}
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                      Font Family
-                    </label>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                        Font Family ({selectedFontMode.toUpperCase()})
+                      </label>
+                      <span className="text-[11px] text-purple-600 dark:text-purple-400 font-medium capitalize">
+                        {selectedFontMode} font
+                      </span>
+                    </div>
                     <SettingsDropdown
-                      value={settings.fontFamily}
-                      onChange={val => updateTypingSettings({ fontFamily: val })}
+                      value={currentModeFont.fontFamily}
+                      onChange={val => handleUpdateModeFont({ fontFamily: val })}
                       options={fontOptions}
                     />
                   </div>
@@ -477,15 +551,15 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                     <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700/80">
                       <div className="flex justify-between text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
                         <span>Font Size</span>
-                        <span className="font-mono font-semibold text-purple-600 dark:text-purple-400">{settings.fontSize}px</span>
+                        <span className="font-mono font-semibold text-purple-600 dark:text-purple-400">{currentModeFont.fontSize}px</span>
                       </div>
                       <input
                         type="range"
                         min="14"
                         max="36"
                         step="1"
-                        value={settings.fontSize}
-                        onChange={e => updateTypingSettings({ fontSize: parseInt(e.target.value) })}
+                        value={currentModeFont.fontSize}
+                        onChange={e => handleUpdateModeFont({ fontSize: parseInt(e.target.value) })}
                         className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
                       />
                     </div>
@@ -494,15 +568,15 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                     <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700/80">
                       <div className="flex justify-between text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
                         <span>Line Height</span>
-                        <span className="font-mono font-semibold text-purple-600 dark:text-purple-400">{settings.lineHeight.toFixed(1)}</span>
+                        <span className="font-mono font-semibold text-purple-600 dark:text-purple-400">{currentModeFont.lineHeight.toFixed(1)}</span>
                       </div>
                       <input
                         type="range"
                         min="1.2"
                         max="2.6"
                         step="0.1"
-                        value={settings.lineHeight}
-                        onChange={e => updateTypingSettings({ lineHeight: parseFloat(e.target.value) })}
+                        value={currentModeFont.lineHeight}
+                        onChange={e => handleUpdateModeFont({ lineHeight: parseFloat(e.target.value) })}
                         className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
                       />
                     </div>
@@ -512,17 +586,17 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                       <div className="flex justify-between items-center text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
                         <span>Font Weight</span>
                         <span className="font-mono font-semibold text-purple-600 dark:text-purple-400">
-                          {settings.fontWeight || 400}{" "}
+                          {currentModeFont.fontWeight || 400}{" "}
                           <span className="text-[10px] text-gray-400 font-sans">
-                            {settings.fontWeight <= 300
+                            {currentModeFont.fontWeight <= 300
                               ? "Light"
-                              : settings.fontWeight === 400
+                              : currentModeFont.fontWeight === 400
                               ? "Regular"
-                              : settings.fontWeight === 500
+                              : currentModeFont.fontWeight === 500
                               ? "Medium"
-                              : settings.fontWeight === 600
+                              : currentModeFont.fontWeight === 600
                               ? "Semi"
-                              : settings.fontWeight === 700
+                              : currentModeFont.fontWeight === 700
                               ? "Bold"
                               : "Black"}
                           </span>
@@ -533,8 +607,8 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                         min="100"
                         max="900"
                         step="100"
-                        value={settings.fontWeight || 400}
-                        onChange={e => updateTypingSettings({ fontWeight: parseInt(e.target.value) })}
+                        value={currentModeFont.fontWeight || 400}
+                        onChange={e => handleUpdateModeFont({ fontWeight: parseInt(e.target.value) })}
                         className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
                       />
                     </div>
@@ -544,23 +618,30 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                   <div
                     className="p-4 rounded-2xl bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 shadow-inner select-none"
                     style={{
-                      fontFamily: getEffectiveFontFamily(settings.fontFamily),
-                      fontSize: `${Math.min(settings.fontSize, 22)}px`,
-                      fontWeight: settings.fontWeight || 400,
-                      lineHeight: settings.lineHeight,
-                      fontVariationSettings: getFontVariationSettings(settings.fontFamily),
+                      fontFamily: getEffectiveFontFamily(currentModeFont.fontFamily),
+                      fontSize: `${Math.min(currentModeFont.fontSize, 22)}px`,
+                      fontWeight: currentModeFont.fontWeight || 400,
+                      lineHeight: currentModeFont.lineHeight,
+                      fontVariationSettings: getFontVariationSettings(currentModeFont.fontFamily),
                     }}
                   >
-                    <div className="text-[11px] font-sans text-gray-400 uppercase tracking-wider mb-1 font-semibold">
-                      Preview ({settings.fontFamily} · {settings.fontWeight || 400})
+                    <div className="text-[11px] font-sans text-purple-600 dark:text-purple-400 uppercase tracking-wider mb-1 font-semibold flex items-center justify-between">
+                      <span>Preview: {selectedFontMode.toUpperCase()} MODE</span>
+                      <span className="text-gray-400 font-mono text-[10px]">{currentModeFont.fontFamily} · {currentModeFont.fontWeight || 400}</span>
                     </div>
-                    <div className="break-words">
-                      <span style={{ color: settings.correctColor }}>The quick brown fox</span>{" "}
-                      <span style={{ color: settings.errorColor }}>jumps</span>{" "}
-                      <span style={{ color: settings.untypedColor, opacity: settings.untypedOpacity }}>
-                        over the lazy dog. 1234567890
-                      </span>
-                    </div>
+                    {selectedFontMode === 'typing' ? (
+                      <div className="break-words">
+                        <span style={{ color: settings.correctColor }}>The quick brown fox</span>{" "}
+                        <span style={{ color: settings.errorColor }}>jumps</span>{" "}
+                        <span style={{ color: settings.untypedColor, opacity: settings.untypedOpacity }}>
+                          over the lazy dog. 1234567890
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="break-words text-gray-800 dark:text-gray-200">
+                        The quick brown fox jumps over the lazy dog. All human beings are born free and equal in dignity and rights. 0123456789
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

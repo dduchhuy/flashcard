@@ -36,6 +36,13 @@ export interface SentenceLink {
 
 export type TypingViewMode = 'typing' | 'note' | 'preview'
 
+export interface FontSettings {
+  fontFamily: string
+  fontSize: number
+  fontWeight: number
+  lineHeight: number
+}
+
 export interface TypingSettings {
   // Appearance & Colors
   untypedColor: string
@@ -46,6 +53,9 @@ export interface TypingSettings {
   fontWeight: number
   lineHeight: number
   fontFamily: string
+
+  // Mode-specific fonts (typing, note, preview)
+  modeFonts?: Record<TypingViewMode, FontSettings>
 
   // Caret
   caretStyle: 'line' | 'floor' | 'block'
@@ -77,6 +87,16 @@ export interface TypingSettings {
   otherVolume: number
 }
 
+export function getEffectiveModeFont(settings: TypingSettings, mode: TypingViewMode): FontSettings {
+  const mf = settings.modeFonts?.[mode]
+  return {
+    fontFamily: mf?.fontFamily || settings.fontFamily || 'JetBrains Mono',
+    fontSize: mf?.fontSize || settings.fontSize || 20,
+    fontWeight: mf?.fontWeight || settings.fontWeight || 400,
+    lineHeight: mf?.lineHeight || settings.lineHeight || 1.8,
+  }
+}
+
 export const defaultTypingSettings: TypingSettings = {
   untypedColor: '#9ca3af',
   untypedOpacity: 1,
@@ -86,6 +106,12 @@ export const defaultTypingSettings: TypingSettings = {
   fontWeight: 400,
   lineHeight: 1.8,
   fontFamily: 'JetBrains Mono',
+
+  modeFonts: {
+    typing: { fontFamily: 'JetBrains Mono', fontSize: 20, fontWeight: 400, lineHeight: 1.8 },
+    note: { fontFamily: 'JetBrains Mono', fontSize: 18, fontWeight: 400, lineHeight: 1.8 },
+    preview: { fontFamily: 'JetBrains Mono', fontSize: 18, fontWeight: 400, lineHeight: 1.8 },
+  },
 
   caretStyle: 'line',
   caretAnimation: 'ease',
