@@ -707,8 +707,8 @@ export function TypingMode({ book, chapter, paragraphs, hasNext, onNextChapter, 
         className={`${
           isPinned
             ? zenMode
-              ? "sticky top-1 sm:top-2 z-20"
-              : `sticky ${isTopBarVisible ? "top-[122px]" : "top-[69px]"} z-20`
+              ? "sticky top-4 sm:top-5 z-20"
+              : `sticky ${isTopBarVisible ? "top-[132px]" : "top-[72px]"} z-20`
             : "relative z-10"
         } mb-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-200/80 dark:border-gray-700/80 shadow-sm overflow-hidden text-xs sm:text-sm transition-all duration-300`}
       >
