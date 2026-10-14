@@ -155,14 +155,78 @@ export function TabAllCards() {
   const { flashcards } = useFlashcardStore()
 
   // 1. Core view states
-  const [cardTypeFilter, setCardTypeFilter] = useState<'flashcard' | 'sentence'>('flashcard')
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
-  const [sortBy, setSortBy] = useState<SortOption>('date_desc')
+  const [cardTypeFilter, setCardTypeFilter] = useState<'flashcard' | 'sentence'>(() => {
+    try {
+      const saved = localStorage.getItem('flashcard_card_type_filter')
+      if (saved === 'flashcard' || saved === 'sentence') return saved
+    } catch {}
+    return 'flashcard'
+  })
+  useEffect(() => {
+    try {
+      localStorage.setItem('flashcard_card_type_filter', cardTypeFilter)
+    } catch {}
+  }, [cardTypeFilter])
+
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>(() => {
+    try {
+      const saved = localStorage.getItem('flashcard_view_mode')
+      if (saved === 'list' || saved === 'grid') return saved
+    } catch {}
+    return 'list'
+  })
+  useEffect(() => {
+    try {
+      localStorage.setItem('flashcard_view_mode', viewMode)
+    } catch {}
+  }, [viewMode])
+
+  const [sortBy, setSortBy] = useState<SortOption>(() => {
+    try {
+      const saved = localStorage.getItem('flashcard_sort_by') as SortOption
+      if (saved && ['date_desc', 'date_asc', 'a_z', 'tag'].includes(saved)) return saved
+    } catch {}
+    return 'date_desc'
+  })
+  useEffect(() => {
+    try {
+      localStorage.setItem('flashcard_sort_by', sortBy)
+    } catch {}
+  }, [sortBy])
 
   // 2. Search & Tag filter states
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchTargets, setSearchTargets] = useState<SearchTarget[]>(['word'])
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [searchTargets, setSearchTargets] = useState<SearchTarget[]>(() => {
+    try {
+      const saved = localStorage.getItem('flashcard_search_targets')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed
+      }
+    } catch {}
+    return ['word']
+  })
+  useEffect(() => {
+    try {
+      localStorage.setItem('flashcard_search_targets', JSON.stringify(searchTargets))
+    } catch {}
+  }, [searchTargets])
+
+  const [selectedTags, setSelectedTags] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('flashcard_selected_tags')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) return parsed
+      }
+    } catch {}
+    return []
+  })
+  useEffect(() => {
+    try {
+      localStorage.setItem('flashcard_selected_tags', JSON.stringify(selectedTags))
+    } catch {}
+  }, [selectedTags])
 
   // 3. Display filter states
   const [displayFilter, setDisplayFilter] = useState<CardDisplayFilter>(() => {

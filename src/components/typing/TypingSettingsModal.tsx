@@ -471,28 +471,30 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                     />
                   </div>
 
-                  {/* Font Size & Line Height */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Font Size, Line Height & Font Weight on the same row */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {/* Font Size */}
                     <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700/80">
                       <div className="flex justify-between text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
                         <span>Font Size</span>
-                        <span className="font-mono">{settings.fontSize}px</span>
+                        <span className="font-mono font-semibold text-purple-600 dark:text-purple-400">{settings.fontSize}px</span>
                       </div>
                       <input
                         type="range"
                         min="14"
-                        max="32"
+                        max="36"
                         step="1"
                         value={settings.fontSize}
                         onChange={e => updateTypingSettings({ fontSize: parseInt(e.target.value) })}
-                        className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
                       />
                     </div>
 
+                    {/* Line Height */}
                     <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700/80">
                       <div className="flex justify-between text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
                         <span>Line Height</span>
-                        <span className="font-mono">{settings.lineHeight.toFixed(1)}</span>
+                        <span className="font-mono font-semibold text-purple-600 dark:text-purple-400">{settings.lineHeight.toFixed(1)}</span>
                       </div>
                       <input
                         type="range"
@@ -501,54 +503,40 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                         step="0.1"
                         value={settings.lineHeight}
                         onChange={e => updateTypingSettings({ lineHeight: parseFloat(e.target.value) })}
-                        className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                        className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
                       />
                     </div>
-                  </div>
 
-                  {/* Font Weight */}
-                  <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700/80">
-                    <div className="flex justify-between items-center text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      <span>Font Weight</span>
-                      <span className="font-mono font-semibold text-purple-600 dark:text-purple-400">
-                        {settings.fontWeight === 300
-                          ? "300 · Light"
-                          : settings.fontWeight === 400
-                          ? "400 · Regular"
-                          : settings.fontWeight === 500
-                          ? "500 · Medium"
-                          : settings.fontWeight === 600
-                          ? "600 · Semi-Bold"
-                          : settings.fontWeight === 700
-                          ? "700 · Bold"
-                          : settings.fontWeight === 800
-                          ? "800 · Extra Bold"
-                          : `${settings.fontWeight || 400}`}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-                      {[
-                        { label: "Light", weight: 300 },
-                        { label: "Regular", weight: 400 },
-                        { label: "Medium", weight: 500 },
-                        { label: "Semi-Bold", weight: 600 },
-                        { label: "Bold", weight: 700 },
-                        { label: "Black", weight: 800 },
-                      ].map(w => (
-                        <button
-                          key={w.weight}
-                          type="button"
-                          onClick={() => updateTypingSettings({ fontWeight: w.weight })}
-                          className={`py-1.5 px-2 rounded-xl text-xs transition-all cursor-pointer text-center ${
-                            (settings.fontWeight || 400) === w.weight
-                              ? "bg-purple-600 text-white font-bold shadow-xs ring-2 ring-purple-400/40"
-                              : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200/60 dark:border-gray-700/60"
-                          }`}
-                          style={{ fontWeight: w.weight }}
-                        >
-                          {w.weight}
-                        </button>
-                      ))}
+                    {/* Font Weight (Slider) */}
+                    <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700/80">
+                      <div className="flex justify-between items-center text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <span>Font Weight</span>
+                        <span className="font-mono font-semibold text-purple-600 dark:text-purple-400">
+                          {settings.fontWeight || 400}{" "}
+                          <span className="text-[10px] text-gray-400 font-sans">
+                            {settings.fontWeight <= 300
+                              ? "Light"
+                              : settings.fontWeight === 400
+                              ? "Regular"
+                              : settings.fontWeight === 500
+                              ? "Medium"
+                              : settings.fontWeight === 600
+                              ? "Semi"
+                              : settings.fontWeight === 700
+                              ? "Bold"
+                              : "Black"}
+                          </span>
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="100"
+                        max="900"
+                        step="100"
+                        value={settings.fontWeight || 400}
+                        onChange={e => updateTypingSettings({ fontWeight: parseInt(e.target.value) })}
+                        className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                      />
                     </div>
                   </div>
 

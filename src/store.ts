@@ -446,22 +446,36 @@ interface FlashcardState {
 
 const idbStorage: StateStorage = {
   getItem: async (name: string): Promise<string | null> => {
-    const val = await get(name)
-    if (val !== undefined && val !== null) return val
+    try {
+      const val = await get(name)
+      if (val !== undefined && val !== null) return val
 
-    // Migration from localStorage to IndexedDB
-    const local = localStorage.getItem(name)
-    if (local) {
-      await set(name, local)
-      return local
+      // Migration from localStorage to IndexedDB
+      const local = localStorage.getItem(name)
+      if (local) {
+        await set(name, local)
+        return local
+      }
+    } catch {
+      return localStorage.getItem(name)
     }
     return null
   },
   setItem: async (name: string, value: string): Promise<void> => {
-    await set(name, value)
+    try {
+      localStorage.setItem(name, value)
+    } catch {}
+    try {
+      await set(name, value)
+    } catch {}
   },
   removeItem: async (name: string): Promise<void> => {
-    await del(name)
+    try {
+      localStorage.removeItem(name)
+    } catch {}
+    try {
+      await del(name)
+    } catch {}
   },
 }
 

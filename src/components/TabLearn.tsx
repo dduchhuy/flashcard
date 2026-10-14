@@ -402,7 +402,18 @@ export function TabLearn() {
     return "words"
   })
   const [modeDropdownOpen, setModeDropdownOpen] = useState(false)
-  const [isRandom, setIsRandom] = useState(false)
+  const [isRandom, setIsRandom] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("learn_is_random") === "true"
+    } catch {
+      return false
+    }
+  })
+  useEffect(() => {
+    try {
+      localStorage.setItem("learn_is_random", String(isRandom))
+    } catch {}
+  }, [isRandom])
   const [selectedTags, setSelectedTags] = useState<string[]>(() => {
     try {
       const raw = localStorage.getItem("learn_selected_tags")

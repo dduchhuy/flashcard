@@ -137,9 +137,36 @@ interface TypingState {
 }
 
 const idbStorage: StateStorage = {
-  getItem: async (name) => (await get(name)) ?? null,
-  setItem: async (name, value) => { await set(name, value) },
-  removeItem: async (name) => { await del(name) },
+  getItem: async (name) => {
+    try {
+      const val = await get(name)
+      if (val !== undefined && val !== null) return val
+      const local = localStorage.getItem(name)
+      if (local) {
+        await set(name, local)
+        return local
+      }
+    } catch {
+      return localStorage.getItem(name)
+    }
+    return null
+  },
+  setItem: async (name, value) => {
+    try {
+      localStorage.setItem(name, value)
+    } catch {}
+    try {
+      await set(name, value)
+    } catch {}
+  },
+  removeItem: async (name) => {
+    try {
+      localStorage.removeItem(name)
+    } catch {}
+    try {
+      await del(name)
+    } catch {}
+  },
 }
 
 export const useTypingStore = create<TypingState>()(
