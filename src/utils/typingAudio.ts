@@ -27,6 +27,7 @@ export const KEYCAPS_SWITCHES: KeycapsSwitchItem[] = [
   { id: "mechanical/cream", name: "Creams", category: "Mechanical" },
   { id: "mechanical/holypanda", name: "Holy Pandas", category: "Mechanical" },
   { id: "mechanical/mxblack", name: "MX Blacks", category: "Mechanical" },
+  { id: "mechanical/mxblue", name: "MX Blues", category: "Mechanical" },
   { id: "mechanical/mxbrown", name: "MX Browns", category: "Mechanical" },
   { id: "mechanical/redink", name: "Red Inks", category: "Mechanical" },
   { id: "mechanical/topre", name: "Topre", category: "Mechanical" },
@@ -107,6 +108,31 @@ async function loadBufferFromUrl(url: string, ctx: AudioContext): Promise<AudioB
   return p
 }
 
+function playAudioBuffer(
+  ctx: AudioContext,
+  audioBuf: AudioBuffer,
+  playbackRate: number,
+  volume: number
+) {
+  const source = ctx.createBufferSource()
+  source.buffer = audioBuf
+  source.playbackRate.value = playbackRate
+
+  const gainNode = ctx.createGain()
+  gainNode.gain.value = Math.max(0, Math.min(1, volume))
+
+  source.connect(gainNode)
+  gainNode.connect(ctx.destination)
+  source.start(0)
+
+  source.onended = () => {
+    try {
+      source.disconnect()
+      gainNode.disconnect()
+    } catch {}
+  }
+}
+
 export function preloadSwitch(switchId: string = "mechanical/mxbrown") {
   const ctx = getAudioContext()
   if (!ctx) return
@@ -136,6 +162,9 @@ export function preloadSwitch(switchId: string = "mechanical/mxbrown") {
     `sounds/keycaps/mechanical/${sw}/press/ENTER.mp3`,
     `sounds/keycaps/mechanical/${sw}/press/BACKSPACE.mp3`,
     `sounds/keycaps/mechanical/${sw}/release/GENERIC.mp3`,
+    `sounds/keycaps/mechanical/${sw}/release/SPACE.mp3`,
+    `sounds/keycaps/mechanical/${sw}/release/ENTER.mp3`,
+    `sounds/keycaps/mechanical/${sw}/release/BACKSPACE.mp3`,
   ]
   for (const f of files) {
     loadBufferFromUrl(resolveAssetUrl(f), ctx).catch(() => {})
@@ -198,28 +227,19 @@ export async function playKeycapsSound(options: PlaySoundOptions = {}) {
 
       const relPath = `sounds/typelouder/${sw}/${soundName}`
       const url = resolveAssetUrl(relPath)
-      const audioBuf = await loadBufferFromUrl(url, ctx)
-      if (!audioBuf) return
-
-      const source = ctx.createBufferSource()
-      source.buffer = audioBuf
-
-      // TypeLouder pitch modulation formula (0.97 + Math.random() * 0.06):
+      
       const baseVariation = 0.97 + Math.random() * 0.06
       const pitchFactor = Math.pow(2, pitchModifier / 12)
       const finalRate = Math.max(0.2, Math.min(3.0, baseVariation * pitchFactor))
-      source.playbackRate.value = finalRate
 
-      const gainNode = ctx.createGain()
-      gainNode.gain.value = Math.max(0, Math.min(1, volume))
+      const audioBuf = bufferCache.get(url) || await loadBufferFromUrl(url, ctx)
+      if (!audioBuf) return
 
-      source.connect(gainNode)
-      gainNode.connect(ctx.destination)
-      source.start(0)
+      playAudioBuffer(ctx, audioBuf, finalRate, volume)
       return
     }
 
-    // Classic Entertrained Mechanical switches
+    // Classic Entertrained / KBS Mechanical switches
     const sw = switchId.replace(/^mechanical\//, "")
     let soundName = "GENERIC"
     if (special) {
@@ -230,13 +250,8 @@ export async function playKeycapsSound(options: PlaySoundOptions = {}) {
 
     const relPath = `sounds/keycaps/mechanical/${sw}/${action}/${soundName}.mp3`
     const url = resolveAssetUrl(relPath)
-    const audioBuf = await loadBufferFromUrl(url, ctx)
-    if (!audioBuf) return
 
-    const source = ctx.createBufferSource()
-    source.buffer = audioBuf
-
-    // Base pitch modulation from Entertrained formula:
+    // Base pitch modulation
     let baseRate = 1.0
     if (key && key.length === 1) {
       baseRate = 0.95 + (key.charCodeAt(0) % 32) * 0.01
@@ -246,16 +261,52 @@ export async function playKeycapsSound(options: PlaySoundOptions = {}) {
 
     const pitchFactor = Math.pow(2, pitchModifier / 12)
     const finalRate = Math.max(0.2, Math.min(3.0, baseRate * pitchFactor))
-    source.playbackRate.value = finalRate
+    const vol = Math.max(0, Math.min(1, volume * (action === "release" ? 0.75 : 1)))
 
-    const gainNode = ctx.createGain()
-    const vol = Math.max(0, Math.min(1, volume * (action === "release" ? 0.7 : 1)))
-    gainNode.gain.value = vol
+    const audioBuf = bufferCache.get(url) || await loadBufferFromUrl(url, ctx)
+    if (!audioBuf) return
 
-    source.connect(gainNode)
-    gainNode.connect(ctx.destination)
-    source.start(0)
+    playAudioBuffer(ctx, audioBuf, finalRate, vol)
   } catch {}
+}
+
+/**
+ * Previews the full switch sound experience.
+ * For mechanical switches (which have separate press and release sounds),
+ * it plays the downstroke (press) and after a realistic typing interval (110ms),
+ * it plays the upstroke (release) so the user hears the complete clack/thock!
+ */
+export function previewKeycapsSound(options: {
+  switchId: string
+  volume?: number
+  pitchModifier?: number
+  type?: "key" | "space" | "enter" | "backspace"
+}) {
+  const { switchId, volume = 0.5, pitchModifier = 0, type = "key" } = options
+
+  // 1. Play downstroke
+  playKeycapsSound({
+    switchId,
+    action: "press",
+    type,
+    volume,
+    pitchModifier,
+    key: "a",
+  })
+
+  // 2. If mechanical switch, also trigger upstroke (release) after 110ms
+  if (!switchId.startsWith("typelouder/")) {
+    setTimeout(() => {
+      playKeycapsSound({
+        switchId,
+        action: "release",
+        type,
+        volume,
+        pitchModifier,
+        key: "a",
+      })
+    }, 110)
+  }
 }
 
 export async function playErrorSound(errorId: string = "errors/pop", volume: number = 0.3) {

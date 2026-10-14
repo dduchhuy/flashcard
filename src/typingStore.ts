@@ -132,7 +132,7 @@ export const defaultTypingSettings: TypingSettings = {
   keycapsSound: 'mechanical/mxbrown',
   keycapsVolume: 0.5,
   keycapsPitch: 0,
-  keycapsReleaseSound: false,
+  keycapsReleaseSound: true,
   keycapsSpecial: true,
   keycapsTrim: true,
   errorSound: 'errors/pop',

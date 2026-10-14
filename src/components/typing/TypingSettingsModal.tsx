@@ -3,7 +3,7 @@ import { createPortal } from "react-dom"
 import { X, Sliders, Volume2, Database, RotateCcw, Play, Upload, Download, FileText, BookOpen, Check, AlertCircle, ChevronDown, Keyboard, StickyNote, Eye } from "lucide-react"
 import { useTypingStore, Book, TypingViewMode, FontSettings, getEffectiveModeFont } from "../../typingStore"
 import { useFlashcardStore } from "../../store"
-import { KEYCAPS_SWITCHES, ERROR_SOUNDS, playKeycapsSound, playErrorSound } from "../../utils/typingAudio"
+import { KEYCAPS_SWITCHES, ERROR_SOUNDS, playErrorSound, previewKeycapsSound, preloadSwitch } from "../../utils/typingAudio"
 import {
   exportBookToJson,
   exportBookToTxt,
@@ -263,6 +263,12 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
       setSelectedFontMode(viewMode)
     }
   }, [isOpen, viewMode])
+
+  useEffect(() => {
+    if (isOpen && activeTab === "sound" && settings.keycapsSound) {
+      preloadSwitch(settings.keycapsSound)
+    }
+  }, [isOpen, activeTab, settings.keycapsSound])
 
   const currentModeFont = useMemo(
     () => getEffectiveModeFont(settings, selectedFontMode),
@@ -1038,14 +1044,13 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                       <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Mechanical Switch</label>
                       <button
                         type="button"
-                        onClick={() => playKeycapsSound({
+                        onClick={() => previewKeycapsSound({
                           switchId: settings.keycapsSound,
                           pitchModifier: settings.keycapsPitch,
                           volume: settings.keycapsVolume,
-                          key: "a",
                         })}
                         className="p-1 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors cursor-pointer"
-                        title="Play sound preview"
+                        title="Play sound preview (press + release)"
                       >
                         <Play size={13} fill="currentColor" />
                       </button>
@@ -1054,9 +1059,9 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                       value={settings.keycapsSound}
                       onChange={val => {
                         updateTypingSettings({ keycapsSound: val })
-                        playKeycapsSound({ switchId: val, volume: settings.keycapsVolume, key: "a" })
+                        previewKeycapsSound({ switchId: val, volume: settings.keycapsVolume, pitchModifier: settings.keycapsPitch })
                       }}
-                      onPreview={val => playKeycapsSound({ switchId: val, volume: settings.keycapsVolume, key: "a" })}
+                      onPreview={val => previewKeycapsSound({ switchId: val, volume: settings.keycapsVolume, pitchModifier: settings.keycapsPitch })}
                       options={keycapsOptions}
                     />
                   </div>
@@ -1094,7 +1099,7 @@ export function TypingSettingsModal({ isOpen, onClose, currentBook }: TypingSett
                       onChange={e => {
                         const val = parseInt(e.target.value)
                         updateTypingSettings({ keycapsPitch: val })
-                        playKeycapsSound({ switchId: settings.keycapsSound, pitchModifier: val, volume: settings.keycapsVolume, key: "a" })
+                        previewKeycapsSound({ switchId: settings.keycapsSound, pitchModifier: val, volume: settings.keycapsVolume })
                       }}
                       className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
                     />
