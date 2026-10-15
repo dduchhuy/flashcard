@@ -20,7 +20,7 @@ async function isApiAvailable(): Promise<boolean> {
   if (_apiAvailable !== null && now - _apiCheckTime < 10_000) return _apiAvailable
   try {
     const res = await fetch('/api/data/list', { signal: AbortSignal.timeout(1500) })
-    _apiAvailable = res.ok
+    _apiAvailable = res.ok && (res.headers.get('content-type') || '').includes('application/json')
   } catch {
     _apiAvailable = false
   }

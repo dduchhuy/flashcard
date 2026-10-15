@@ -448,15 +448,38 @@ interface FlashcardState {
 const idbStorage: StateStorage = {
   getItem: async (name: string): Promise<string | null> => {
     try {
-      const val = await get(name)
-      if (val !== undefined && val !== null) return val
-
-      // Migration from localStorage to IndexedDB
-      const local = localStorage.getItem(name)
-      if (local) {
-        await set(name, local)
-        return local
+      let val = await get(name)
+      if (val === undefined || val === null) {
+        // Migration from localStorage to IndexedDB
+        val = localStorage.getItem(name)
       }
+
+      // ── Storage Clean-up: If storage contains bloated bulk dictionary (160k cards) ──
+      if (typeof val === 'string' && val.length > 200_000) {
+        try {
+          const parsed = JSON.parse(val)
+          if (parsed?.state?.flashcards && Array.isArray(parsed.state.flashcards) && parsed.state.flashcards.length > 500) {
+            console.warn(`[Storage Purge] Detected bloated flashcards (${parsed.state.flashcards.length} cards, ${(val.length / 1024 / 1024).toFixed(1)}MB). Purging unreviewed dictionary cards...`)
+            const filtered = parsed.state.flashcards.filter((c: any) => {
+              if (c.srs && (c.srs.reps > 0 || c.srs.lastReviewedAt)) return true
+              if (c.highlights?.some((h: any) => h.srs && (h.srs.reps > 0 || h.srs.lastReviewedAt))) return true
+              if (c.phrasesAndIdioms?.some((p: any) => p.srs && (p.srs.reps > 0 || p.srs.lastReviewedAt))) return true
+              if (!isWordCard(c)) return true
+              return false
+            })
+            parsed.state.flashcards = filtered
+            const cleaned = JSON.stringify(parsed)
+            await set(name, cleaned)
+            try { localStorage.setItem(name, cleaned) } catch {}
+            console.log(`[Storage Purge] Storage shrunk to ${filtered.length} cards (${(cleaned.length / 1024).toFixed(1)}KB)!`)
+            return cleaned
+          }
+        } catch (e) {
+          console.error('[Storage Purge Error]', e)
+        }
+      }
+
+      if (val !== undefined && val !== null) return val
     } catch {
       return localStorage.getItem(name)
     }

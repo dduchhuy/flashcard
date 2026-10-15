@@ -74,6 +74,17 @@ function App() {
   }, [])
 
   useEffect(() => {
+    // If flashcards store contains bloated bulk dictionary words (> 500 cards), purge them immediately
+    const cards = useFlashcardStore.getState().flashcards
+    if (cards.length > 500) {
+      const purged = useFlashcardStore.getState().purgeDictionaryCards()
+      if (purged > 0) {
+        console.log(`[Auto-Clean on App Mount] Purged ${purged} raw dictionary cards to restore 60fps!`)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
     if (settings.isDarkMode) {
       document.documentElement.classList.add("dark")
     } else {

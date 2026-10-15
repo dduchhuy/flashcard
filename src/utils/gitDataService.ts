@@ -22,7 +22,7 @@ export interface DataManifest {
 export async function isDevDataApiAvailable(): Promise<boolean> {
   try {
     const res = await fetch('/api/data/list', { method: 'GET', signal: AbortSignal.timeout(1500) })
-    return res.ok
+    return res.ok && (res.headers.get('content-type') || '').includes('application/json')
   } catch {
     return false
   }
