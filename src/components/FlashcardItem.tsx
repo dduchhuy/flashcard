@@ -121,11 +121,10 @@ export function FlashcardItem({
 }: Props) {
   const { deleteFlashcard, updateFlashcard, updateFlashcardTag, saveHighlight, removeHighlight, settings, flashcards } = useFlashcardStore()
 
-  const wordKey = flashcard.sentence.trim().toLowerCase()
   const allVariants = useMemo(() => {
     if (siblingCards && siblingCards.length > 0) return siblingCards
-    return flashcards.filter(f => f.sentence.trim().toLowerCase() === wordKey)
-  }, [siblingCards, flashcards, wordKey])
+    return [flashcard]
+  }, [siblingCards, flashcard])
 
   const [activeCardId, setActiveCardId] = useState<string>(flashcard.id)
   const [activePosIdx, setActivePosIdx] = useState<number>(0)

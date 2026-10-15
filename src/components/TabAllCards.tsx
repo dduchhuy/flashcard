@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, useDeferredValue } from 'react'
 import { useFlashcardStore, getCardTags, isWordCard, Flashcard, CardDisplayFilter, defaultDisplayFilter } from '../store'
 import { FlashcardItem } from './FlashcardItem'
+import { lookupDictionaryWord } from '../utils/dictionaryService'
 import { 
   LayoutGrid, 
   List, 
@@ -12,13 +13,14 @@ import {
   ChevronsRight, 
   Check, 
   Search, 
-  SlidersHorizontal, 
+  SlidersHorizontal,
+  BookOpen,
+  Plus,
   X, 
   RotateCcw, 
   Layers, 
   Sparkles, 
-  Loader2,
-  BookOpen
+  Loader2
 } from 'lucide-react'
 
 export type SortOption = 'date_desc' | 'date_asc' | 'a_z' | 'tag'
@@ -196,6 +198,32 @@ export function TabAllCards() {
 
   // 2. Search & Tag filter states
   const [searchQuery, setSearchQuery] = useState('')
+  const deferredSearchQuery = useDeferredValue(searchQuery)
+  const [dictResult, setDictResult] = useState<Flashcard | null>(null)
+  const [, setIsSearchingDict] = useState(false)
+  const { addWordCard } = useFlashcardStore()
+
+  useEffect(() => {
+    const q = deferredSearchQuery.trim().toLowerCase()
+    if (!q || q.length < 2) {
+      setDictResult(null)
+      return
+    }
+    let cancelled = false
+    setIsSearchingDict(true)
+    lookupDictionaryWord(q)
+      .then(card => {
+        if (!cancelled) setDictResult(card)
+      })
+      .catch(() => {
+        if (!cancelled) setDictResult(null)
+      })
+      .finally(() => {
+        if (!cancelled) setIsSearchingDict(false)
+      })
+    return () => { cancelled = true }
+  }, [deferredSearchQuery])
+
   const [searchTargets, setSearchTargets] = useState<SearchTarget[]>(() => {
     try {
       const saved = localStorage.getItem('flashcard_search_targets')
@@ -338,7 +366,7 @@ export function TabAllCards() {
     return allAvailableTags.filter(t => t.toLowerCase().includes(tagSearchQuery.toLowerCase().trim()))
   }, [allAvailableTags, tagSearchQuery])
 
-  // Filtered cards
+  // Filtered cards (optimized for high speed with deferred search query)
   const filteredCards = useMemo(() => {
     // 1. Filter by card type: Flashcard (word) vs Sentence
     let result = flashcards.filter(c => {
@@ -355,74 +383,80 @@ export function TabAllCards() {
     }
 
     // 3. Filter by search query & search target
-    const q = searchQuery.trim().toLowerCase()
+    const q = deferredSearchQuery.trim().toLowerCase()
     if (q) {
       const activeTargets = searchTargets.length > 0 ? searchTargets : ['word']
-      result = result.filter(c => {
-        const wordMatches = c.sentence.toLowerCase().includes(q)
+      const checkWord = activeTargets.includes('word') || activeTargets.includes('all')
+      const checkMeaning = activeTargets.includes('meaning') || activeTargets.includes('all')
+      const checkExample = activeTargets.includes('example') || activeTargets.includes('all')
+      const checkPhrase = activeTargets.includes('phrase') || activeTargets.includes('all')
+      const checkUsage = activeTargets.includes('usage') || activeTargets.includes('all')
 
-        const meaningMatches = () => {
-          if (c.translation && c.translation.toLowerCase().includes(q)) return true
-          if (c.highlights?.some(h => h.meaning.toLowerCase().includes(q))) return true
-          if (c.posEntries?.some(pos => pos.meanings.some(m => m.meaning.toLowerCase().includes(q)))) return true
-          return false
-        }
-
-        const exampleMatches = () => {
-          if (c.highlights?.some(h => h.example && h.example.toLowerCase().includes(q))) return true
-          if (c.posEntries?.some(pos => pos.meanings.some(m =>
-            m.examples?.some(ex =>
-              ex.sentence.toLowerCase().includes(q) ||
-              (ex.translation && ex.translation.toLowerCase().includes(q))
-            )
-          ))) return true
-          return false
-        }
-
-        const phraseMatches = () => {
-          if (c.phrasesAndIdioms?.some(pi => {
+      // Ultra-fast path: Word-only search (95% of queries)
+      if (checkWord && !checkMeaning && !checkExample && !checkPhrase && !checkUsage) {
+        result = result.filter(c => c.sentence.toLowerCase().includes(q))
+      } else {
+        result = result.filter(c => {
+          if (checkWord && c.sentence.toLowerCase().includes(q)) return true
+          if (checkMeaning) {
+            if (c.translation && c.translation.toLowerCase().includes(q)) return true
+            if (c.highlights?.some(h => h.meaning.toLowerCase().includes(q))) return true
+            if (c.posEntries?.some(pos => pos.meanings.some(m => m.meaning.toLowerCase().includes(q)))) return true
+          }
+          if (checkExample) {
+            if (c.highlights?.some(h => h.example && h.example.toLowerCase().includes(q))) return true
+            if (c.posEntries?.some(pos => pos.meanings.some(m =>
+              m.examples?.some(ex =>
+                ex.sentence.toLowerCase().includes(q) ||
+                (ex.translation && ex.translation.toLowerCase().includes(q))
+              )
+            ))) return true
+          }
+          if (checkPhrase && c.phrasesAndIdioms?.some(pi => {
             const p = typeof pi === 'string' ? pi : pi.phrase
             const t = typeof pi === 'string' ? '' : pi.translation
             return p.toLowerCase().includes(q) || (t && t.toLowerCase().includes(q))
           })) return true
-          return false
-        }
-
-        const usageMatches = () => {
-          if (c.usageNotes?.some(u => u.toLowerCase().includes(q))) return true
-          if (c.posEntries?.some(pos => pos.meanings.some(m => m.notes?.some(n => n.toLowerCase().includes(q))))) return true
-          return false
-        }
-
-        return activeTargets.some(target => {
-          if (target === 'word') return wordMatches
-          if (target === 'meaning') return meaningMatches()
-          if (target === 'example') return exampleMatches()
-          if (target === 'phrase') return phraseMatches()
-          if (target === 'usage') return usageMatches()
-          if (target === 'all') return wordMatches || meaningMatches() || exampleMatches() || phraseMatches() || usageMatches()
+          if (checkUsage) {
+            if (c.usageNotes?.some(u => u.toLowerCase().includes(q))) return true
+            if (c.posEntries?.some(pos => pos.meanings.some(m => m.notes?.some(n => n.toLowerCase().includes(q))))) return true
+          }
           return false
         })
-      })
+      }
     }
     return result
-  }, [flashcards, cardTypeFilter, selectedTags, searchQuery, searchTargets])
+  }, [flashcards, cardTypeFilter, selectedTags, deferredSearchQuery, searchTargets])
 
-  // Sorted cards
+  // Sorted cards (optimized string compare + exact prefix match prioritization)
   const sortedCards = useMemo(() => {
+    const q = deferredSearchQuery.trim().toLowerCase()
     return [...filteredCards].sort((a, b) => {
+      // Prioritize prefix match when user is searching
+      if (q) {
+        const aStarts = a.sentence.toLowerCase().startsWith(q)
+        const bStarts = b.sentence.toLowerCase().startsWith(q)
+        if (aStarts && !bStarts) return -1
+        if (!aStarts && bStarts) return 1
+      }
       if (sortBy === 'date_desc') return b.createdAt - a.createdAt
       if (sortBy === 'date_asc') return a.createdAt - b.createdAt
-      if (sortBy === 'a_z') return a.sentence.localeCompare(b.sentence)
+      if (sortBy === 'a_z') {
+        const aWord = a.sentence.toLowerCase()
+        const bWord = b.sentence.toLowerCase()
+        return aWord < bWord ? -1 : aWord > bWord ? 1 : 0
+      }
       if (sortBy === 'tag') {
         const aTag = getCardTags(a)[0] || '\uffff'
         const bTag = getCardTags(b)[0] || '\uffff'
-        if (aTag !== bTag) return aTag.localeCompare(bTag)
-        return a.sentence.localeCompare(b.sentence)
+        if (aTag !== bTag) return aTag < bTag ? -1 : 1
+        const aWord = a.sentence.toLowerCase()
+        const bWord = b.sentence.toLowerCase()
+        return aWord < bWord ? -1 : aWord > bWord ? 1 : 0
       }
       return 0
     })
-  }, [filteredCards, sortBy])
+  }, [filteredCards, sortBy, deferredSearchQuery])
 
   // Grouped cards (group variants of same word together)
   const groupedCards = useMemo(() => {
@@ -1633,9 +1667,69 @@ export function TabAllCards() {
       )}
 
       {/* 3. Cards Display List */}
+      {/* Live Dictionary Match from 160k Words */}
+      {deferredSearchQuery && dictResult && (
+        <div className="mb-4 max-w-4xl mx-auto p-4 rounded-2xl bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/40 dark:to-indigo-950/30 border border-purple-200 dark:border-purple-800/60 shadow-xs animate-in fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 flex items-center gap-1">
+                  <BookOpen size={13} /> Từ điển 160.000 từ
+                </span>
+                {dictResult.partOfSpeech && (
+                  <span className="text-[11px] bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 font-semibold px-2 py-0.5 rounded-full">
+                    {dictResult.partOfSpeech}
+                  </span>
+                )}
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white capitalize flex items-center gap-2">
+                {dictResult.sentence}
+                {dictResult.phonetic && (
+                  <span className="font-mono text-sm font-normal text-purple-600 dark:text-purple-400">
+                    {dictResult.phonetic}
+                  </span>
+                )}
+              </h3>
+              {dictResult.posEntries?.[0]?.meanings?.[0]?.meaning && (
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  • {dictResult.posEntries[0].meanings[0].meaning}
+                </p>
+              )}
+            </div>
+
+            <div className="shrink-0">
+              {flashcards.some(f => f.sentence.trim().toLowerCase() === dictResult.sentence.trim().toLowerCase()) ? (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/50 px-3 py-1.5 rounded-xl border border-green-200 dark:border-green-800">
+                  <Check size={14} /> Đã có trong thư viện
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    addWordCard(
+                      dictResult.sentence,
+                      dictResult.posEntries || [],
+                      dictResult.phrasesAndIdioms,
+                      dictResult.tags || ['Dictionary'],
+                      dictResult.phonetic,
+                      dictResult.usageNotes
+                    )
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer"
+                >
+                  <Plus size={14} /> Lưu vào thư viện
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {sortedCards.length === 0 ? (
         <div className="text-center text-gray-500 py-16 bg-white dark:bg-gray-800 rounded-3xl border border-gray-200/80 dark:border-gray-700/80 shadow-xs">
-          <p className="text-base font-semibold">No cards found matching your filters.</p>
+          <p className="text-base font-semibold">
+            {dictResult ? 'Đã tìm thấy từ này trong từ điển ở trên!' : 'No cards found matching your filters.'}
+          </p>
           <p className="text-xs text-gray-400 mt-1">Try clearing some search terms or resetting settings.</p>
           <button
             type="button"
