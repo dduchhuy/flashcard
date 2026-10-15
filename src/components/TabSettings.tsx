@@ -776,8 +776,13 @@ export function TabSettings() {
                 <FileText size={14} /> data/vocab
               </div>
               <div className="text-lg font-bold text-gray-900 dark:text-gray-100 mt-1">
-                {gitManifest?.vocab.length ?? 0} <span className="text-xs font-normal text-gray-500">vocab files (Word cards)</span>
+                {gitManifest?.vocab.length ?? 0} <span className="text-xs font-normal text-gray-500">user vocab files (Word cards)</span>
               </div>
+              {(gitManifest?.vocabIndex?.length ?? 0) > 0 && (
+                <div className="text-sm text-indigo-600 dark:text-indigo-400 mt-0.5">
+                  + {gitManifest!.vocabIndex!.length} <span className="text-xs font-normal text-gray-500">dictionary files (a–z, on-demand)</span>
+                </div>
+              )}
             </div>
 
             <div className="p-3 bg-emerald-50/60 dark:bg-emerald-950/20 rounded-xl border border-emerald-100 dark:border-emerald-900/30">

@@ -36,5 +36,137 @@
       "size": 260,
       "modified": 1791903448255.5386
     }
+  ],
+  "vocabIndex": [
+    {
+      "letter": "a",
+      "name": "a.json",
+      "size": 28898841
+    },
+    {
+      "letter": "b",
+      "name": "b.json",
+      "size": 25580465
+    },
+    {
+      "letter": "c",
+      "name": "c.json",
+      "size": 42287120
+    },
+    {
+      "letter": "d",
+      "name": "d.json",
+      "size": 22360553
+    },
+    {
+      "letter": "e",
+      "name": "e.json",
+      "size": 15712408
+    },
+    {
+      "letter": "f",
+      "name": "f.json",
+      "size": 21352022
+    },
+    {
+      "letter": "g",
+      "name": "g.json",
+      "size": 22131244
+    },
+    {
+      "letter": "h",
+      "name": "h.json",
+      "size": 17459854
+    },
+    {
+      "letter": "i",
+      "name": "i.json",
+      "size": 16431117
+    },
+    {
+      "letter": "j",
+      "name": "j.json",
+      "size": 3700315
+    },
+    {
+      "letter": "k",
+      "name": "k.json",
+      "size": 4329944
+    },
+    {
+      "letter": "l",
+      "name": "l.json",
+      "size": 16427935
+    },
+    {
+      "letter": "m",
+      "name": "m.json",
+      "size": 23032708
+    },
+    {
+      "letter": "n",
+      "name": "n.json",
+      "size": 10609105
+    },
+    {
+      "letter": "o",
+      "name": "o.json",
+      "size": 12318052
+    },
+    {
+      "letter": "p",
+      "name": "p.json",
+      "size": 35872064
+    },
+    {
+      "letter": "q",
+      "name": "q.json",
+      "size": 1986068
+    },
+    {
+      "letter": "r",
+      "name": "r.json",
+      "size": 19285015
+    },
+    {
+      "letter": "s",
+      "name": "s.json",
+      "size": 52026742
+    },
+    {
+      "letter": "t",
+      "name": "t.json",
+      "size": 22697523
+    },
+    {
+      "letter": "u",
+      "name": "u.json",
+      "size": 11746023
+    },
+    {
+      "letter": "v",
+      "name": "v.json",
+      "size": 6839955
+    },
+    {
+      "letter": "w",
+      "name": "w.json",
+      "size": 11620329
+    },
+    {
+      "letter": "x",
+      "name": "x.json",
+      "size": 470062
+    },
+    {
+      "letter": "y",
+      "name": "y.json",
+      "size": 1550252
+    },
+    {
+      "letter": "z",
+      "name": "z.json",
+      "size": 1044983
+    }
   ]
 }

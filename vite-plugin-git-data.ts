@@ -9,12 +9,18 @@ function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9._\-]/g, '_')
 }
 
+/** Matches the 26 single-letter dictionary files (a.json … z.json) */
+const SINGLE_LETTER_VOCAB_RE = /^[a-z]\.json$/i
+
 function scanDataDirectory(dataDir: string) {
-  const result: Record<Category, Array<{ name: string; size: number; modified: number }>> = {
+  const result: Record<Category, Array<{ name: string; size: number; modified: number }>> & {
+    vocabIndex: Array<{ letter: string; name: string; size: number; modified: number }>
+  } = {
     book: [],
     vocab: [],
     sentence: [],
-    save: []
+    save: [],
+    vocabIndex: [],
   }
 
   for (const cat of CATEGORIES) {
@@ -34,16 +40,29 @@ function scanDataDirectory(dataDir: string) {
         try {
           const stat = fs.statSync(fullPath)
           if (stat.isFile()) {
-            result[cat].push({
-              name: file,
-              size: stat.size,
-              modified: stat.mtimeMs
-            })
+            // Vocab category: separate dictionary letter files into vocabIndex
+            if (cat === 'vocab' && SINGLE_LETTER_VOCAB_RE.test(file)) {
+              result.vocabIndex.push({
+                letter: file[0].toLowerCase(),
+                name: file,
+                size: stat.size,
+                modified: stat.mtimeMs,
+              })
+            } else {
+              result[cat].push({
+                name: file,
+                size: stat.size,
+                modified: stat.mtimeMs,
+              })
+            }
           }
         } catch {}
       }
     } catch {}
   }
+
+  // Sort vocabIndex alphabetically
+  result.vocabIndex.sort((a, b) => a.letter.localeCompare(b.letter))
 
   return result
 }

@@ -1,4 +1,5 @@
 import { useFlashcardStore, Flashcard, isWordCard, migrateFlashcard, getCardTags } from '../store'
+export { lookupVocabWord, searchVocabByPrefix, isLetterCached, preloadLetters } from './vocabCache'
 import { useTypingStore } from '../typingStore'
 import {
   validateBookJson,
@@ -13,6 +14,8 @@ export interface DataManifest {
   vocab: Array<{ name: string; size: number; modified: number }>
   sentence: Array<{ name: string; size: number; modified: number }>
   save: Array<{ name: string; size: number; modified: number }>
+  /** Per-letter dictionary files (a.json – z.json) — loaded on-demand, not at startup */
+  vocabIndex?: Array<{ letter: string; name: string; size: number; modified?: number }>
 }
 
 /** Check if Vite dev server data API is available */
@@ -88,6 +91,13 @@ async function fetchFileContent(category: 'book' | 'vocab' | 'sentence' | 'save'
 
 export let isGitDataSyncing = false
 
+/**
+ * Regex that matches the 26 per-letter dictionary files (a.json … z.json).
+ * These files are NOT loaded at startup — they are fetched on-demand via
+ * vocabCache when the user looks up a word.
+ */
+const SINGLE_LETTER_VOCAB = /^[a-z]\.json$/i
+
 /** Load and import all data from Flashcard/data (book, vocab, sentence, save) */
 export async function loadAllFromGitData(options?: {
   onProgress?: (message: string) => void
@@ -139,9 +149,16 @@ export async function loadAllFromGitData(options?: {
     }
 
   // 2. Load Word Cards from data/vocab
+  // NOTE: Single-letter dictionary files (a.json – z.json) are intentionally
+  // skipped here. They are ~500 MB total and are fetched lazily on-demand via
+  // vocabCache.ts when the user looks up or searches a word.
   const importedWordCards: Flashcard[] = []
   for (const item of manifest.vocab) {
     if (!item.name.toLowerCase().endsWith('.json')) continue
+    if (SINGLE_LETTER_VOCAB.test(item.name)) {
+      // Dictionary file — skip, loaded on-demand by vocabCache
+      continue
+    }
     try {
       notify(`Reading vocab: ${item.name}...`)
       const { text } = await fetchFileContent('vocab', item.name)
