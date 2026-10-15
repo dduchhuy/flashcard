@@ -1,7 +1,8 @@
 import { useState, useRef, useMemo } from 'react'
 import { useFlashcardStore, getCardTags, isWordCard } from '../store'
 import { FlashcardItem } from './FlashcardItem'
-import { Plus, Sparkles, Tag, X, Check, BookOpen, Command, Lock, Unlock, Type, FileText, ArrowLeftRight } from 'lucide-react'
+import { Plus, Sparkles, Tag, X, Check, BookOpen, Command, Lock, Unlock, Type, FileText, ArrowLeftRight, Loader2, Zap } from 'lucide-react'
+import { lookupDictionaryWord } from '../utils/dictionaryService'
 
 interface FormExample {
   sentence: string
@@ -40,6 +41,47 @@ export function TabAdd() {
   const [posFormEntries, setPosFormEntries] = useState<FormPosEntry[]>([emptyPosEntry()])
   const [phrasesForm, setPhrasesForm] = useState<{ phrase: string, translation: string }[]>([])
   const [usageNotesForm, setUsageNotesForm] = useState<string[]>([])
+  const [isAutoFilling, setIsAutoFilling] = useState(false)
+
+  const handleAutoFillFromDict = async () => {
+    if (!newSentence.trim()) return
+    setIsAutoFilling(true)
+    try {
+      const card = await lookupDictionaryWord(newSentence)
+      if (card) {
+        if (card.phonetic) setPhoneticInput(card.phonetic)
+        if (card.partOfSpeech) setPartOfSpeechInput(card.partOfSpeech)
+        if (card.posEntries && card.posEntries.length > 0) {
+          setPosFormEntries(card.posEntries.map(p => ({
+            partOfSpeech: p.partOfSpeech || '',
+            phonetic: p.phonetic || '',
+            meanings: (p.meanings || []).map(m => ({
+              meaning: m.meaning || '',
+              examples: (m.examples || []).map(ex => ({
+                sentence: ex.sentence || '',
+                translation: ex.translation || ''
+              }))
+            }))
+          })))
+        }
+        if (card.phrasesAndIdioms && card.phrasesAndIdioms.length > 0) {
+          setPhrasesForm(card.phrasesAndIdioms.map(pi => ({
+            phrase: pi.phrase,
+            translation: pi.translation
+          })))
+        }
+        if (card.usageNotes && card.usageNotes.length > 0) {
+          setUsageNotesForm(card.usageNotes)
+        }
+      } else {
+        alert(`Không tìm thấy từ "${newSentence}" trong từ điển.`)
+      }
+    } catch {
+      alert('Không thể tra cứu từ điển.')
+    } finally {
+      setIsAutoFilling(false)
+    }
+  }
   
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -304,11 +346,21 @@ export function TabAdd() {
                   placeholder="Enter word or phrase (e.g. 'Action')..."
                   className="flex-1 bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 text-lg font-bold leading-relaxed focus:outline-none"
                 />
+                <button
+                  type="button"
+                  disabled={!newSentence.trim() || isAutoFilling}
+                  onClick={handleAutoFillFromDict}
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/40 dark:hover:bg-purple-900/60 text-purple-700 dark:text-purple-300 text-xs font-bold rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-2xs active:scale-95"
+                  title="Tự động điền phát âm, nghĩa, ví dụ từ từ điển 160k từ"
+                >
+                  {isAutoFilling ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
+                  <span>Auto-fill từ điển</span>
+                </button>
                 <input
                   value={phoneticInput}
                   onChange={(e) => setPhoneticInput(e.target.value)}
                   placeholder="Phonetic (e.g. /ˈæk.ʃən/)"
-                  className="w-full sm:w-48 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 text-sm italic focus:outline-none sm:border-l sm:border-gray-200 sm:dark:border-gray-700 sm:pl-3"
+                  className="w-full sm:w-44 bg-transparent text-gray-500 dark:text-gray-400 placeholder-gray-400 dark:placeholder-gray-500 text-sm italic focus:outline-none sm:border-l sm:border-gray-200 sm:dark:border-gray-700 sm:pl-3"
                 />
               </div>
 

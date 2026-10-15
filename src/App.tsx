@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Home, PlusCircle, Library, Gamepad2, Settings as SettingsIcon, LogIn, LogOut, GraduationCap, Sparkles, Keyboard } from "lucide-react"
+import { Home, PlusCircle, Library, Gamepad2, Settings as SettingsIcon, LogIn, LogOut, GraduationCap, Sparkles, Keyboard, Search } from "lucide-react"
 import { TabHome } from "./components/TabHome"
 import { TabAdd } from "./components/TabAdd"
 import { TabAllCards } from "./components/TabAllCards"
@@ -7,6 +7,7 @@ import { TabGame } from "./components/TabGame"
 import { TabLearn } from "./components/TabLearn"
 import { TabSettings } from "./components/TabSettings"
 import { TabTyping } from "./components/typing/TabTyping"
+import { DictionaryModal } from "./components/DictionaryModal"
 import { useFlashcardStore } from "./store"
 import { useFirebaseSync } from "./useFirebaseSync"
 import { useGitDataSync } from "./useGitDataSync"
@@ -41,6 +42,7 @@ function App() {
     if (!path) path = window.location.pathname.split("/").pop() || ""
     return PATH_TO_TAB[path] || "home"
   })
+  const [isDictModalOpen, setIsDictModalOpen] = useState(false)
 
   const { settings } = useFlashcardStore()
   const { user, isLoading } = useFirebaseSync()
@@ -50,6 +52,17 @@ function App() {
     setActiveTab(tab)
     window.history.pushState(null, "", `#/${TAB_TO_PATH[tab]}`)
   }
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setIsDictModalOpen(prev => !prev)
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [])
 
   useEffect(() => {
     const handlePopState = () => {
@@ -81,17 +94,33 @@ function App() {
       {/* Header */}
       <header className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-md shadow-xs sticky top-0 z-50 transition-colors border-b border-gray-100 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-          {/* Logo / Brand — Clicking navigates to Home */}
-          <button
-            type="button"
-            onClick={() => changeTab("home")}
-            className="flex items-center gap-2 cursor-pointer transition-transform active:scale-95 focus:outline-none"
-            title="Home"
-          >
-            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-xs hover:shadow-md transition-shadow">
-              <Sparkles size={19} />
-            </div>
-          </button>
+          <div className="flex items-center gap-2.5">
+            {/* Logo / Brand — Clicking navigates to Home */}
+            <button
+              type="button"
+              onClick={() => changeTab("home")}
+              className="flex items-center gap-2 cursor-pointer transition-transform active:scale-95 focus:outline-none"
+              title="Home"
+            >
+              <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-xs hover:shadow-md transition-shadow">
+                <Sparkles size={19} />
+              </div>
+            </button>
+
+            {/* Quick Dictionary Search Button */}
+            <button
+              type="button"
+              onClick={() => setIsDictModalOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200/80 dark:bg-gray-700/60 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-300 rounded-xl text-xs sm:text-sm font-medium transition-all shadow-2xs hover:border-purple-300"
+              title="Tra từ điển 160.000 từ siêu tốc (Phím tắt ⌘K)"
+            >
+              <Search size={15} className="text-purple-600 dark:text-purple-400" />
+              <span className="hidden sm:inline">Từ điển</span>
+              <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] font-semibold text-gray-400 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md">
+                ⌘K
+              </kbd>
+            </button>
+          </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1 bg-gray-100/80 dark:bg-gray-900/60 p-1 rounded-2xl border border-gray-200/50 dark:border-gray-700/50">
@@ -289,6 +318,8 @@ function App() {
           </button>
         </div>
       </nav>
+
+      <DictionaryModal isOpen={isDictModalOpen} onClose={() => setIsDictModalOpen(false)} />
     </div>
   )
 }

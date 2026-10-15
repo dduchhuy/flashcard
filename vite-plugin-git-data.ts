@@ -1,8 +1,9 @@
 import { Plugin } from 'vite'
 import fs from 'fs'
 import path from 'path'
+import { execFile } from 'child_process'
 
-const CATEGORIES = ['book', 'vocab', 'sentence', 'save'] as const
+const CATEGORIES = ['book', 'vocab', 'sentence', 'save', 'dict'] as const
 type Category = typeof CATEGORIES[number]
 
 function sanitizeFilename(name: string): string {
@@ -127,6 +128,82 @@ export default function gitDataPlugin(): Plugin {
 
         const stream = fs.createReadStream(filePath)
         stream.pipe(res)
+      })
+
+      // ── Dictionary SQLite API ─────────────────────────────────────────────
+
+      // API: Lookup single word from SQLite dictionary.db
+      server.middlewares.use('/api/dict/lookup', (req, res) => {
+        const url = new URL(req.url || '', 'http://localhost')
+        const word = (url.searchParams.get('word') || '').trim().toLowerCase()
+        if (!word) {
+          res.statusCode = 400
+          res.end(JSON.stringify({ error: 'Missing word parameter' }))
+          return
+        }
+
+        const dbPath = path.join(dataDir, 'dictionary.db')
+        if (!fs.existsSync(dbPath)) {
+          res.statusCode = 404
+          res.end(JSON.stringify({ error: 'dictionary.db not found' }))
+          return
+        }
+
+        const safeWord = word.replace(/'/g, "''")
+        const query = `SELECT data FROM words WHERE word = '${safeWord}' LIMIT 1;`
+
+        execFile('sqlite3', ['-json', dbPath, query], { timeout: 3000 }, (err, stdout) => {
+          if (err) {
+            res.statusCode = 500
+            res.end(JSON.stringify({ error: 'Query failed' }))
+            return
+          }
+          try {
+            const rows = JSON.parse(stdout || '[]')
+            if (rows.length === 0 || !rows[0].data) {
+              res.statusCode = 404
+              res.end(JSON.stringify({ error: 'Word not found' }))
+              return
+            }
+            res.setHeader('Content-Type', 'application/json; charset=utf-8')
+            res.end(rows[0].data)
+          } catch {
+            res.statusCode = 500
+            res.end(JSON.stringify({ error: 'Parse failed' }))
+          }
+        })
+      })
+
+      // API: Prefix search for autocomplete from SQLite dictionary.db
+      server.middlewares.use('/api/dict/search', (req, res) => {
+        const url = new URL(req.url || '', 'http://localhost')
+        const prefix = (url.searchParams.get('prefix') || url.searchParams.get('q') || '').trim().toLowerCase()
+        const limit = Math.min(Math.max(parseInt(url.searchParams.get('limit') || '15', 10), 1), 50)
+        if (!prefix) {
+          res.setHeader('Content-Type', 'application/json; charset=utf-8')
+          res.end('[]')
+          return
+        }
+
+        const dbPath = path.join(dataDir, 'dictionary.db')
+        if (!fs.existsSync(dbPath)) {
+          res.statusCode = 404
+          res.end(JSON.stringify({ error: 'dictionary.db not found' }))
+          return
+        }
+
+        const safePrefix = prefix.replace(/'/g, "''").replace(/%/g, '')
+        const query = `SELECT word, phonetic, pos FROM words WHERE word LIKE '${safePrefix}%' ORDER BY length(word) ASC LIMIT ${limit};`
+
+        execFile('sqlite3', ['-json', dbPath, query], { timeout: 3000 }, (err, stdout) => {
+          if (err) {
+            res.statusCode = 500
+            res.end(JSON.stringify({ error: 'Query failed' }))
+            return
+          }
+          res.setHeader('Content-Type', 'application/json; charset=utf-8')
+          res.end(stdout || '[]')
+        })
       })
 
       // 3. API: Write single file

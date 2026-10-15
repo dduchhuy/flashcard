@@ -442,6 +442,7 @@ interface FlashcardState {
   updatePhraseSRS: (flashcardId: string, phraseTextOrId: string, srsData: SRSData) => void
   gameInputMode: 'sentence' | 'word'
   setGameInputMode: (mode: 'sentence' | 'word') => void
+  purgeDictionaryCards: () => number
 }
 
 const idbStorage: StateStorage = {
@@ -677,15 +678,43 @@ export const useFlashcardStore = create<FlashcardState>()(
             return f
           }),
         })),
+      purgeDictionaryCards: () => {
+        let purgedCount = 0
+        set((state) => {
+          const kept = state.flashcards.filter((c) => {
+            if (c.srs && (c.srs.reps > 0 || c.srs.lastReviewedAt)) return true
+            if (c.highlights?.some((h) => h.srs && (h.srs.reps > 0 || h.srs.lastReviewedAt))) return true
+            if (c.phrasesAndIdioms?.some((p) => p.srs && (p.srs.reps > 0 || p.srs.lastReviewedAt))) return true
+            if (!isWordCard(c)) return true
+            return false
+          })
+          purgedCount = state.flashcards.length - kept.length
+          return { flashcards: kept }
+        })
+        return purgedCount
+      },
     }),
     {
       name: 'flashcard-storage',
       storage: createJSONStorage(() => idbStorage),
       onRehydrateStorage: () => (state) => {
         if (state && Array.isArray(state.flashcards)) {
+          // If bulk dictionary (160k cards) was previously loaded, auto-clean it
+          if (state.flashcards.length > 5000) {
+            console.warn(`[Auto-Clean] Detected ${state.flashcards.length} cards. Purging unstudied raw dictionary bulk import...`)
+            state.flashcards = state.flashcards.filter((c) => {
+              if (c.srs && (c.srs.reps > 0 || c.srs.lastReviewedAt)) return true
+              if (c.highlights?.some((h) => h.srs && (h.srs.reps > 0 || h.srs.lastReviewedAt))) return true
+              if (c.phrasesAndIdioms?.some((p) => p.srs && (p.srs.reps > 0 || p.srs.lastReviewedAt))) return true
+              if (!isWordCard(c)) return true
+              return false
+            })
+            console.log(`[Auto-Clean] Cleaned down to ${state.flashcards.length} personal cards.`)
+          }
           state.flashcards = state.flashcards.map(migrateFlashcard)
         }
       }
     }
   )
 )
+

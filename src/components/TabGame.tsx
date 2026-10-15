@@ -79,14 +79,6 @@ class GameErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
 
 export function TabGame() {
   const [gameMode, setGameMode] = useState<GameMode>('menu')
-  const { flashcards } = useFlashcardStore()
-
-  useEffect(() => {
-    fetch('/api/debug', {
-      method: 'POST',
-      body: JSON.stringify(flashcards)
-    }).catch(() => {})
-  }, [flashcards])
 
   return (
     <div className="h-full pb-8">

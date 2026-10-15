@@ -12,13 +12,26 @@ function hexToRgb(hex: string) {
 }
 
 export function TabSettings() {
-  const { settings, updateSettings, resetSettings, flashcards } = useFlashcardStore()
+  const { settings, updateSettings, resetSettings, flashcards, purgeDictionaryCards } = useFlashcardStore()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { isSyncing: isGitSyncing, manifest: gitManifest, lastResult: gitSyncResult, syncFromGit, exportToGit, refreshManifest } = useGitDataSync()
 
   const [exportTag, setExportTag] = useState<string>('all')
   const [deleteTag, setDeleteTag] = useState<string>('all')
   const [importedTags, setImportedTags] = useState<string[]>([])
+
+  const handlePurgeDictionary = () => {
+    const sure = window.confirm(
+      'Hành động này sẽ xóa các từ từ điển chưa học (không có tiến độ SRS) ra khỏi danh sách thẻ học cá nhân để giải phóng RAM và làm mượt web.\n\nCác thẻ có tiến độ học hoặc do bạn tự tạo sẽ được GIỮ NGUYÊN.\n\nBạn có muốn tiếp tục?'
+    )
+    if (!sure) return
+    const purged = purgeDictionaryCards()
+    if (purged > 0) {
+      alert(`Đã giải phóng thành công ${purged.toLocaleString()} từ khỏi bộ nhớ!\nWeb của bạn giờ đã siêu mượt.`)
+    } else {
+      alert('Bộ nhớ Flashcard của bạn đã sạch sẽ, không có từ điển dư thừa!')
+    }
+  }
 
   const allTags = useMemo(() => {
     const tags = new Set<string>()
@@ -910,6 +923,29 @@ export function TabSettings() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Memory Optimization / Purge Bulk Dictionary */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-5 space-y-4 transition-colors border border-purple-100 dark:border-purple-900/30">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+              <SparklesIcon size={20} className="text-purple-600" />
+              Tối ưu hóa bộ nhớ Flashcards
+            </h2>
+            <span className="text-xs font-semibold px-2.5 py-1 bg-purple-50 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded-full">
+              {flashcards.length.toLocaleString()} thẻ hiện tại
+            </span>
+          </div>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Nếu bạn đã lỡ nhập 160.000 từ từ điển vào danh sách thẻ học, tính năng này sẽ lọc sạch các từ chưa học ra khỏi bộ nhớ trình duyệt, đưa dung lượng về vài KB và giúp web chạy siêu mượt 60fps.
+          </p>
+          <button
+            type="button"
+            onClick={handlePurgeDictionary}
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-2.5 px-4 rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all active:scale-98 cursor-pointer"
+          >
+            <SparklesIcon size={16} /> Dọn dẹp từ điển khỏi bộ nhớ (Giải phóng RAM)
+          </button>
         </div>
 
         {/* Danger Zone Section */}

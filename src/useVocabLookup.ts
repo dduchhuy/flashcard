@@ -16,20 +16,18 @@
 import { useState, useCallback, useRef } from 'react'
 import { Flashcard } from './store'
 import {
-  lookupVocabWord,
-  searchVocabByPrefix,
-  isLetterCached,
-} from './utils/vocabCache'
+  lookupDictionaryWord,
+  searchDictionaryPrefix,
+  DictionarySearchResult
+} from './utils/dictionaryService'
 
 export interface UseVocabLookupReturn {
   /** Lookup a single word by exact match. Returns null if not found. */
   lookupWord: (word: string) => Promise<Flashcard | null>
-  /** Search words by prefix, returns up to `limit` results. */
-  searchPrefix: (prefix: string, limit?: number) => Promise<Flashcard[]>
+  /** Search words by prefix for autocomplete suggestions. */
+  searchPrefix: (prefix: string, limit?: number) => Promise<DictionarySearchResult[]>
   /** True while any fetch is in progress */
   isLoading: boolean
-  /** Set of first-letters whose files are already cached in this session */
-  isCached: (letter: string) => boolean
 }
 
 export function useVocabLookup(): UseVocabLookupReturn {
@@ -49,16 +47,14 @@ export function useVocabLookup(): UseVocabLookupReturn {
   }, [])
 
   const lookupWord = useCallback(
-    (word: string) => wrap(() => lookupVocabWord(word)),
+    (word: string) => wrap(() => lookupDictionaryWord(word)),
     [wrap]
   )
 
   const searchPrefix = useCallback(
-    (prefix: string, limit = 20) => wrap(() => searchVocabByPrefix(prefix, limit)),
+    (prefix: string, limit = 15) => wrap(() => searchDictionaryPrefix(prefix, limit)),
     [wrap]
   )
 
-  const isCached = useCallback((letter: string) => isLetterCached(letter), [])
-
-  return { lookupWord, searchPrefix, isLoading, isCached }
+  return { lookupWord, searchPrefix, isLoading }
 }
